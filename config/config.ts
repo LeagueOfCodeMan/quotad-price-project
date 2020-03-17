@@ -1,15 +1,16 @@
-import { IConfig, IPlugin } from 'umi-types';
+import {IConfig, IPlugin} from 'umi-types';
 import defaultSettings from './defaultSettings'; // https://umijs.org/config/
 
 import slash from 'slash2';
-import themePluginConfig from './themePluginConfig';
+// import themePluginConfig from './themePluginConfig';
 import proxy from './proxy';
 import webpackPlugin from './plugin.config';
-const { pwa } = defaultSettings; // preview.pro.ant.design only do not use in your production ;
+
+const {pwa} = defaultSettings; // preview.pro.ant.design only do not use in your production ;
 // preview.pro.ant.design 专用环境变量，请不要在你的项目中使用它。
 
-const { ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION, REACT_APP_ENV } = process.env;
-const isAntDesignProPreview = ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION === 'site';
+const {ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION, REACT_APP_ENV} = process.env;
+// const isAntDesignProPreview = ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION === 'site';
 const plugins: IPlugin[] = [
   ['umi-plugin-antd-icon-config', {}],
   [
@@ -34,11 +35,11 @@ const plugins: IPlugin[] = [
       },
       pwa: pwa
         ? {
-            workboxPluginMode: 'InjectManifest',
-            workboxOptions: {
-              importWorkboxFrom: 'local',
-            },
-          }
+          workboxPluginMode: 'InjectManifest',
+          workboxOptions: {
+            importWorkboxFrom: 'local',
+          },
+        }
         : false, // default close dll, because issue https://github.com/ant-design/ant-design-pro/issues/4665
       // dll features https://webpack.js.org/plugins/dll-plugin/
       // dll: {
@@ -58,22 +59,24 @@ const plugins: IPlugin[] = [
   ],
 ];
 
-if (isAntDesignProPreview) {
-  // 针对 preview.pro.ant.design 的 GA 统计代码
-  plugins.push([
-    'umi-plugin-ga',
-    {
-      code: 'UA-72788897-6',
-    },
-  ]);
-  plugins.push([
-    'umi-plugin-pro',
-    {
-      serverUrl: 'https://ant-design-pro.netlify.com',
-    },
-  ]);
-  plugins.push(['umi-plugin-antd-theme', themePluginConfig]);
-}
+// if (isAntDesignProPreview) {
+//   // 针对 preview.pro.ant.design 的 GA 统计代码
+//   plugins.push([
+//     'umi-plugin-ga',
+//     {
+//       code: 'UA-72788897-6',
+//     },
+//   ]);
+//   plugins.push([
+//     'umi-plugin-pro',
+//     {
+//       serverUrl: 'https://ant-design-pro.netlify.com',
+//     },
+//   ]);
+//   plugins.push(['umi-plugin-antd-theme', themePluginConfig]);
+// }
+
+const needUserAuthority: string[] = ['user_lv1', 'user_lv2', 'user_lv3', 'user_lv4'];
 
 export default {
   plugins,
@@ -122,33 +125,8 @@ export default {
           path: '/',
           component: '../layouts/BasicLayout',
           Routes: ['src/pages/Authorized'],
-          authority: ['admin', 'user'],
+          authority: needUserAuthority,
           routes: [
-            {
-              path: '/dashboard',
-              name: 'dashboard',
-              icon: 'dashboard',
-              routes: [
-                {
-                  name: 'analysis',
-                  icon: 'smile',
-                  path: '/dashboard/analysis',
-                  component: './dashboard/analysis',
-                },
-                {
-                  name: 'monitor',
-                  icon: 'smile',
-                  path: '/dashboard/monitor',
-                  component: './dashboard/monitor',
-                },
-                {
-                  name: 'workplace',
-                  icon: 'smile',
-                  path: '/dashboard/workplace',
-                  component: './dashboard/workplace',
-                },
-              ],
-            },
             {
               path: '/form',
               icon: 'form',
@@ -171,6 +149,25 @@ export default {
                   icon: 'smile',
                   path: '/form/advanced-form',
                   component: './form/advanced-form',
+                },
+              ],
+            },
+            {
+              path: '/usermanager',
+              icon: 'user',
+              name: 'usermanager',
+              routes: [
+                {
+                  name: 'userlist',
+                  icon: 'smile',
+                  path: '/usermanager/userlist',
+                  component: './usermanager/userlist',
+                },
+                {
+                  name: 'settings',
+                  icon: 'smile',
+                  path: '/usermanager/settings',
+                  component: './usermanager/settings',
                 },
               ],
             },
@@ -288,25 +285,6 @@ export default {
                   icon: 'smile',
                   path: '/exception/500',
                   component: './exception/500',
-                },
-              ],
-            },
-            {
-              name: 'account',
-              icon: 'user',
-              path: '/account',
-              routes: [
-                {
-                  name: 'center',
-                  icon: 'smile',
-                  path: '/account/center',
-                  component: './account/center',
-                },
-                {
-                  name: 'settings',
-                  icon: 'smile',
-                  path: '/account/settings',
-                  component: './account/settings',
                 },
               ],
             },

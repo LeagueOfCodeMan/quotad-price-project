@@ -1,14 +1,19 @@
-import { AnyAction, Reducer } from 'redux';
-import { message } from 'antd';
-import { EffectsCommandMap } from 'dva';
-import { routerRedux } from 'dva/router';
-import { fakeAccountLogin, getFakeCaptcha } from './service';
-import { getPageQuery, setAuthority } from './utils/utils';
+import {AnyAction, Reducer} from 'redux';
+import {message} from 'antd';
+import {EffectsCommandMap} from 'dva';
+import {routerRedux} from 'dva/router';
+import {fakeAccountLogin, getFakeCaptcha} from './service';
+import {getPageQuery, setAuthority} from './utils/utils';
+import {LoginPayload, LoginResultType} from './login';
+
+type statusType = 'ok' | 'error';
+type currentAuthorityType = 'guest' | 'user_lv1' | 'user_lv2' | 'user_lv3' | 'user_lv4' | string;
 
 export interface StateType {
-  status?: 'ok' | 'error';
+  status?: statusType;
   type?: string;
-  currentAuthority?: 'user' | 'guest' | 'admin';
+  currentAuthority?: currentAuthorityType;
+  errorMessage?: string;
 }
 
 export type Effect = (
@@ -28,6 +33,22 @@ export interface ModelType {
   };
 }
 
+// 鉴别登录用户权限
+const identityUser = (result: LoginResultType, payload: LoginPayload): StateType => {
+  let currentAuthority: currentAuthorityType = 'guest';
+  let status: statusType = 'error';
+  let errorMessage: string = '';
+  const type = payload?.type;
+  if (result?.id > 0) {
+    status = 'ok'
+    currentAuthority = `user_lv${result.identity}`
+  } else {
+    errorMessage = result;
+  }
+
+  return {type, status, currentAuthority, errorMessage};
+};
+
 const Model: ModelType = {
   namespace: 'userAndlogin',
 
@@ -36,18 +57,20 @@ const Model: ModelType = {
   },
 
   effects: {
-    *login({ payload }, { call, put }) {
+    * login({payload}, {call, put}) {
       const response = yield call(fakeAccountLogin, payload);
+      const authority = identityUser(response, payload);
       yield put({
         type: 'changeLoginStatus',
-        payload: response,
+        payload: authority,
       });
+      console.log(authority);
       // Login successfully
-      if (response.status === 'ok') {
+      if (response.id > 0) {
         message.success('登录成功！');
         const urlParams = new URL(window.location.href);
         const params = getPageQuery();
-        let { redirect } = params as { redirect: string };
+        let {redirect} = params as { redirect: string };
         if (redirect) {
           const redirectUrlParams = new URL(redirect);
           if (redirectUrlParams.origin === urlParams.origin) {
@@ -64,18 +87,19 @@ const Model: ModelType = {
       }
     },
 
-    *getCaptcha({ payload }, { call }) {
+    * getCaptcha({payload}, {call}) {
       yield call(getFakeCaptcha, payload);
     },
   },
 
   reducers: {
-    changeLoginStatus(state, { payload }) {
+    changeLoginStatus(state, {payload}) {
       setAuthority(payload.currentAuthority);
       return {
         ...state,
         status: payload.status,
         type: payload.type,
+        errorMessage: payload.errorMessage,
       };
     },
   },

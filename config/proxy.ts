@@ -22,7 +22,7 @@ export default {
   },
   pre: {
     '/api/': {
-      target: 'your pre url',
+      target: 'http://222.128.6.251:9099/',
       changeOrigin: true,
       pathRewrite: { '^': '' },
     },

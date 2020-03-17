@@ -1,15 +1,20 @@
-import { AlipayCircleOutlined, TaobaoCircleOutlined, WeiboCircleOutlined } from '@ant-design/icons';
-import { Alert, Checkbox } from 'antd';
-import React, { useState } from 'react';
-import { Dispatch, AnyAction } from 'redux';
-import { Link } from 'umi';
-import { connect } from 'dva';
-import { StateType } from './model';
+// import { AlipayCircleOutlined, TaobaoCircleOutlined, WeiboCircleOutlined } from '@ant-design/icons';
+import {Alert, Checkbox} from 'antd';
+import React, {useState} from 'react';
+import {AnyAction, Dispatch} from 'redux';
+// import { Link } from 'umi';
+import {connect} from 'dva';
+import {StateType} from './model';
 import styles from './style.less';
-import { LoginParamsType } from './service';
+import {LoginParamsType} from './service';
 import LoginFrom from './components/Login';
 
-const { Tab, UserName, Password, Mobile, Captcha, Submit } = LoginFrom;
+const {
+  Tab, UserName, Password,
+  // Mobile, Captcha,
+  Submit
+} = LoginFrom;
+
 interface LoginProps {
   dispatch: Dispatch<AnyAction>;
   userAndlogin: StateType;
@@ -18,7 +23,7 @@ interface LoginProps {
 
 const LoginMessage: React.FC<{
   content: string;
-}> = ({ content }) => (
+}> = ({content}) => (
   <Alert
     style={{
       marginBottom: 24,
@@ -30,13 +35,13 @@ const LoginMessage: React.FC<{
 );
 
 const Login: React.FC<LoginProps> = props => {
-  const { userAndlogin = {}, submitting } = props;
-  const { status, type: loginType } = userAndlogin;
+  const {userAndlogin = {}, submitting} = props;
+  const {status, type: loginType} = userAndlogin;
   const [autoLogin, setAutoLogin] = useState(true);
   const [type, setType] = useState<string>('account');
 
   const handleSubmit = (values: LoginParamsType) => {
-    const { dispatch } = props;
+    const {dispatch} = props;
     dispatch({
       type: 'userAndlogin/login',
       payload: {
@@ -50,12 +55,12 @@ const Login: React.FC<LoginProps> = props => {
       <LoginFrom activeKey={type} onTabChange={setType} onSubmit={handleSubmit}>
         <Tab key="account" tab="账户密码登录">
           {status === 'error' && loginType === 'account' && !submitting && (
-            <LoginMessage content="账户或密码错误（admin/ant.design）" />
+            <LoginMessage content="账户或密码错误"/>
           )}
 
           <UserName
-            name="userName"
-            placeholder="用户名: admin or user"
+            name="username"
+            placeholder="用户名: username"
             rules={[
               {
                 required: true,
@@ -65,43 +70,11 @@ const Login: React.FC<LoginProps> = props => {
           />
           <Password
             name="password"
-            placeholder="密码: ant.design"
+            placeholder="密码: password"
             rules={[
               {
                 required: true,
                 message: '请输入密码！',
-              },
-            ]}
-          />
-        </Tab>
-        <Tab key="mobile" tab="手机号登录">
-          {status === 'error' && loginType === 'mobile' && !submitting && (
-            <LoginMessage content="验证码错误" />
-          )}
-          <Mobile
-            name="mobile"
-            placeholder="手机号"
-            rules={[
-              {
-                required: true,
-                message: '请输入手机号！',
-              },
-              {
-                pattern: /^1\d{10}$/,
-                message: '手机号格式错误！',
-              },
-            ]}
-          />
-          <Captcha
-            name="captcha"
-            placeholder="验证码"
-            countDown={120}
-            getCaptchaButtonText=""
-            getCaptchaSecondText="秒"
-            rules={[
-              {
-                required: true,
-                message: '请输入验证码！',
               },
             ]}
           />
@@ -119,15 +92,15 @@ const Login: React.FC<LoginProps> = props => {
           </a>
         </div>
         <Submit loading={submitting}>登录</Submit>
-        <div className={styles.other}>
-          其他登录方式
-          <AlipayCircleOutlined className={styles.icon} />
-          <TaobaoCircleOutlined className={styles.icon} />
-          <WeiboCircleOutlined className={styles.icon} />
-          <Link className={styles.register} to="/user/register">
-            注册账户
-          </Link>
-        </div>
+        {/*<div className={styles.other}>*/}
+        {/*其他登录方式*/}
+        {/*<AlipayCircleOutlined className={styles.icon} />*/}
+        {/*<TaobaoCircleOutlined className={styles.icon} />*/}
+        {/*<WeiboCircleOutlined className={styles.icon} />*/}
+        {/*<Link className={styles.register} to="/user/register">*/}
+        {/*注册账户*/}
+        {/*</Link>*/}
+        {/*</div>*/}
       </LoginFrom>
     </div>
   );
@@ -135,9 +108,9 @@ const Login: React.FC<LoginProps> = props => {
 
 export default connect(
   ({
-    userAndlogin,
-    loading,
-  }: {
+     userAndlogin,
+     loading,
+   }: {
     userAndlogin: StateType;
     loading: {
       effects: {
