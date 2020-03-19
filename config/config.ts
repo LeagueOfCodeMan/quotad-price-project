@@ -2,7 +2,7 @@ import {IConfig, IPlugin} from 'umi-types';
 import defaultSettings from './defaultSettings'; // https://umijs.org/config/
 
 import slash from 'slash2';
-// import themePluginConfig from './themePluginConfig';
+import themePluginConfig from './themePluginConfig';
 import proxy from './proxy';
 import webpackPlugin from './plugin.config';
 
@@ -10,7 +10,7 @@ const {pwa} = defaultSettings; // preview.pro.ant.design only do not use in your
 // preview.pro.ant.design 专用环境变量，请不要在你的项目中使用它。
 
 const {ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION, REACT_APP_ENV} = process.env;
-// const isAntDesignProPreview = ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION === 'site';
+const isAntDesignProPreview = ANT_DESIGN_PRO_ONLY_DO_NOT_USE_IN_YOUR_PRODUCTION === 'site';
 const plugins: IPlugin[] = [
   ['umi-plugin-antd-icon-config', {}],
   [
@@ -59,37 +59,41 @@ const plugins: IPlugin[] = [
   ],
 ];
 
-// if (isAntDesignProPreview) {
-//   // 针对 preview.pro.ant.design 的 GA 统计代码
-//   plugins.push([
-//     'umi-plugin-ga',
-//     {
-//       code: 'UA-72788897-6',
-//     },
-//   ]);
-//   plugins.push([
-//     'umi-plugin-pro',
-//     {
-//       serverUrl: 'https://ant-design-pro.netlify.com',
-//     },
-//   ]);
-//   plugins.push(['umi-plugin-antd-theme', themePluginConfig]);
-// }
+if (isAntDesignProPreview) {
+  // 针对 preview.pro.ant.design 的 GA 统计代码
+  plugins.push([
+    'umi-plugin-ga',
+    {
+      code: 'UA-72788897-6',
+    },
+  ]);
+  plugins.push([
+    'umi-plugin-pro',
+    {
+      serverUrl: 'https://ant-design-pro.netlify.com',
+    },
+  ]);
+  plugins.push(['umi-plugin-antd-theme', themePluginConfig]);
+}
 
 const needUserAuthority: string[] = ['user_lv1', 'user_lv2', 'user_lv3', 'user_lv4'];
+const needManagerAuthority: string[] = ['user_lv1', 'user_lv2'];
 
 export default {
   plugins,
   hash: true,
+  history: "hash",
   targets: {
     ie: 11,
   },
   // umi routes: https://umijs.org/zh/guide/router.html
+
   routes: [
     {
       path: '/',
       component: '../layouts/BlankLayout',
       routes: [
+        // user
         {
           path: '/user',
           component: '../layouts/UserLayout',
@@ -121,6 +125,7 @@ export default {
             },
           ],
         },
+        // app
         {
           path: '/',
           component: '../layouts/BasicLayout',
@@ -162,12 +167,16 @@ export default {
                   icon: 'smile',
                   path: '/usermanager/userlist',
                   component: './usermanager/userlist',
+                  Routes: ['src/pages/Authorized'],
+                  authority: needManagerAuthority,
                 },
                 {
                   name: 'settings',
                   icon: 'smile',
                   path: '/usermanager/settings',
                   component: './usermanager/settings',
+                  Routes: ['src/pages/Authorized'],
+                  authority: needUserAuthority,
                 },
               ],
             },
@@ -313,11 +322,8 @@ export default {
                 },
               ],
             },
-            {
-              path: '/',
-              redirect: '/dashboard/analysis',
-              authority: ['admin', 'user'],
-            },
+            {path: '/', redirect: '/usermanager/settings',authority:needUserAuthority},
+
             {
               component: '404',
             },
@@ -375,6 +381,9 @@ export default {
   manifest: {
     basePath: '/',
   },
+  base:'/',
+  publicPath: './',
+  cssPublicPath: './',
   proxy: proxy[REACT_APP_ENV || 'dev'],
   chainWebpack: webpackPlugin,
 } as IConfig;

@@ -24,7 +24,7 @@ function getModulePackageName(module: { context: string }) {
 const webpackPlugin = (config: IWebpackChainConfig) => {
   // optimize chunks
   config.optimization
-    // share the same chunks across different modules
+  // share the same chunks across different modules
     .runtimeChunk(false)
     .splitChunks({
       chunks: 'async',

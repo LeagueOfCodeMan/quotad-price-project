@@ -9,26 +9,27 @@ const {Option} = Select;
 
 const FormItem = Form.Item;
 
-interface CreateFormProps {
-  modalVisible: boolean;
+interface EditUserProps {
+  updateModalVisible: boolean;
   onSubmit: (fieldsValue: CreateUser, callback: Function) => void;
   onCancel: () => void;
   currentUser?: CurrentUser;
   areaList?: NotRequired<AreasInfo>;
+  values?: CurrentUser;
 }
 
 type IdentityOptionsType = { label: string; value: number; };
 
-const CreateForm: React.FC<CreateFormProps> = props => {
+const EditUser: React.FC<EditUserProps> = props => {
   const [form] = Form.useForm();
 
-  const {modalVisible, onSubmit: handleAdd, onCancel, currentUser, areaList} = props;
-  // console.log(currentUser, areaList);
+  const {updateModalVisible, onSubmit: handleAdd, onCancel, currentUser, areaList, values = {}} = props;
+  const {identity, company, real_name, area, email, tel} = values;
   // 初始化可分配权限
   const identityOptions: IdentityOptionsType[] = currentUser?.identity === 1 ? [{label: '组长', value: 2}, {
     label: '二级组员',
     value: 4
-  }] : [{label: '一级组员', value: 3}]
+  }] : [{label: '一级组员', value: 3}];
 
   const okHandle = async () => {
     const fieldsValue = await form.validateFields();
@@ -46,79 +47,21 @@ const CreateForm: React.FC<CreateFormProps> = props => {
   return (
     <Modal
       destroyOnClose
-      title="新建用户"
-      visible={modalVisible}
+      title="编辑用户信息"
+      visible={updateModalVisible}
       onOk={okHandle}
-      onCancel={() => {
-        form.resetFields();
-        onCancel();
-      }}
+      onCancel={() => onCancel()}
     >
 
       <Form form={form}
             initialValues={{
-              identity: identityOptions[0].value.toString()
+              identity: identity ? identityOptions.filter(i => i.value !== identity)?.[0]?.label : null,
+              real_name, area, email, tel, company
             }}
             layout="vertical"
             className={styles.formStyleCommon}
       >
         <div className={styles.flexSpaceBetween}>
-          <FormItem
-            label="用户名"
-            name="username"
-            rules={[{required: true, message: '请输入最少5位用户名', min: 5},
-              {pattern: /^[A-Za-z0-9/.+-_]+$/, message: '包含字母，数字和仅有的@/./+/-/_符号'}
-            ]}
-          >
-            <Input placeholder="请输入用户名"  {...commonProps} />
-          </FormItem>
-          <FormItem
-            label="权限级别"
-            name="identity"
-            rules={[{required: true, message: 'Please input your password!'}]}
-          >
-            <Select {...commonProps}>
-              {identityOptions.map(item => (
-                <Option key={item.value} value={item.value.toString()}>{item.label}</Option>
-              ))}
-
-            </Select>
-          </FormItem>
-        </div>
-
-        <div className={styles.flexSpaceBetween}>
-          <FormItem
-            label="密码"
-            name="password"
-            rules={[{required: true, message: 'Please input your password!'}]}
-          >
-            <Input.Password {...commonProps}/>
-          </FormItem>
-          <FormItem
-            label="确认密码"
-            name="re_password"
-            rules={[{required: true, message: 'Please input your password!'},
-              ({getFieldValue}) => ({
-                validator(rule, value) {
-                  if (!value || getFieldValue('password') === value) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject('The two passwords that you entered do not match!');
-                },
-              }),]}
-          >
-            <Input.Password {...commonProps}/>
-          </FormItem>
-        </div>
-
-        <div className={styles.flexSpaceBetween}>
-          <FormItem
-            label="真实姓名"
-            name="real_name"
-            rules={[{required: false}]}
-          >
-            <Input placeholder="请输入" {...commonProps}/>
-          </FormItem>
           <FormItem
             label="地区"
             name="area"
@@ -131,9 +74,26 @@ const CreateForm: React.FC<CreateFormProps> = props => {
 
             </Select>
           </FormItem>
+          <FormItem
+            label="权限级别"
+            name="identity"
+            rules={[{required: true, message: 'Please input your password!'}]}
+          >
+            <Select {...commonProps}>
+              {identityOptions.map(item => (
+                <Option key={item.value} value={item.value}>{item.label}</Option>
+              ))}
+            </Select>
+          </FormItem>
         </div>
-
         <div className={styles.flexSpaceBetween}>
+          <FormItem
+            label="真实姓名"
+            name="real_name"
+            rules={[{required: false}]}
+          >
+            <Input placeholder="请输入" {...commonProps}/>
+          </FormItem>
           <FormItem
             label="公司名"
             name="company"
@@ -141,15 +101,8 @@ const CreateForm: React.FC<CreateFormProps> = props => {
           >
             <Input placeholder="请输入" {...commonProps}/>
           </FormItem>
-          <FormItem
-            label="职务"
-            name="duty"
-            rules={[{required: false}]}
-          >
-            <Input placeholder="请输入" {...commonProps}/>
-          </FormItem>
-        </div>
 
+        </div>
         <div className={styles.flexSpaceBetween}>
           <FormItem
             label="邮箱"
@@ -166,18 +119,9 @@ const CreateForm: React.FC<CreateFormProps> = props => {
             <Input placeholder="请输入" {...commonProps}/>
           </FormItem>
         </div>
-
-        <FormItem
-          label="地址"
-          name="addr"
-          rules={[{required: false}]}
-          style={{marginLeft: '15px'}}
-        >
-          <Input placeholder="请输入" {...commonProps}/>
-        </FormItem>
       </Form>
     </Modal>
   );
 };
 
-export default CreateForm;
+export default EditUser;

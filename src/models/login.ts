@@ -1,11 +1,11 @@
-import { Reducer } from 'redux';
-import { Effect } from 'dva';
-import { stringify } from 'querystring';
-import { router } from 'umi';
+import {Reducer} from 'redux';
+import {Effect} from 'dva';
+import {router} from 'umi';
 
-import { fakeAccountLogin } from '@/services/login';
-import { setAuthority } from '@/utils/authority';
-import { getPageQuery } from '@/utils/utils';
+import {fakeAccountLogin, logout} from '@/services/login';
+import {clearAuthority, setAuthority} from '@/utils/authority';
+import {getPageQuery} from '@/utils/utils';
+import {routerRedux} from "dva/router";
 
 export interface StateType {
   status?: 'ok' | 'error';
@@ -33,7 +33,7 @@ const Model: LoginModelType = {
   },
 
   effects: {
-    *login({ payload }, { call, put }) {
+    * login({payload}, {call, put}) {
       const response = yield call(fakeAccountLogin, payload);
       yield put({
         type: 'changeLoginStatus',
@@ -43,7 +43,7 @@ const Model: LoginModelType = {
       if (response.status === 'ok') {
         const urlParams = new URL(window.location.href);
         const params = getPageQuery();
-        let { redirect } = params as { redirect: string };
+        let {redirect} = params as { redirect: string };
         if (redirect) {
           const redirectUrlParams = new URL(redirect);
           if (redirectUrlParams.origin === urlParams.origin) {
@@ -60,22 +60,26 @@ const Model: LoginModelType = {
       }
     },
 
-    logout() {
-      const { redirect } = getPageQuery();
+    * logout(_, {call, put}) {
+      yield call(logout);
+      const {redirect} = getPageQuery();
       // Note: There may be security issues, please note
       if (window.location.pathname !== '/user/login' && !redirect) {
-        router.replace({
-          pathname: '/user/login',
-          search: stringify({
-            redirect: window.location.href,
+        clearAuthority();
+        yield put(
+          routerRedux.push({
+            pathname: '/user/login',
+            // search: stringify({
+            //   redirect: window.location.href,
+            // }),
           }),
-        });
+        );
       }
     },
   },
 
   reducers: {
-    changeLoginStatus(state, { payload }) {
+    changeLoginStatus(state, {payload}) {
       setAuthority(payload.currentAuthority);
       return {
         ...state,

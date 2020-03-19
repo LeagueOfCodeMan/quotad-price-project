@@ -1,21 +1,15 @@
-import { Effect } from 'dva';
-import { Reducer } from 'redux';
+import {Effect} from 'dva';
+import {Reducer} from 'redux';
+import {router} from 'umi';
 
-import { queryCurrent, query as queryUsers } from '@/services/user';
+import {queryCurrent} from '@/services/user';
+import {UserListItem} from "@/pages/usermanager/userlist/data";
 
-export interface CurrentUser {
-  avatar?: string;
-  name?: string;
-  title?: string;
-  group?: string;
-  signature?: string;
-  tags?: {
-    key: string;
-    label: string;
-  }[];
-  userid?: string;
-  unreadCount?: number;
-}
+export type NotRequired<T> = {
+  [P in keyof T]+?: T[P];
+};
+
+export type CurrentUser = NotRequired<UserListItem>;
 
 export interface UserModelState {
   currentUser?: CurrentUser;
@@ -25,12 +19,10 @@ export interface UserModelType {
   namespace: 'user';
   state: UserModelState;
   effects: {
-    fetch: Effect;
     fetchCurrent: Effect;
   };
   reducers: {
     saveCurrentUser: Reducer<UserModelState>;
-    changeNotifyCount: Reducer<UserModelState>;
   };
 }
 
@@ -42,19 +34,17 @@ const UserModel: UserModelType = {
   },
 
   effects: {
-    *fetch(_, { call, put }) {
-      const response = yield call(queryUsers);
-      yield put({
-        type: 'save',
-        payload: response,
-      });
-    },
-    *fetchCurrent(_, { call, put }) {
+    * fetchCurrent(_, {call, put}) {
       const response = yield call(queryCurrent);
-      yield put({
-        type: 'saveCurrentUser',
-        payload: response,
-      });
+      if (response?.id) {
+        yield put({
+          type: 'saveCurrentUser',
+          payload: response,
+        });
+      } else {
+        router.push("/user/login")
+      }
+
     },
   },
 
@@ -65,21 +55,7 @@ const UserModel: UserModelType = {
         currentUser: action.payload || {},
       };
     },
-    changeNotifyCount(
-      state = {
-        currentUser: {},
-      },
-      action,
-    ) {
-      return {
-        ...state,
-        currentUser: {
-          ...state.currentUser,
-          notifyCount: action.payload.totalCount,
-          unreadCount: action.payload.unreadCount,
-        },
-      };
-    },
+
   },
 };
 

@@ -1,5 +1,4 @@
-import {NotRequired} from "../../../models/user";
-import {number, string} from "prop-types";
+import {NotRequired} from "@/models/user";
 
 export interface TableListItem {
   key: number;
@@ -53,39 +52,12 @@ export interface UserListItem {
   email: string;
   tel: string;
   area: null | string;
-
   [propNmae: string]: any;
 }
 
-export type UsersInfo = {
+export type UsersInfo =  {
   results: NotRequired<UserListItem[]>;
   count?: number;
   [propNmae: string]: any;
 };
 
-export interface AreaListItem {
-  id: number;
-  area_name: string;
-};
-
-export type AreasInfo = {
-  results: NotRequired<AreaListItem[]>;
-  count?: number;
-  [propNmae: string]: any;
-}
-
-export interface CreateUser {
-  identity: number;
-  username: string;
-  password: string;
-  re_password: string;
-  real_name: string;
-  company: string;
-  addr: string;
-  duty: string;
-  email: string;
-  tel: string;
-  area: null | string;
-
-  [propNmae: string]: any;
-}

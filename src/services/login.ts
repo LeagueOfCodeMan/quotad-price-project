@@ -17,3 +17,7 @@ export async function fakeAccountLogin(params: LoginParamsType) {
 export async function getFakeCaptcha(mobile: string) {
   return request(`/api/login/captcha?mobile=${mobile}`);
 }
+
+export async function logout(): Promise<any> {
+  return request('/api/logout', {method: 'POST'});
+}
