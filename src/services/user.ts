@@ -1,5 +1,5 @@
 import request from '@/utils/request';
-import {TableListParams} from "@/pages/usermanager/userlist/data";
+import {TableListParams} from "@/models/data";
 
 export async function queryUsers(params?: TableListParams) {
   return request('/api/user', {

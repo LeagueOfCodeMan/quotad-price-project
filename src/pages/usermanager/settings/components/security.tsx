@@ -1,88 +1,62 @@
-import { FormattedMessage, formatMessage } from 'umi-plugin-react/locale';
-import React, { Component } from 'react';
+import {FormattedMessage, formatMessage} from 'umi-plugin-react/locale';
+import React, {Component} from 'react';
 
-import { List } from 'antd';
+import {List} from 'antd';
+import {connect} from "react-redux";
+import {CurrentUser} from "@/models/user";
 
 type Unpacked<T> = T extends (infer U)[] ? U : T;
 
-const passwordStrength = {
-  strong: (
-    <span className="strong">
-      <FormattedMessage id="accountandsettings.security.strong" defaultMessage="Strong" />
-    </span>
-  ),
-  medium: (
-    <span className="medium">
-      <FormattedMessage id="accountandsettings.security.medium" defaultMessage="Medium" />
-    </span>
-  ),
-  weak: (
-    <span className="weak">
-      <FormattedMessage id="accountandsettings.security.weak" defaultMessage="Weak" />
-      Weak
-    </span>
-  ),
-};
 
-class SecurityView extends Component {
-  getData = () => [
-    {
-      title: formatMessage({ id: 'accountandsettings.security.password' }, {}),
-      description: (
-        <>
-          {formatMessage({ id: 'accountandsettings.security.password-description' })}：
-          {passwordStrength.strong}
-        </>
-      ),
-      actions: [
-        <a key="Modify">
-          <FormattedMessage id="accountandsettings.security.modify" defaultMessage="Modify" />
-        </a>,
-      ],
-    },
-    {
-      title: formatMessage({ id: 'accountandsettings.security.phone' }, {}),
-      description: `${formatMessage(
-        { id: 'accountandsettings.security.phone-description' },
-        {},
-      )}：138****8293`,
-      actions: [
-        <a key="Modify">
-          <FormattedMessage id="accountandsettings.security.modify" defaultMessage="Modify" />
-        </a>,
-      ],
-    },
-    {
-      title: formatMessage({ id: 'accountandsettings.security.question' }, {}),
-      description: formatMessage({ id: 'accountandsettings.security.question-description' }, {}),
-      actions: [
-        <a key="Set">
-          <FormattedMessage id="accountandsettings.security.set" defaultMessage="Set" />
-        </a>,
-      ],
-    },
-    {
-      title: formatMessage({ id: 'accountandsettings.security.email' }, {}),
-      description: `${formatMessage(
-        { id: 'accountandsettings.security.email-description' },
-        {},
-      )}：ant***sign.com`,
-      actions: [
-        <a key="Modify">
-          <FormattedMessage id="accountandsettings.security.modify" defaultMessage="Modify" />
-        </a>,
-      ],
-    },
-    {
-      title: formatMessage({ id: 'accountandsettings.security.mfa' }, {}),
-      description: formatMessage({ id: 'accountandsettings.security.mfa-description' }, {}),
-      actions: [
-        <a key="bind">
-          <FormattedMessage id="accountandsettings.security.bind" defaultMessage="Bind" />
-        </a>,
-      ],
-    },
-  ];
+interface SecurityViewProps {
+  currentUser?: CurrentUser;
+  handleSecurityUpdate: (target: string) => void;
+}
+
+class SecurityView extends Component<SecurityViewProps> {
+  getData = () => {
+    const {currentUser, handleSecurityUpdate} = this.props;
+    return [
+      {
+        title: formatMessage({id: 'accountandsettings.security.password'}, {}),
+        actions: [
+          <a key="Modify" onClick={() => {
+            handleSecurityUpdate('password')
+          }}>
+            <FormattedMessage id="accountandsettings.security.modify" defaultMessage="Modify"/>
+          </a>,
+        ],
+      },
+      {
+        title: formatMessage({id: 'accountandsettings.security.phone'}, {}),
+        description: `${formatMessage(
+          {id: 'accountandsettings.security.phone-description'},
+          {},
+        )}${currentUser?.tel || '请先绑定'}`,
+        actions: [
+          <a key="Modify" onClick={() => {
+            handleSecurityUpdate('tel')
+          }}>
+            <FormattedMessage id="accountandsettings.security.modify" defaultMessage="Modify"/>
+          </a>,
+        ],
+      },
+      {
+        title: formatMessage({id: 'accountandsettings.security.email'}, {}),
+        description: `${formatMessage(
+          {id: 'accountandsettings.security.email-description'},
+          {},
+        )}${currentUser?.email || '请先绑定'}`,
+        actions: [
+          <a key="Modify" onClick={() => {
+            handleSecurityUpdate('email')
+          }}>
+            <FormattedMessage id="accountandsettings.security.modify" defaultMessage="Modify"/>
+          </a>,
+        ],
+      }
+    ]
+  };
 
   render() {
     const data = this.getData();
@@ -93,7 +67,7 @@ class SecurityView extends Component {
           dataSource={data}
           renderItem={item => (
             <List.Item actions={item.actions}>
-              <List.Item.Meta title={item.title} description={item.description} />
+              <List.Item.Meta title={item.title} description={item.description}/>
             </List.Item>
           )}
         />
@@ -102,4 +76,8 @@ class SecurityView extends Component {
   }
 }
 
-export default SecurityView;
+export default connect(
+  ({user}: { user: { currentUser: CurrentUser } }) => ({
+    currentUser: user.currentUser,
+  }),
+)(SecurityView);

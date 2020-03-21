@@ -31,7 +31,6 @@ const errorHandler = (error: { response: Response, data: any }): Response => {
   if (response && response.status) {
     const errorText = codeMessage[response.status] || response.statusText;
     const {status, url} = response;
-
     notification.error({
       message: `请求错误 ${status}: ${url}`,
       description: errorText,
@@ -67,7 +66,6 @@ const requestWithExtend = extend({
  */
 const request = async (url: string, options: any = {}, otherOptions: any = {}) => {
 
-
   const optionsFinal = stringifyDataBasedOtherOptions(options, otherOptions);
   const result = await requestWithExtend(url, {
     getResponse: true,
@@ -81,6 +79,7 @@ const request = async (url: string, options: any = {}, otherOptions: any = {}) =
   }).catch(e => {
     return e
   });
+  console.log(result);
   return result;
 };
 

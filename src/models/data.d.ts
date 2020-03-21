@@ -1,30 +1,10 @@
 import {NotRequired} from "@/models/user";
-
-export interface TableListItem {
-  key: number;
-  disabled?: boolean;
-  href: string;
-  avatar: string;
-  name: string;
-  title: string;
-  owner: string;
-  desc: string;
-  callNo: number;
-  status: number;
-  updatedAt: Date;
-  createdAt: Date;
-  progress: number;
-}
+import {AreaListItem, UserListItem} from "@/pages/usermanager/userlist/data";
 
 export interface TableListPagination {
   total: number;
   pageSize: number;
   current: number;
-}
-
-export interface TableListData {
-  list: TableListItem[];
-  pagination: Partial<TableListPagination>;
 }
 
 export interface TableListParams {
@@ -37,10 +17,17 @@ export interface TableListParams {
   currentPage?: number;
 }
 
+
+export type UsersInfo =  {
+  results: NotRequired<UserListItem[]>;
+  count?: number;
+  [propNmae: string]: any;
+};
+
 export interface UserListItem {
   key: number;
   id: number;
-  identity: number;
+  identity: IdentityType;
   username: string;
   is_superuser: boolean;
   data_joined: Date;
@@ -52,12 +39,44 @@ export interface UserListItem {
   email: string;
   tel: string;
   area: null | string;
+  avatar: string;
+  parent?: {
+    id: number;
+    tel: string;
+    email: string;
+    real_name: string;
+    company: string;
+    addr: string;
+    duty: string;
+  }
+
   [propNmae: string]: any;
 }
 
-export type UsersInfo =  {
-  results: NotRequired<UserListItem[]>;
+export interface TableListPagination {
+  total: number;
+  pageSize: number;
+  current: number;
+}
+
+export interface TableListParams {
+  sorter?: string;
+  status?: string;
+  name?: string;
+  desc?: string;
+  key?: number;
+  pageSize?: number;
+  currentPage?: number;
+}
+
+export interface AreaListItem {
+  id?: number;
+  area_name: string;
+};
+
+export type AreasInfo = {
+  results: NotRequired<AreaListItem[]>;
   count?: number;
   [propNmae: string]: any;
-};
+}
 

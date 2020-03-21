@@ -1,18 +1,15 @@
 import {Effect} from 'dva';
 import {Reducer} from 'redux';
 import {router} from 'umi';
+import {message} from 'antd';
 
 import {queryCurrent} from '@/services/user';
-import {UserListItem} from "@/pages/usermanager/userlist/data";
-
-export type NotRequired<T> = {
-  [P in keyof T]+?: T[P];
-};
+import {UserListItem} from "@/models/data";
 
 export type CurrentUser = NotRequired<UserListItem>;
 
 export interface UserModelState {
-  currentUser?: CurrentUser;
+  currentUser: CurrentUser;
 }
 
 export interface UserModelType {
@@ -42,6 +39,7 @@ const UserModel: UserModelType = {
           payload: response,
         });
       } else {
+        message.info('当前登录已失效，请重新登录!')
         router.push("/user/login")
       }
 

@@ -51,6 +51,7 @@ export default {
   'menu.editor.koni': '拓扑编辑器',
   // yuntai
   'menu.usermanager': '用户管理',
+  'menu.usermanager.arealist': '地区列表',
   'menu.usermanager.userlist': '用户列表',
   'menu.usermanager.settings': '个人设置'
 };

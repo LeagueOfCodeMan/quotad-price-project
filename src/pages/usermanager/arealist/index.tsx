@@ -1,34 +1,28 @@
 import {DownOutlined, PlusOutlined} from '@ant-design/icons';
 import {Button, Divider, Dropdown, Menu, message, Modal} from 'antd';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useRef, useState} from 'react';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
-import _ from 'lodash';
-import CreateForm from './components/CreateForm';
-import {CreateUser, UpdateUser} from './data';
-import {createUser, deleteUser, queryUsers, updateUser} from './service';
 import {Dispatch} from "redux";
 import {connect} from "react-redux";
-import {UserListModalState} from "src/pages/usermanager/userlist/model";
-import {ColumnsState, RequestData} from "@ant-design/pro-table/es";
+import {RequestData} from "@ant-design/pro-table/es";
 import {UserModelState} from "@/models/user";
 import {DeleteTwoTone, EditTwoTone, ExclamationCircleOutlined} from "@ant-design/icons/lib";
-import EditUser from "@/pages/usermanager/userlist/components/EditUser";
 import ValidatePassword from "@/components/ValidatePassword";
 import {testPassword} from "@/services/user";
 import {addIcontains, ResultType, ValidatePwdResult} from "@/utils/utils";
-import {UserListItem} from "@/models/data";
+import {AreaListItem, UserListItem} from "@/models/data";
+import {createArea, deleteArea, queryAreas, updateArea} from "@/pages/usermanager/arealist/service";
+import CreateForm from "@/pages/usermanager/arealist/components/CreateForm";
+import EditForm from "@/pages/usermanager/arealist/components/EditForm";
 
 const {confirm} = Modal;
 /**
  * 添加
  * @param fields
  */
-const handleAdd = async (fields: CreateUser) => {
+const handleAdd = async (fields: AreaListItem) => {
   const hide = message.loading('正在添加');
-  const data = Object.assign({},
-    _.omit(fields, ['re_password']),
-    {identity: fields?.identity - 0});
-  const result: ResultType | string = await createUser(data as UserListItem);
+  const result: ResultType | string = await createArea(fields as AreaListItem);
   console.log(result);
   return new ValidatePwdResult(result).validate(null, null, hide);
 };
@@ -38,11 +32,11 @@ const handleAdd = async (fields: CreateUser) => {
  * @param fields
  * @param record
  */
-const handleUpdate = async (fields: UpdateUser, record: UserListItem | {}) => {
+const handleUpdate = async (fields: AreaListItem, record: AreaListItem | {}) => {
   const hide = message.loading('正在修改');
   const result: ResultType | string =
-    await updateUser({
-      id: (record as UserListItem)?.id, data: fields
+    await updateArea({
+      id: ((record as AreaListItem)?.id) as number, data: fields
     });
   return new ValidatePwdResult(result).validate('修改成功', null, hide);
 };
@@ -50,8 +44,6 @@ const handleUpdate = async (fields: UpdateUser, record: UserListItem | {}) => {
 
 interface UserListProps {
   dispatch: Dispatch<any>;
-  userlist: UserListModalState;
-  userlistLoading: boolean;
   user: UserModelState;
 }
 
@@ -59,89 +51,23 @@ enum ValidateType {
   DELETE_URL = 'DELETE_URL',
 }
 
-const UserList: React.FC<UserListProps> = (props) => {
+const AreaList: React.FC<UserListProps> = (props) => {
   const [createModalVisible, handleModalVisible] = useState<boolean>(false);
   const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
   const [validateVisible, setValidateVisible] = useState(false);
   const [editFormValues, setEditFormValues] = useState({});
   const [validateType, setValidateType] = useState<string>("");
-  const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState; }>({
-    addr: {show: false,},
-    email: {show: false},
-    ["data_joined"]: {show: false},
-    ["last_login"]: {show: false},
-    company: {show: false},
-    duty: {show: false}
-  });
   const actionRef = useRef<ActionType>();
-  const {dispatch} = props;
-
-  useEffect(() => {
-    dispatch({
-      type: 'userlist/fetchAreas'
-    })
-  }, []);
-
-  const {user: {currentUser}, userlist: {areaList}} = props;
 
   const columns: ProColumns<UserListItem>[] = [
     {
-      title: '用户名',
-      dataIndex: 'username',
+      title: '番号',
+      dataIndex: 'id',
+      valueType: 'indexBorder',
     },
     {
-      title: '真实姓名',
-      dataIndex: 'real_name',
-    },
-    {
-      title: '地区',
+      title: '区域名字',
       dataIndex: 'area_name',
-    },
-    {
-      title: '公司名',
-      dataIndex: 'company',
-    },
-    {
-      title: '职务',
-      dataIndex: 'duty',
-      hideInSearch: true,
-    },
-    {
-      title: '地址',
-      dataIndex: 'addr',
-      hideInSearch: true,
-    },
-    {
-      title: '手机号',
-      dataIndex: 'tel',
-    },
-    {
-      title: '邮箱',
-      dataIndex: 'email',
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'data_joined',
-      sorter: true,
-      valueType: 'dateTime',
-      hideInSearch: true,
-    },
-    {
-      title: '最后登录时间',
-      dataIndex: 'last_login',
-      sorter: true,
-      valueType: 'dateTime',
-      hideInSearch: true,
-    },
-    {
-      title: '权限',
-      dataIndex: 'identity',
-      valueEnum: {
-        1: {text: '管理员'},
-        2: {text: '一级组长'},
-        3: {text: '一级组员'},
-        4: {text: '二级组员'},
-      },
     },
     {
       title: '操作',
@@ -149,25 +75,20 @@ const UserList: React.FC<UserListProps> = (props) => {
       valueType: 'option',
       render: (_, record) => (
         <>
-          {record.identity !== currentUser?.identity ?
-            <EditTwoTone
-              onClick={() => {
-                handleUpdateModalVisible(true);
-                setEditFormValues(record);
-              }}/> : null
-          }
+          <EditTwoTone
+            onClick={() => {
+              handleUpdateModalVisible(true);
+              setEditFormValues(record);
+            }}/>
           <Divider type="vertical"/>
-          {
-            record.identity !== currentUser?.identity ?
-              <DeleteTwoTone
-                twoToneColor="#eb2f96"
-                onClick={() => {
-                  setValidateType(ValidateType.DELETE_URL);
-                  setEditFormValues(record);
-                  setValidateVisible(true);
-                }}
-              /> : null
-          }
+          <DeleteTwoTone
+            twoToneColor="#eb2f96"
+            onClick={() => {
+              setValidateType(ValidateType.DELETE_URL);
+              setEditFormValues(record);
+              setValidateVisible(true);
+            }}
+          />
         </>
       ),
     },
@@ -181,7 +102,7 @@ const UserList: React.FC<UserListProps> = (props) => {
   }): Promise<RequestData<UserListItem>> => {
     console.log('request params: ', params)
     const searchParamsType = addIcontains(params);
-    const result = await queryUsers({...searchParamsType});
+    const result = await queryAreas({...searchParamsType});
     return Promise.resolve({
       data: result?.results || [],
       success: true,
@@ -205,12 +126,12 @@ const UserList: React.FC<UserListProps> = (props) => {
       confirm({
         title: '删除用户',
         icon: <ExclamationCircleOutlined/>,
-        content: '请确认是否删除用户',
+        content: '请确认是否删除',
         okText: '确认',
         okType: 'danger',
         cancelText: '取消',
         onOk: async () => {
-          const result: ResultType | string = await deleteUser({id});
+          const result: ResultType | string = await deleteArea({id});
           const success: boolean = new ValidatePwdResult(result).validate('删除成功', null, hide);
           // 刷新数据
           if (actionRef.current && success) {
@@ -273,8 +194,6 @@ const UserList: React.FC<UserListProps> = (props) => {
         request={request}
         columns={columns}
         // rowSelection={{}}
-        columnsStateMap={columnsStateMap}
-        onColumnsStateChange={map => setColumnsStateMap(map)}
         pagination={{pageSize: 5, showQuickJumper: true}}
       />
       <CreateForm
@@ -290,13 +209,11 @@ const UserList: React.FC<UserListProps> = (props) => {
             callback(false);
           }
         }}
-        currentUser={currentUser}
-        areaList={areaList}
         onCancel={() => handleModalVisible(false)}
         modalVisible={createModalVisible}
       />
       {editFormValues && Object.keys(editFormValues).length ? (
-        <EditUser
+        <EditForm
           onSubmit={async (value, callback) => {
             const success = await handleUpdate(value, editFormValues);
             if (success) {
@@ -339,18 +256,15 @@ const UserList: React.FC<UserListProps> = (props) => {
 
 export default connect(
   ({
-     loading, userlist, user
+     loading, user
    }: {
     loading: {
       effects: {
         [key: string]: boolean;
       };
     };
-    userlist: UserListModalState;
     user: UserModelState;
   }) => ({
-    userlist,
     user,
-    userlistLoading: loading.effects['userlist/fetch'],
   }),
-)(UserList);
+)(AreaList);

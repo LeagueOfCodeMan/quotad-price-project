@@ -8,6 +8,7 @@ import {ConnectProps, ConnectState} from '@/models/connect';
 import {CurrentUser} from '@/models/user';
 import HeaderDropdown from '../HeaderDropdown';
 import styles from './index.less';
+import Avatar from "antd/lib/avatar";
 
 export interface GlobalHeaderRightProps extends ConnectProps {
   currentUser?: CurrentUser;
@@ -59,7 +60,8 @@ class AvatarDropdown extends React.Component<GlobalHeaderRightProps> {
     return currentUser && currentUser.username ? (
       <HeaderDropdown overlay={menuHeaderDropdown}>
         <span className={`${styles.action} ${styles.account}`}>
-          <span className={styles.name}>用户名： <span style={{color: '#ec384f'}}>{currentUser.username}</span></span>
+          <Avatar size="small" className={styles.avatar} src={currentUser.avatar} alt="avatar"/>
+          <span className={styles.name}><span style={{color: '#ec384f'}}>{currentUser.username}</span></span>
         </span>
       </HeaderDropdown>
     ) : (

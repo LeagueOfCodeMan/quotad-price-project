@@ -47,6 +47,7 @@ const plugins: IPlugin[] = [
       //   exclude: ['@babel/runtime', 'netlify-lambda'],
       // },
     },
+
   ],
   [
     'umi-plugin-pro-block',
@@ -163,11 +164,17 @@ export default {
               name: 'usermanager',
               routes: [
                 {
+                  name: 'arealist',
+                  icon: 'smile',
+                  path: '/usermanager/arealist',
+                  component: './usermanager/arealist',
+                  authority: ['user_lv1'],
+                },
+                {
                   name: 'userlist',
                   icon: 'smile',
                   path: '/usermanager/userlist',
                   component: './usermanager/userlist',
-                  Routes: ['src/pages/Authorized'],
                   authority: needManagerAuthority,
                 },
                 {
@@ -175,7 +182,6 @@ export default {
                   icon: 'smile',
                   path: '/usermanager/settings',
                   component: './usermanager/settings',
-                  Routes: ['src/pages/Authorized'],
                   authority: needUserAuthority,
                 },
               ],
@@ -254,53 +260,10 @@ export default {
               ],
             },
             {
-              name: 'result',
-              icon: 'CheckCircleOutlined',
-              path: '/result',
-              routes: [
-                {
-                  name: 'success',
-                  icon: 'smile',
-                  path: '/result/success',
-                  component: './result/success',
-                },
-                {
-                  name: 'fail',
-                  icon: 'smile',
-                  path: '/result/fail',
-                  component: './result/fail',
-                },
-              ],
-            },
-            {
-              name: 'exception',
-              icon: 'warning',
-              path: '/exception',
-              routes: [
-                {
-                  name: '403',
-                  icon: 'smile',
-                  path: '/exception/403',
-                  component: './exception/403',
-                },
-                {
-                  name: '404',
-                  icon: 'smile',
-                  path: '/exception/404',
-                  component: './exception/404',
-                },
-                {
-                  name: '500',
-                  icon: 'smile',
-                  path: '/exception/500',
-                  component: './exception/500',
-                },
-              ],
-            },
-            {
               name: 'editor',
               icon: 'highlight',
               path: '/editor',
+              authority: ['user_lv1'],
               routes: [
                 {
                   name: 'flow',
@@ -322,7 +285,7 @@ export default {
                 },
               ],
             },
-            {path: '/', redirect: '/usermanager/settings',authority:needUserAuthority},
+            {path: '/', redirect: '/usermanager/settings', authority: needUserAuthority},
 
             {
               component: '404',
@@ -381,7 +344,7 @@ export default {
   manifest: {
     basePath: '/',
   },
-  base:'/',
+  base: '/',
   publicPath: './',
   cssPublicPath: './',
   proxy: proxy[REACT_APP_ENV || 'dev'],

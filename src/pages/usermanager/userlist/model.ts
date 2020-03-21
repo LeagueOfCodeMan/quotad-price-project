@@ -1,9 +1,8 @@
 import {AnyAction, Reducer} from 'redux';
 import {EffectsCommandMap} from 'dva';
 import {queryUsers, queryAreas} from './service';
-import {NotRequired} from "../../../models/user";
-import {AreasInfo, UsersInfo} from "src/pages/usermanager/userlist/data";
 import {message} from "antd";
+import {AreasInfo, UsersInfo} from "@/models/data";
 
 
 export interface UserListModalState {
@@ -34,7 +33,9 @@ const Model: ModelType = {
 
   state: {
     userlist: {},
-    areaList: {},
+    areaList: {
+      results:[]
+    },
   },
 
   effects: {

@@ -1,81 +1,66 @@
-import { UploadOutlined } from '@ant-design/icons';
-import { Button, Input, Select, Upload, Form, message } from 'antd';
-import { FormattedMessage, formatMessage } from 'umi-plugin-react/locale';
-import React, { Component } from 'react';
+import {UploadOutlined} from '@ant-design/icons';
+import {Button, Form, Input, Upload, message} from 'antd';
+import {FormattedMessage} from 'umi-plugin-react/locale';
+import React, {Component} from 'react';
 
-import { connect } from 'dva';
-import { CurrentUser } from '../data.d';
-import GeographicView from './GeographicView';
-import PhoneView from './PhoneView';
+import {connect} from 'dva';
 import styles from './BaseView.less';
-
-const { Option } = Select;
+import FormItem from "antd/es/form/FormItem";
+import {CurrentUser} from "@/models/user";
+import {identifyUser} from "@/utils/utils";
 
 // 头像组件 方便以后独立，增加裁剪之类的功能
-const AvatarView = ({ avatar }: { avatar: string }) => (
-  <>
-    <div className={styles.avatar_title}>
-      <FormattedMessage id="accountandsettings.basic.avatar" defaultMessage="Avatar" />
-    </div>
-    <div className={styles.avatar}>
-      <img src={avatar} alt="avatar" />
-    </div>
-    <Upload showUploadList={false}>
-      <div className={styles.button_view}>
-        <Button>
-          <UploadOutlined />
-          <FormattedMessage
-            id="accountandsettings.basic.change-avatar"
-            defaultMessage="Change avatar"
-          />
-        </Button>
+const AvatarView = ({avatar, url, hadUploadImage}: {
+  avatar: string; url: string; hadUploadImage?: () => void;
+}) => {
+  const props = {
+    action: url,
+    onChange(info: any) {
+      if (info.file.status !== 'uploading') {
+        console.log(info.file, info.fileList);
+      }
+      if (info.file.status === 'done') {
+        hadUploadImage && hadUploadImage();
+      } else if (info.file.status === 'error') {
+        message.error(`${info.file.name} 上传失败!`);
+      }
+    },
+  };
+
+  return (
+    <>
+      <div className={styles.avatar_title}>
+        <FormattedMessage id="accountandsettings.basic.avatar" defaultMessage="Avatar"/>
       </div>
-    </Upload>
-  </>
-);
-interface SelectItem {
-  label: string;
-  key: string;
+      <div className={styles.avatar}>
+        <img src={avatar} alt="avatar"/>
+      </div>
+      <Upload showUploadList={false} {...props}>
+        <div className={styles.button_view}>
+          <Button>
+            <UploadOutlined/>
+            <FormattedMessage
+              id="accountandsettings.basic.change-avatar"
+              defaultMessage="Change avatar"
+            />
+          </Button>
+        </div>
+      </Upload>
+    </>
+  )
 }
-
-const validatorGeographic = (
-  _: any,
-  value: {
-    province: SelectItem;
-    city: SelectItem;
-  },
-  callback: (message?: string) => void,
-) => {
-  const { province, city } = value;
-  if (!province.key) {
-    callback('Please input your province!');
-  }
-  if (!city.key) {
-    callback('Please input your city!');
-  }
-  callback();
-};
-
-const validatorPhone = (rule: any, value: string, callback: (message?: string) => void) => {
-  const values = value.split('-');
-  if (!values[0]) {
-    callback('Please input your area code!');
-  }
-  if (!values[1]) {
-    callback('Please input your phone number!');
-  }
-  callback();
-};
 
 interface BaseViewProps {
   currentUser?: CurrentUser;
+  onSubmit?: (values: any) => void;
+  hadUploadImage?: () => void;
 }
 
 class BaseView extends Component<BaseViewProps> {
   view: HTMLDivElement | undefined = undefined;
 
   getAvatarURL() {
-    const { currentUser } = this.props;
+    const {currentUser} = this.props;
     if (currentUser) {
       if (currentUser.avatar) {
         return currentUser.avatar;
@@ -90,12 +75,13 @@ class BaseView extends Component<BaseViewProps> {
     this.view = ref;
   };
 
-  handleFinish = () => {
-    message.success(formatMessage({ id: 'accountandsettings.basic.update.success' }));
+  handleFinish = (values: any) => {
+    const {onSubmit} = this.props;
+    onSubmit && onSubmit(values);
   };
 
   render() {
-    const { currentUser } = this.props;
+    const {currentUser} = this.props;
 
     return (
       <div className={styles.baseView} ref={this.getViewDom}>
@@ -106,99 +92,34 @@ class BaseView extends Component<BaseViewProps> {
             initialValues={currentUser}
             hideRequiredMark
           >
-            <Form.Item
-              name="email"
-              label={formatMessage({ id: 'accountandsettings.basic.email' })}
-              rules={[
-                {
-                  required: true,
-                  message: formatMessage({ id: 'accountandsettings.basic.email-message' }, {}),
-                },
-              ]}
+            <FormItem
+              label="真实姓名"
+              name="real_name"
+              rules={[{required: false}]}
             >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name="name"
-              label={formatMessage({ id: 'accountandsettings.basic.nickname' })}
-              rules={[
-                {
-                  required: true,
-                  message: formatMessage({ id: 'accountandsettings.basic.nickname-message' }, {}),
-                },
-              ]}
+              <Input placeholder="请输入"/>
+            </FormItem>
+            <FormItem
+              label="公司名"
+              name="company"
+              rules={[{required: false}]}
             >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name="profile"
-              label={formatMessage({ id: 'accountandsettings.basic.profile' })}
-              rules={[
-                {
-                  required: true,
-                  message: formatMessage({ id: 'accountandsettings.basic.profile-message' }, {}),
-                },
-              ]}
+              <Input placeholder="请输入"/>
+            </FormItem>
+            <FormItem
+              label="职务"
+              name="duty"
+              rules={[{required: false}]}
             >
-              <Input.TextArea
-                placeholder={formatMessage({ id: 'accountandsettings.basic.profile-placeholder' })}
-                rows={4}
-              />
-            </Form.Item>
-            <Form.Item
-              name="country"
-              label={formatMessage({ id: 'accountandsettings.basic.country' })}
-              rules={[
-                {
-                  required: true,
-                  message: formatMessage({ id: 'accountandsettings.basic.country-message' }, {}),
-                },
-              ]}
+              <Input placeholder="请输入"/>
+            </FormItem>
+            <FormItem
+              label="联系地址"
+              name="addr"
+              rules={[{required: false}]}
             >
-              <Select style={{ maxWidth: 220 }}>
-                <Option value="China">中国</Option>
-              </Select>
-            </Form.Item>
-            <Form.Item
-              name="geographic"
-              label={formatMessage({ id: 'accountandsettings.basic.geographic' })}
-              rules={[
-                {
-                  required: true,
-                  message: formatMessage({ id: 'accountandsettings.basic.geographic-message' }, {}),
-                },
-                {
-                  validator: validatorGeographic,
-                },
-              ]}
-            >
-              <GeographicView />
-            </Form.Item>
-            <Form.Item
-              name="address"
-              label={formatMessage({ id: 'accountandsettings.basic.address' })}
-              rules={[
-                {
-                  required: true,
-                  message: formatMessage({ id: 'accountandsettings.basic.address-message' }, {}),
-                },
-              ]}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name="phone"
-              label={formatMessage({ id: 'accountandsettings.basic.phone' })}
-              rules={[
-                {
-                  required: true,
-                  message: formatMessage({ id: 'accountandsettings.basic.phone-message' }, {}),
-                },
-                { validator: validatorPhone },
-              ]}
-            >
-              <PhoneView />
-            </Form.Item>
+              <Input placeholder="请输入"/>
+            </FormItem>
             <Form.Item>
               <Button htmlType="submit" type="primary">
                 <FormattedMessage
@@ -210,7 +131,13 @@ class BaseView extends Component<BaseViewProps> {
           </Form>
         </div>
         <div className={styles.right}>
-          <AvatarView avatar={this.getAvatarURL()} />
+          <AvatarView avatar={this.getAvatarURL()} url={"/api/user/" + currentUser?.id + "/modify_headimg"}
+                      hadUploadImage={this.props.hadUploadImage}/>
+          <div style={{marginTop: '30px'}}>
+            <div>当前权限级别：<span style={{color: 'red', marginLeft: '14px'}}>{identifyUser(currentUser?.identity)}</span>
+            </div>
+            <div>上一次登录时间：<span style={{color: 'red'}}>{currentUser?.last_login || ''}</span></div>
+          </div>
         </div>
       </div>
     );
@@ -218,7 +145,7 @@ class BaseView extends Component<BaseViewProps> {
 }
 
 export default connect(
-  ({ accountAndsettings }: { accountAndsettings: { currentUser: CurrentUser } }) => ({
-    currentUser: accountAndsettings.currentUser,
+  ({user}: { user: { currentUser: CurrentUser } }) => ({
+    currentUser: user.currentUser,
   }),
 )(BaseView);

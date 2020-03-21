@@ -1,9 +1,11 @@
 import React, {ReactText} from 'react';
 import {Form, Input, Modal, Select} from 'antd';
-import {CurrentUser, NotRequired} from "@/models/user";
+import {CurrentUser} from "@/models/user";
 import {SizeType} from "antd/es/config-provider/SizeContext";
 import styles from '@/pages/yuntai.less';
-import {AreasInfo, CreateUser} from "@/pages/usermanager/userlist/data";
+import {CreateUser} from "@/pages/usermanager/userlist/data";
+import {formatMessage} from 'umi-plugin-react/locale';
+import {AreasInfo} from "@/models/data";
 
 const {Option} = Select;
 
@@ -40,6 +42,23 @@ const CreateForm: React.FC<CreateFormProps> = props => {
     });
   };
 
+  const checkPassword = (rule: any, value: string, callback: (error?: string) => void): Promise<void> | void => {
+    if (!value) {
+      callback(formatMessage({id: 'validation.password.required'}));
+    } else {
+      if (value.length < 8) {
+        callback(formatMessage({id: 'validation.password.sosimple'}));
+      } else {
+        const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,20}$/;
+        if (!re.test(value)) {
+          callback(formatMessage({id: 'validation.password.includeType'}));
+        }
+        form.validateFields(['password2']);
+        callback();
+      }
+    }
+  };
+
   const commonProps = {
     style: {width: '200px'}, size: 'middle' as SizeType,
   };
@@ -67,7 +86,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
             label="用户名"
             name="username"
             rules={[{required: true, message: '请输入最少5位用户名', min: 5},
-              {pattern: /^[A-Za-z0-9/.+-_]+$/, message: '包含字母，数字和仅有的@/./+/-/_符号'}
+              {pattern: /^[A-Za-z0-9/.+-_]+$/, message: formatMessage({id: 'validation.username.format'})}
             ]}
           >
             <Input placeholder="请输入用户名"  {...commonProps} />
@@ -90,7 +109,11 @@ const CreateForm: React.FC<CreateFormProps> = props => {
           <FormItem
             label="密码"
             name="password"
-            rules={[{required: true, message: 'Please input your password!'}]}
+            rules={[{required: true, message: 'Please input your password!'},
+              {
+                validator: checkPassword,
+              },
+            ]}
           >
             <Input.Password {...commonProps}/>
           </FormItem>
@@ -125,7 +148,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
             rules={[{required: true}]}
           >
             <Select {...commonProps}>
-              {areaList?.results?.map(item => (
+              {areaList?.results?.map((item: { id: number; area_name: string; }) => (
                 <Option key={item?.id} value={item?.id as ReactText}>{item?.area_name}</Option>
               ))}
 
@@ -154,7 +177,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
           <FormItem
             label="邮箱"
             name="email"
-            rules={[{required: false}]}
+            rules={[{required: false,}, {type: 'email'}]}
           >
             <Input placeholder="请输入" {...commonProps}/>
           </FormItem>

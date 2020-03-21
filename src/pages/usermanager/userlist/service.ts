@@ -1,6 +1,7 @@
 import request from '../../../utils/request';
 
-import {TableListParams, UserListItem} from './data';
+import {UpdateUser} from './data';
+import {TableListParams, UserListItem} from "@/models/data";
 
 export async function createUser(params: UserListItem): Promise<any> {
   return request('/api/user', {
@@ -23,7 +24,7 @@ export async function queryAreas(): Promise<any> {
   return request('/api/area');
 }
 
-export async function updateUser(params?: { id: number, data: UserListItem }) {
+export async function updateUser(params?: { id: number, data: UpdateUser }) {
   return request('/api/user/' + params?.id, {
     method: 'PUT',
     data: params?.data,

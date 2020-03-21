@@ -66,6 +66,9 @@ export const getRouteAuthority = (path: string, routeData: Route[]) => {
   return authorities;
 };
 
+/*
+  TODO 校验请求返回
+ */
 type SuccessResult = {
   msg?: string;
   id?: number;
@@ -73,7 +76,12 @@ type SuccessResult = {
 };
 type FailResult = string | undefined;
 
-export type ResultType = SuccessResult | FailResult;
+type DetailResult = {
+  detail?: string;
+  [propName: string]: any;
+};
+
+export type ResultType = SuccessResult | FailResult | DetailResult;
 
 abstract class Result {
   _data: ResultType;
@@ -84,10 +92,15 @@ abstract class Result {
   protected constructor(data: ResultType) {
     const tempMsg: string = (data as SuccessResult)?.msg || '';
     const tempId: number = (data as SuccessResult)?.id || 0;
+    const tempDetail: string = (data as DetailResult)?.detail || '';
     if (tempMsg || tempId) {
       this.msg = tempMsg;
       this.id = tempId;
       this.isSuccess = true;
+    } else if (tempDetail) {
+      this.msg = tempDetail;
+      this.id = 0;
+      this.isSuccess = false;
     } else {
       this.msg = data as string;
       this.id = 0;
@@ -117,7 +130,7 @@ export class ValidatePwdResult extends Result {
     if (this.isSuccess) {
       if (this.id > 0) {
         message.success(ok || '创建成功');
-      }else {
+      } else {
         message.success(ok || this.msg);
       }
     } else {
@@ -125,15 +138,71 @@ export class ValidatePwdResult extends Result {
     }
     return this.isSuccess;
   }
-
-
-  public static simplyFailure(fn: Function): false {
-    fn();
-    message.error('校验失败，请重试');
-    return false;
-  }
-
 }
 
+type SearchParamsType = {
+  pageSize?: number;
+  current?: number;
+  [key: string]: any;
+};
 
+// ProTable向python查询添加
+export function addIcontains(params?: SearchParamsType): SearchParamsType {
+  let returnParams = {pageSize: params?.pageSize, current: params?.current};
+  _.forIn(_.omit(params, ['pageSize', 'current', '_timestamp']), (v, k) => {
+    returnParams[k + '__icontains'] = v;
+  })
+  return returnParams;
+}
+
+// 鉴别权限
+export type IdentityType = 1 | 2 | 3 | 4;
+
+export function identifyUser(type: IdentityType): string {
+  if (type === 1) {
+    return '管理员';
+  } else if (type === 2) {
+    return '一级组长';
+  } else if (type === 3) {
+    return '一级组员';
+  } else {
+    return '二级组员';
+  }
+}
+
+// 用户修改项
+export type ModifyType = null | 'tel' | 'email';
+
+type ModifyUserInfoType = {
+  title: string;
+  formData: {
+    label: string;
+    name: string;
+    placeholder: string;
+    rule: any;
+  }[];
+} | undefined;
+
+export function getModifyUserComponentProps(type: ModifyType): ModifyUserInfoType {
+  switch (type) {
+    case 'tel':
+      return {
+        title: '修改手机号',
+        formData: [{
+          label: '手机号', name: type, placeholder: '请输入手机号',
+          rule: {pattern: /^[1]([3-9])[0-9]{9}$/,message:'格式错误'}
+        }],
+
+      };
+    case 'email':
+      return {
+        title: '修改邮箱', formData: [{
+          label: '邮箱', name: type, placeholder: '请输入邮箱',
+          rule: {type: 'email',message:'格式错误'}
+        }]
+      };
+    default:
+      return undefined;
+  }
+}
 
