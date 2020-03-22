@@ -159,6 +159,37 @@ export default {
               ],
             },
             {
+              path: '/dfdk',
+              icon: 'table',
+              name: 'dfdk',
+              routes: [
+                {
+                  path: '/dfdk/product',
+                  name: 'product',
+                  component: './dfdk/product',
+                  authority: ['user_lv1', 'user_lv2'],
+                  routes: [
+                    {
+                      path: '/dfdk/product',
+                      redirect: '/dfdk/product/product-base',
+                    },
+                    {
+                      name: 'product-base',
+                      icon: 'smile',
+                      path: '/dfdk/product/product-base',
+                      component: './dfdk/product/product-base',
+                    },
+                    {
+                      name: 'product-config',
+                      icon: 'smile',
+                      path: '/dfdk/product/product-config',
+                      component: './dfdk/product/product-config',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
               path: '/usermanager',
               icon: 'user',
               name: 'usermanager',
@@ -183,60 +214,6 @@ export default {
                   path: '/usermanager/settings',
                   component: './usermanager/settings',
                   authority: needUserAuthority,
-                },
-              ],
-            },
-            {
-              path: '/list',
-              icon: 'table',
-              name: 'list',
-              routes: [
-                {
-                  path: '/list/search',
-                  name: 'search-list',
-                  component: './list/search',
-                  routes: [
-                    {
-                      path: '/list/search',
-                      redirect: '/list/search/articles',
-                    },
-                    {
-                      name: 'articles',
-                      icon: 'smile',
-                      path: '/list/search/articles',
-                      component: './list/search/articles',
-                    },
-                    {
-                      name: 'projects',
-                      icon: 'smile',
-                      path: '/list/search/projects',
-                      component: './list/search/projects',
-                    },
-                    {
-                      name: 'applications',
-                      icon: 'smile',
-                      path: '/list/search/applications',
-                      component: './list/search/applications',
-                    },
-                  ],
-                },
-                {
-                  name: 'table-list',
-                  icon: 'smile',
-                  path: '/list/table-list',
-                  component: './list/table-list',
-                },
-                {
-                  name: 'basic-list',
-                  icon: 'smile',
-                  path: '/list/basic-list',
-                  component: './list/basic-list',
-                },
-                {
-                  name: 'card-list',
-                  icon: 'smile',
-                  path: '/list/card-list',
-                  component: './list/card-list',
                 },
               ],
             },

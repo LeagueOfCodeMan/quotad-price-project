@@ -179,7 +179,6 @@ const UserList: React.FC<UserListProps> = (props) => {
     current?: number;
     [key: string]: any;
   }): Promise<RequestData<UserListItem>> => {
-    console.log('request params: ', params)
     const searchParamsType = addIcontains(params);
     const result = await queryUsers({...searchParamsType});
     return Promise.resolve({
@@ -301,7 +300,7 @@ const UserList: React.FC<UserListProps> = (props) => {
             const success = await handleUpdate(value, editFormValues);
             if (success) {
               callback();
-              handleModalVisible(false);
+              handleUpdateModalVisible(false);
               setEditFormValues({});
               if (actionRef.current) {
                 actionRef.current.reload();

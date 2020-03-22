@@ -85,6 +85,7 @@
     "react-helmet": "^5.2.1",
     "react-router": "^4.3.1",
     "redux": "^4.0.1",
+    "reqwest": "^2.0.5",
     "umi": "^2.13.0",
     "umi-plugin-antd-icon-config": "^1.0.2",
     "umi-plugin-antd-theme": "1.2.0-0",

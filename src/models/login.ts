@@ -69,7 +69,7 @@ const Model: LoginModelType = {
         yield put(
           routerRedux.push({
             pathname: '/user/login',
-            // search: stringify({
+            // product: stringify({
             //   redirect: window.location.href,
             // }),
           }),

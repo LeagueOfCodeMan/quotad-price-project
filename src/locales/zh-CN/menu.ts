@@ -53,5 +53,11 @@ export default {
   'menu.usermanager': '用户管理',
   'menu.usermanager.arealist': '地区列表',
   'menu.usermanager.userlist': '用户列表',
-  'menu.usermanager.settings': '个人设置'
+  'menu.usermanager.settings': '个人设置',
+
+
+  'menu.dfdk': '产品管理',
+  'menu.dfdk.product': '产品配置',
+  'menu.dfdk.product.product-base': '标准配置',
+  'menu.dfdk.product.product-config': '配件配置',
 };

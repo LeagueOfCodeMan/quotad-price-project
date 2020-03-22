@@ -125,8 +125,8 @@ export class ValidatePwdResult extends Result {
     super(data);
   }
 
-  validate(ok: string | null, fail: string | null, fn: Function): boolean {
-    fn();
+  validate(ok: string | null, fail: string | null, fn: Function | undefined): boolean {
+    fn && fn();
     if (this.isSuccess) {
       if (this.id > 0) {
         message.success(ok || '创建成功');
@@ -190,7 +190,7 @@ export function getModifyUserComponentProps(type: ModifyType): ModifyUserInfoTyp
         title: '修改手机号',
         formData: [{
           label: '手机号', name: type, placeholder: '请输入手机号',
-          rule: {pattern: /^[1]([3-9])[0-9]{9}$/,message:'格式错误'}
+          rule: {pattern: /^[1]([3-9])[0-9]{9}$/, message: '格式错误'}
         }],
 
       };
@@ -198,11 +198,26 @@ export function getModifyUserComponentProps(type: ModifyType): ModifyUserInfoTyp
       return {
         title: '修改邮箱', formData: [{
           label: '邮箱', name: type, placeholder: '请输入邮箱',
-          rule: {type: 'email',message:'格式错误'}
+          rule: {type: 'email', message: '格式错误'}
         }]
       };
     default:
       return undefined;
+  }
+}
+
+type CommonResponseBody = {
+  count: number;
+  results: any[];
+  [propName: string]: any;
+}
+
+export function isNormalResponseBody(response: CommonResponseBody):boolean{
+  if (Array.isArray(response?.results)) {
+    return true;
+  } else {
+    message.error('请求失败，网络异常！');
+    return false;
   }
 }
 

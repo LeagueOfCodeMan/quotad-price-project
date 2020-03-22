@@ -51,12 +51,12 @@ const requestWithExtend = extend({
   errorHandler, // 默认错误处理
   credentials: 'include', // 默认请求是否带上cookie
   mode: 'cors',
-  requestType: 'json',
+  // requestType: 'json',
   headers: {
     Accept: 'application/json',
-    //'Content-Type': 'application/json;charset=utf-8',
+    // 'Content-Type': 'multipart/form-data',
     // 'Content-Type': 'application/x-www-form-urlencoded',
-    'Content-Type': 'application/json;charset=utf-8',
+    // 'Content-Type': 'application/json;charset=utf-8',
   },
 });
 
