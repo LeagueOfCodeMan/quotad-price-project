@@ -3,13 +3,16 @@ import {Reducer} from 'redux';
 import {router} from 'umi';
 import {message} from 'antd';
 
-import {queryCurrent} from '@/services/user';
+import {queryCurrent, queryLabels} from '@/services/user';
 import {UserListItem} from "@/models/data";
+import {isNormalResponseBody} from "@/utils/utils";
+import {LabelList} from "@/pages/dfdk/label/data";
 
 export type CurrentUser = NotRequired<UserListItem>;
 
 export interface UserModelState {
   currentUser: CurrentUser;
+  labelList: LabelList;
 }
 
 export interface UserModelType {
@@ -17,9 +20,11 @@ export interface UserModelType {
   state: UserModelState;
   effects: {
     fetchCurrent: Effect;
+    fetchLabels: Effect;
   };
   reducers: {
-    saveCurrentUser: Reducer<UserModelState>;
+    saveCurrentUser: Reducer<CurrentUser>;
+    saveLabels: Reducer<NotRequired<LabelList>>;
   };
 }
 
@@ -28,6 +33,10 @@ const UserModel: UserModelType = {
 
   state: {
     currentUser: {},
+    labelList: {
+      results: [],
+      count: undefined
+    },
   },
 
   effects: {
@@ -42,7 +51,16 @@ const UserModel: UserModelType = {
         message.info('当前登录已失效，请重新登录!')
         router.push("/user/login")
       }
+    },
 
+    * fetchLabels({payload}, {call, put}) {
+      const response = yield call(queryLabels, payload);
+      if (isNormalResponseBody(response)) {
+        yield put({
+          type: 'saveLabels',
+          payload: response,
+        });
+      }
     },
   },
 
@@ -51,6 +69,12 @@ const UserModel: UserModelType = {
       return {
         ...state,
         currentUser: action.payload || {},
+      };
+    },
+    saveLabels(state, action) {
+      return {
+        ...state,
+        labelList: action.payload || {},
       };
     },
 

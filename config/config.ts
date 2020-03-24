@@ -134,35 +134,16 @@ export default {
           authority: needUserAuthority,
           routes: [
             {
-              path: '/form',
-              icon: 'form',
-              name: 'form',
-              routes: [
-                {
-                  name: 'basic-form',
-                  icon: 'smile',
-                  path: '/form/basic-form',
-                  component: './form/basic-form',
-                },
-                {
-                  name: 'step-form',
-                  icon: 'smile',
-                  path: '/form/step-form',
-                  component: './form/step-form',
-                },
-                {
-                  name: 'advanced-form',
-                  icon: 'smile',
-                  path: '/form/advanced-form',
-                  component: './form/advanced-form',
-                },
-              ],
-            },
-            {
               path: '/dfdk',
               icon: 'table',
               name: 'dfdk',
               routes: [
+                {
+                  path: '/dfdk/label',
+                  name: 'label',
+                  component: './dfdk/label',
+                  authority: ['user_lv1'],
+                },
                 {
                   path: '/dfdk/product',
                   name: 'product',
@@ -214,25 +195,6 @@ export default {
                   path: '/usermanager/settings',
                   component: './usermanager/settings',
                   authority: needUserAuthority,
-                },
-              ],
-            },
-            {
-              path: '/profile',
-              name: 'profile',
-              icon: 'profile',
-              routes: [
-                {
-                  name: 'basic',
-                  icon: 'smile',
-                  path: '/profile/basic',
-                  component: './profile/basic',
-                },
-                {
-                  name: 'advanced',
-                  icon: 'smile',
-                  path: '/profile/advanced',
-                  component: './profile/advanced',
                 },
               ],
             },

@@ -1,51 +1,85 @@
-import { AnyAction, Reducer } from 'redux';
+import {AnyAction, Reducer} from 'redux';
+import {EffectsCommandMap} from 'dva';
+import {isNormalResponseBody} from "@/utils/utils";
+import {countStatistics, queryProduct} from "@/pages/dfdk/product/product-base/service";
+import {ProductBaseList} from "@/pages/dfdk/product/product-base/data";
 
-import { EffectsCommandMap } from 'dva';
-import { CardListItemDataType } from './data.d';
-import { queryFakeList } from './service';
+export interface ProductBaseStateType {
+  productList: NotRequired<ProductBaseList>;
+  countStatistics: NotRequired<CountStatistics>;
+}
 
-export interface StateType {
-  list: CardListItemDataType[];
+export interface CountStatistics {
+  total_count: number;
+  published_count: number;
+  unpublished: number;
 }
 
 export type Effect = (
   action: AnyAction,
-  effects: EffectsCommandMap & { select: <T>(func: (state: StateType) => T) => T },
+  effects: EffectsCommandMap & { select: <T>(func: (state: ProductBaseStateType) => T) => T },
 ) => void;
 
-export interface ModelType {
+export interface ProductBaseModelType {
   namespace: string;
-  state: StateType;
+  state: ProductBaseStateType;
   effects: {
     fetch: Effect;
+    countStatistics: Effect;
   };
   reducers: {
-    queryList: Reducer<StateType>;
+    save: Reducer<NotRequired<ProductBaseList>>;
+    saveCountStatistics: Reducer<NotRequired<CountStatistics>>;
   };
 }
 
-const Model: ModelType = {
-  namespace: 'listAndcardList',
+const Model: ProductBaseModelType = {
+  namespace: 'productBase',
 
   state: {
-    list: [],
+    productList: {
+      results: [],
+      count: undefined
+    },
+    countStatistics: {
+      total_count: 0,
+      published_count: 0,
+      unpublished: 0,
+    },
   },
 
   effects: {
-    *fetch({ payload }, { call, put }) {
-      const response = yield call(queryFakeList, payload);
-      yield put({
-        type: 'queryList',
-        payload: Array.isArray(response) ? response : [],
-      });
+    * fetch({payload}, {call, put}) {
+      const response = yield call(queryProduct, payload);
+      if (isNormalResponseBody(response)) {
+        yield put({
+          type: 'save',
+          payload: response,
+        });
+      }
+    },
+    * countStatistics(_, {call, put}) {
+      const response = yield call(countStatistics);
+      if (response?.total_count) {
+        yield put({
+          type: 'saveCountStatistics',
+          payload: response,
+        });
+      }
     },
   },
 
   reducers: {
-    queryList(state, action) {
+    save(state, action) {
       return {
         ...state,
-        list: action.payload,
+        productList: action.payload,
+      };
+    },
+    saveCountStatistics(state, action) {
+      return {
+        ...state,
+        countStatistics: action.payload,
       };
     },
   },

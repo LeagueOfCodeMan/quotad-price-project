@@ -212,7 +212,7 @@ type CommonResponseBody = {
   [propName: string]: any;
 }
 
-export function isNormalResponseBody(response: CommonResponseBody):boolean{
+export function isNormalResponseBody(response: CommonResponseBody): boolean {
   if (Array.isArray(response?.results)) {
     return true;
   } else {
@@ -221,3 +221,13 @@ export function isNormalResponseBody(response: CommonResponseBody):boolean{
   }
 }
 
+export type LabelType = 1 | 2;
+
+export function identifyLabel(type: LabelType): string {
+  if (type === 1) {
+    return '产品';
+  } else if (type === 2) {
+    return '配件';
+  }
+  return '未定义';
+}

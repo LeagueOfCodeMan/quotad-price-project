@@ -2,10 +2,10 @@ import React, {FC, useEffect, useState} from 'react';
 import {Store} from 'rc-field-form/lib/interface';
 import {Button, Form, Input, InputNumber, Modal, Result, Select, Tooltip, Upload} from 'antd';
 import styles from '../style.less';
-import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
 import {EyeOutlined, InboxOutlined} from "@ant-design/icons/lib";
 import {UploadListType} from "antd/lib/upload/interface";
 import _ from 'lodash';
+import {ProductBaseListItem} from "@/pages/dfdk/product/product-base/data";
 import {LabelListItem} from "@/pages/dfdk/label/data";
 
 const {Option} = Select;
@@ -13,9 +13,9 @@ const {Option} = Select;
 interface OperationModalProps {
   done: boolean;
   visible: boolean;
-  current: Partial<ProductConfigListItem> | undefined;
+  current: Partial<ProductBaseListItem> | undefined;
   onDone: () => void;
-  onSubmit: (values: ProductConfigListItem, callback: Function) => void;
+  onSubmit: (values: ProductBaseListItem, callback: Function) => void;
   onCancel: () => void;
   labelArr: LabelListItem[];
 }
@@ -28,16 +28,17 @@ const formLayout = {
 
 const OperationModal: FC<OperationModalProps> = props => {
   const [form] = Form.useForm();
-  const {done, visible, current, onDone, onCancel, onSubmit,labelArr} = props;
+  const {done, visible, current, onDone, onCancel, onSubmit, labelArr} = props;
   const [previewVisible, setPeviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
-  const [result, setResult] = useState<ProductConfigListItem>();
+  const [result, setResult] = useState<ProductBaseListItem>();
 
   useEffect(() => {
-    if (form && !visible) {
-      setTimeout(() => form.resetFields(), 0)
-
-    }
+    setTimeout(() => {
+      if (form && !visible) {
+        form.resetFields()
+      }
+    })
   }, [props.visible]);
 
   useEffect(() => {
@@ -46,7 +47,6 @@ const OperationModal: FC<OperationModalProps> = props => {
       setTimeout(() => {
         form.setFieldsValue({
           ..._.omit(current, ['avatar'])
-          // createdAt: current.createdAt ? moment(current.createdAt) : null,
         });
       }, 0);
     }
@@ -71,9 +71,9 @@ const OperationModal: FC<OperationModalProps> = props => {
             <div className={styles.resultImageContainer}>
               <img src={result?.avatar || ''} style={result?.avatar ? {backgroundColor: '#4f4f4f'} : {}}/>
               <div>
-                <span>配件名：{result?.conf_name}</span>
-                <span>备注：{result?.conf_mark}</span>
-                <span>描述：{result?.con_desc}</span>
+                <span>产品名：{result?.pro_type}</span>
+                <span>备注：{result?.mark}</span>
+                <span>描述：{result?.desc}</span>
                 <span>组长价格：{result?.leader_price}</span>
                 <span>二级组员价格 ：{result?.second_price}</span>
               </div>
@@ -150,23 +150,23 @@ const OperationModal: FC<OperationModalProps> = props => {
         }
       });
       if (onSubmit) {
-        onSubmit(formData as any, (response: ProductConfigListItem) => {
+        onSubmit(formData as any, (response: ProductBaseListItem) => {
           setResult(response);
         });
       }
     };
     return (
-      <Form form={form} {...formLayout} onFinish={onFinish}>
+      <Form form={form}  {...formLayout} onFinish={onFinish}>
         <Form.Item
-          name="conf_name"
-          label="配件名称"
-          rules={[{required: true, message: '请选择配件名称'}]}
+          name="pro_type"
+          label="产品名称"
+          rules={[{required: true, message: '请选择产品名称'}]}
         >
           <Input/>
         </Form.Item>
         <Form.Item
           name="label"
-          label="配置分类"
+          label="产品分类"
           rules={[{required: true, message: '请选择类别'}]}
         >
           <Select showSearch>
@@ -208,7 +208,7 @@ const OperationModal: FC<OperationModalProps> = props => {
           </div>
         </Form.Item>
         <Form.Item
-          name="conf_mark"
+          name="mark"
           label="备注"
           rules={[{required: true, message: '请输入至少五个字符的备注！', min: 5}]}
         >
@@ -216,8 +216,8 @@ const OperationModal: FC<OperationModalProps> = props => {
         </Form.Item>
 
         <Form.Item
-          name="con_desc"
-          label="配件描述"
+          name="desc"
+          label="产品描述"
           rules={[{required: true, message: '请输入至少五个字符的产品描述！', min: 5}]}
         >
           <TextArea rows={4} placeholder="请输入至少五个字符"/>
@@ -250,7 +250,7 @@ const OperationModal: FC<OperationModalProps> = props => {
 
   return (
     <Modal
-      title={done ? null : `配件${current?.id ? '编辑' : '添加'}`}
+      title={done ? null : `产品${current?.id ? '编辑' : '添加'}`}
       className={styles.standardListForm}
       width={640}
       bodyStyle={done ? {padding: '72px 0'} : {padding: '28px 0 0'}}

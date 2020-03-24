@@ -2,15 +2,15 @@ import React, {useEffect, useState} from 'react';
 import {Form, InputNumber, Modal} from 'antd';
 import {SizeType} from "antd/es/config-provider/SizeContext";
 import styles from '@/pages/yuntai.less';
-import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/product-base/data";
 
 const FormItem = Form.Item;
 
 interface PublishModalProps {
   updateModalVisible: boolean;
-  onSubmit: (fieldsValue: ProductConfigListItem, callback: Function) => void;
+  onSubmit: (fieldsValue: ProductBaseListItem, callback: Function) => void;
   onCancel: () => void;
-  current?: NotRequired<ProductConfigListItem>;
+  current?: NotRequired<ProductBaseListItem>;
 }
 
 const PublishModal: React.FC<PublishModalProps> = props => {
@@ -41,7 +41,7 @@ const PublishModal: React.FC<PublishModalProps> = props => {
   const okHandle = async () => {
     const fieldsValue = await form.validateFields();
 
-    handleAdd(fieldsValue as ProductConfigListItem, (callback: boolean) => {
+    handleAdd(fieldsValue as ProductBaseListItem, (callback: boolean) => {
       if (callback) {
         form.resetFields();
       }

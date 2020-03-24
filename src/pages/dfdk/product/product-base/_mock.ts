@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CardListItemDataType } from './data.d';
+import { BasicListItemDataType } from './data.d';
 
 const titles = [
   'Alipay',
@@ -49,7 +49,7 @@ const user = [
   '仲尼',
 ];
 
-function fakeList(count: number): CardListItemDataType[] {
+function fakeList(count: number): BasicListItemDataType[] {
   const list = [];
   for (let i = 0; i < count; i += 1) {
     list.push({
@@ -101,15 +101,51 @@ function fakeList(count: number): CardListItemDataType[] {
   return list;
 }
 
+let sourceData: BasicListItemDataType[] = [];
+
 function getFakeList(req: Request, res: Response) {
   const params = req.query;
 
   const count = params.count * 1 || 20;
 
   const result = fakeList(count);
+  sourceData = result;
+  return res.json(result);
+}
+
+function postFakeList(req: Request, res: Response) {
+  const { /* url = '', */ body } = req;
+  // const params = getUrlParams(url);
+  const { method, id } = body;
+  // const count = (params.count * 1) || 20;
+  let result = sourceData || [];
+
+  switch (method) {
+    case 'delete':
+      result = result.filter(item => item.id !== id);
+      break;
+    case 'update':
+      result.forEach((item, i) => {
+        if (item.id === id) {
+          result[i] = { ...item, ...body };
+        }
+      });
+      break;
+    case 'post':
+      result.unshift({
+        ...body,
+        id: `fake-list-${result.length}`,
+        createdAt: new Date().getTime(),
+      });
+      break;
+    default:
+      break;
+  }
+
   return res.json(result);
 }
 
 export default {
   'GET  /api/fake_list': getFakeList,
+  'POST  /api/fake_list': postFakeList,
 };

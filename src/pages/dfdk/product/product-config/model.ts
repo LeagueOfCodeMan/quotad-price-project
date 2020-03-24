@@ -1,11 +1,13 @@
 import {AnyAction, Reducer} from 'redux';
 import {EffectsCommandMap} from 'dva';
 import {ProductConfigList} from "@/pages/dfdk/product/product-config/data";
-import {queryConfInfo} from "@/pages/dfdk/product/product-config/service";
+import {queryConfInfo, countStatistics} from "./service";
 import {isNormalResponseBody} from "@/utils/utils";
+import {CountStatistics} from "@/pages/dfdk/product/product-base/model";
 
 export interface ProductConfigStateType {
   configList: NotRequired<ProductConfigList>;
+  countStatistics: NotRequired<CountStatistics>;
 }
 
 export type Effect = (
@@ -18,9 +20,11 @@ export interface ProductConfigModelType {
   state: ProductConfigStateType;
   effects: {
     fetch: Effect;
+    countStatistics: Effect;
   };
   reducers: {
-    save: Reducer<ProductConfigStateType>;
+    save: Reducer<NotRequired<ProductConfigList>>;
+    saveCountStatistics: Reducer<NotRequired<CountStatistics>>;
   };
 }
 
@@ -31,7 +35,12 @@ const Model: ProductConfigModelType = {
     configList: {
       results: [],
       count: undefined
-    }
+    },
+    countStatistics: {
+      total_count: 0,
+      published_count: 0,
+      unpublished: 0,
+    },
   },
 
   effects: {
@@ -44,6 +53,15 @@ const Model: ProductConfigModelType = {
         });
       }
     },
+    * countStatistics(_, {call, put}) {
+      const response = yield call(countStatistics);
+      if (response?.total_count) {
+        yield put({
+          type: 'saveCountStatistics',
+          payload: response,
+        });
+      }
+    },
   },
 
   reducers: {
@@ -51,6 +69,12 @@ const Model: ProductConfigModelType = {
       return {
         ...state,
         configList: action.payload,
+      };
+    },
+    saveCountStatistics(state, action) {
+      return {
+        ...state,
+        countStatistics: action.payload,
       };
     },
   },

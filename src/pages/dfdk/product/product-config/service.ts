@@ -41,3 +41,15 @@ export async function updateConfInfo(params: { id: number, data: ParamsType }) {
     data: params.data,
   });
 }
+
+export async function ModifyMemberPrice(params: { id: number, data: ParamsType }) {
+  return request('/api/conf_info/' + params.id + '/mod_mem_price', {
+    method: 'POST',
+    data: params.data,
+  });
+}
+
+export async function countStatistics() {
+  return request('/api/conf_info/count_statistics');
+}
+

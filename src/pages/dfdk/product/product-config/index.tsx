@@ -11,7 +11,12 @@ import styles from './style.less';
 import {CurrentUser, UserModelState} from "@/models/user";
 import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
 import Tag from "antd/lib/tag";
-import {addConfInfo, deleteConfInfo, updateConfInfo} from "@/pages/dfdk/product/product-config/service";
+import {
+  addConfInfo,
+  deleteConfInfo,
+  ModifyMemberPrice,
+  updateConfInfo
+} from "@/pages/dfdk/product/product-config/service";
 import {ResultType, ValidatePwdResult} from "@/utils/utils";
 import ValidatePassword from "@/components/ValidatePassword";
 import {testPassword} from "@/services/user";
@@ -19,6 +24,7 @@ import {ExclamationCircleOutlined} from "@ant-design/icons/lib";
 import {PaginationConfig} from "antd/lib/pagination";
 import PublishModal from "@/pages/dfdk/product/product-config/components/PublishModal";
 import _ from 'lodash';
+import {LabelList} from "@/pages/dfdk/label/data";
 
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
@@ -30,6 +36,7 @@ interface BasicListProps {
   dispatch: Dispatch<any>;
   loading: boolean;
   currentUser: CurrentUser;
+  labelList: LabelList;
 }
 
 enum ValidateType {
@@ -52,13 +59,17 @@ const Info: FC<{
 const ListContent = ({
                        data: {
                          con_desc, leader_price, second_price, member_price,
-                         mem_state
+                         mem_state, label_name
                        }, currentUser: {identity}
                      }: {
   data: ProductConfigListItem; currentUser: CurrentUser;
 }) =>
   (
     <div className={styles.listContent}>
+      <div className={styles.listContentItem} style={{textAlign: 'center'}}>
+        <span>产品系列</span>
+        <p><Tag color="blue">{label_name || '未定义标签'}</Tag></p>
+      </div>
       <div className={styles.listContentItem}>
         <span>参数描述</span>
         <p>{con_desc}</p>
@@ -105,8 +116,8 @@ export const ProductConfigList: FC<BasicListProps> = props => {
   const {
     loading,
     dispatch,
-    productConfig: {configList},
-    currentUser,
+    productConfig: {configList, countStatistics},
+    currentUser,labelList
   } = props;
   const [done, setDone] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
@@ -119,6 +130,15 @@ export const ProductConfigList: FC<BasicListProps> = props => {
   });
 
   const {results = [], count = 0} = configList;
+  // TODO 分类label
+  const configLabel = _.head(labelList.results) && labelList.results.filter(i=>i.label_type === 2);
+
+  useEffect(() => {
+    dispatch({
+      type: 'user/fetchLabels',
+      payload: {pageSize: 99999}
+    })
+  }, [1])
 
   useEffect(() => {
     reloadList();
@@ -130,6 +150,9 @@ export const ProductConfigList: FC<BasicListProps> = props => {
       payload: {
         ...listParams
       },
+    });
+    dispatch({
+      type: 'productConfig/countStatistics',
     });
   };
 
@@ -148,8 +171,9 @@ export const ProductConfigList: FC<BasicListProps> = props => {
   };
 
   const showEditModal = (item: ProductConfigListItem) => {
-    setVisible(true);
+    console.log(item,'编辑');
     setCurrent(item);
+    setVisible(true);
   };
 
   const editAndDelete = (key: string, currentItem: ProductConfigListItem) => {
@@ -160,15 +184,15 @@ export const ProductConfigList: FC<BasicListProps> = props => {
     setValidateVisible(true);
   };
 
-  //        TODO 只要组长才需要发布
+  // TODO 只要组长才需要发布
   const extraContent = (
     <div className={styles.extraContent}>
       {currentUser?.identity === 2 ?
         <RadioGroup defaultValue="all" onChange={e => {
           if (e.target.value !== 'all') {
-            setListParams({...listParams, mem_state__iexact: e.target.value - 0 as (1 | 2)});
+            setListParams({...listParams, mem_state: e.target.value - 0 as (1 | 2)});
           } else {
-            setListParams({..._.omit(listParams, ['mem_state__iexact'])});
+            setListParams({..._.omit(listParams, ['mem_state'])});
           }
 
         }}>
@@ -179,7 +203,7 @@ export const ProductConfigList: FC<BasicListProps> = props => {
         : null}
       <Search
         className={styles.extraContentSearch} placeholder="请输入配件名称"
-        onSearch={(value) => setListParams({...listParams, conf_name__icontains: value})}/>
+        onSearch={(value) => setListParams({...listParams, conf_name: value})}/>
     </div>
   );
 
@@ -209,13 +233,14 @@ export const ProductConfigList: FC<BasicListProps> = props => {
 
   const handleDone = () => {
     setAddBtnblur();
-
+    setCurrent({});
     setDone(false);
     setVisible(false);
   };
 
   const handleCancel = () => {
     setAddBtnblur();
+    setCurrent({});
     setVisible(false);
   };
 
@@ -237,7 +262,6 @@ export const ProductConfigList: FC<BasicListProps> = props => {
     } else {
       new ValidatePwdResult(promise).validate('成功处理', null, undefined);
     }
-    console.log(promise)
   };
 
   // 密码校验
@@ -274,7 +298,7 @@ export const ProductConfigList: FC<BasicListProps> = props => {
           }
         },
         onCancel() {
-          console.log('Cancel');
+          setCurrent({});
         },
       });
 
@@ -313,22 +337,20 @@ export const ProductConfigList: FC<BasicListProps> = props => {
     }
     return [];
   }
-  // 统计results中信息
-  const hasNotPublishCount = results?.filter((item: { mem_state: number; }) => item.mem_state === 1)?.length || 0;
-  const lostCount: number = count - hasNotPublishCount;
+
   return (
     <div>
       <div className={styles.standardList}>
         <Card bordered={false}>
           <Row>
             <Col sm={8} xs={24}>
-              <Info title="配件总数" value={count} bordered/>
+              <Info title="配件总数" value={countStatistics?.total_count} bordered/>
             </Col>
             <Col sm={8} xs={24}>
-              <Info title="未发布数" value={<span style={{color: 'gold'}}>{hasNotPublishCount}</span>} bordered/>
+              <Info title="未发布数" value={<span style={{color: 'gold'}}>{countStatistics?.unpublished}</span>} bordered/>
             </Col>
             <Col sm={8} xs={24}>
-              <Info title="已发布数" value={<span style={{color: 'blue'}}>{lostCount}</span>}/>
+              <Info title="已发布数" value={<span style={{color: 'blue'}}>{countStatistics?.published_count}</span>}/>
             </Col>
           </Row>
         </Card>
@@ -397,10 +419,11 @@ export const ProductConfigList: FC<BasicListProps> = props => {
         onDone={handleDone}
         onCancel={handleCancel}
         onSubmit={handleSubmit}
+        labelArr={configLabel || []}
       />
       <PublishModal
         onSubmit={async (value, callback) => {
-          const response = await updateConfInfo({id: current?.id as number, data: value});
+          const response = await ModifyMemberPrice({id: current?.id as number, data: value});
           const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
           if (success) {
             callback();
@@ -432,6 +455,7 @@ export default connect(
   }) => ({
     productConfig,
     currentUser: user.currentUser,
+    labelList: user.labelList,
     loading: loading.models.productConfig,
   }),
 )(ProductConfigList);

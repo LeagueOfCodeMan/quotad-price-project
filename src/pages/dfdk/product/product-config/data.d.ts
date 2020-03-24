@@ -10,6 +10,8 @@ export interface ProductConfigListItem {
   mem_state: 1 | 2; // 1：未发布，2：已发布
   conf_status: true; // 是否上架
   conf_mark: string; // 备注
+  label_id: number;
+  label_name: string;
 
   [propName: string]: any;
 }
