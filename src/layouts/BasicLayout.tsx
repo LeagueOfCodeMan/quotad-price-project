@@ -15,13 +15,14 @@ import React, { useEffect } from 'react';
 import { Link } from 'umi';
 import { Dispatch } from 'redux';
 import { connect } from 'dva';
-import { GithubOutlined } from '@ant-design/icons';
 import { Result, Button } from 'antd';
 import Authorized from '@/utils/Authorized';
 import RightContent from '@/components/GlobalHeader/RightContent';
 import { ConnectState } from '@/models/connect';
 import { isAntDesignPro, getAuthorityFromRouter } from '@/utils/utils';
-import logo from '../assets/logo.svg';
+// import logo from '../assets/logo.svg';
+import logo from '../assets/yuntai.svg';
+import {PhoneOutlined} from "@ant-design/icons/lib";
 const noMatch = (
   <Result
     status={403}
@@ -61,24 +62,24 @@ const menuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] =>
 
 const defaultFooterDom = (
   <DefaultFooter
-    copyright="2019 蚂蚁金服体验技术部出品"
+    copyright="2019  北京东方德康软件有限公司"
     links={[
       {
-        key: 'Ant Design Pro',
-        title: 'Ant Design Pro',
-        href: 'https://pro.ant.design',
+        key: '/base',
+        title: '官网',
+        href: 'http://www.silvanware.com',
         blankTarget: true,
       },
       {
-        key: 'github',
-        title: <GithubOutlined />,
-        href: 'https://github.com/ant-design/ant-design-pro',
+        key: '/phone',
+        title: <div><PhoneOutlined /> 400-161-0188</div>,
+        href: 'http://www.silvanware.com',
         blankTarget: true,
       },
       {
-        key: 'Ant Design',
-        title: 'Ant Design',
-        href: 'https://ant.design',
+        key: '地址',
+        title: '地址: 北京市海淀区农大南路1号硅谷亮城5号楼507',
+        href: '#',
         blankTarget: true,
       },
     ]}

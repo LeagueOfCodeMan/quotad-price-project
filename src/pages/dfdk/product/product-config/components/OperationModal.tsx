@@ -28,7 +28,7 @@ const formLayout = {
 
 const OperationModal: FC<OperationModalProps> = props => {
   const [form] = Form.useForm();
-  const {done, visible, current, onDone, onCancel, onSubmit,labelArr} = props;
+  const {done, visible, current, onDone, onCancel, onSubmit, labelArr} = props;
   const [previewVisible, setPeviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const [result, setResult] = useState<ProductConfigListItem>();
@@ -36,7 +36,6 @@ const OperationModal: FC<OperationModalProps> = props => {
   useEffect(() => {
     if (form && !visible) {
       setTimeout(() => form.resetFields(), 0)
-
     }
   }, [props.visible]);
 
@@ -50,7 +49,7 @@ const OperationModal: FC<OperationModalProps> = props => {
         });
       }, 0);
     }
-  }, [props.current]);
+  }, [current]);
 
   const handleSubmit = () => {
     if (!form) return;

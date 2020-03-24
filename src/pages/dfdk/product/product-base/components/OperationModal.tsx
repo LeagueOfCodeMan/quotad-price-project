@@ -37,17 +37,24 @@ const OperationModal: FC<OperationModalProps> = props => {
     setTimeout(() => {
       if (form && !visible) {
         form.resetFields()
+        console.log('reset')
       }
     })
   }, [props.visible]);
 
   useEffect(() => {
-    if (current) {
+    console.log(current);
+    if (current?.id) {
       setPreviewImage(current?.avatar || '')
       setTimeout(() => {
         form.setFieldsValue({
           ..._.omit(current, ['avatar'])
         });
+      }, 0);
+    } else {
+      setPreviewImage('')
+      setTimeout(() => {
+        form.resetFields()
       }, 0);
     }
   }, [props.current]);

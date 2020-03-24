@@ -63,7 +63,7 @@ class Product extends Component<ProductProps> {
     return (
       <PageHeaderWrapper
         content={<Alert
-          message="产品配置分为两部分：标准配置和扩展配置，若需要增加产品配置，请定义配件后在标准配置中添加"
+          message="产品配置分为两部分：标准配置和扩展配置，若需要给产品增加扩展配置，请定义配件后在标准配置中添加"
           type="info"
           closable
           onClose={onClose}

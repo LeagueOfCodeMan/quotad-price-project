@@ -1,9 +1,8 @@
 import React, {FC, useEffect, useRef, useState} from 'react';
 import {Store} from 'rc-field-form/lib/interface';
-import {Button, Col, Divider, Form, Modal, Result, Row, Select} from 'antd';
+import {Button, Col, Divider, Form, Modal, Row, Select} from 'antd';
 import styles from '../style.less';
 import {MinusCircleOutlined, PlusOutlined} from "@ant-design/icons/lib";
-import {ProductBaseListItem} from "@/pages/dfdk/product/product-base/data";
 import {ProductConfigList, ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
 import {LabelListItem} from "@/pages/dfdk/label/data";
 import _ from "lodash";
@@ -12,11 +11,9 @@ import {queryConfInfo} from "@/pages/dfdk/product/product-config/service";
 const {Option} = Select;
 
 interface OperationModalProps {
-  done: boolean;
   visible: boolean;
-  confList: ProductConfigList;
+  confList: NotRequired<ProductConfigList>;
   labelArr: LabelListItem[];
-  onDone: () => void;
   onSubmit: (values: number[], callback: Function) => void;
   onCancel: () => void;
 }
@@ -30,8 +27,7 @@ type FormStore = { fields: FormListType[] }
 
 const ProductCustomConfig: FC<OperationModalProps> = props => {
   const [form] = Form.useForm();
-  const {done, visible, confList: current, onDone, onCancel, onSubmit, labelArr} = props;
-  const [result, setResult] = useState<ProductBaseListItem>();
+  const {visible, confList: current, onCancel, onSubmit, labelArr} = props;
   const [formList, setFormList] = useState<FormListType[]>([]);
   const [configList, setConfigList] = useState<NotRequired<ProductConfigListItem[]>>([]);
   const formRef = useRef(null);
@@ -45,13 +41,6 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
   }, [visible]);
 
   useEffect(() => {
-    // if (current) {
-    //   setTimeout(() => {
-    //     form.setFieldsValue({
-    //       ..._.omit(current, ['avatar'])
-    //     });
-    //   }, 0);
-    // }
     if (current?.results) {
       const initFormList: FormListType[] = [];
       current.results.forEach((d) => {
@@ -63,61 +52,12 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
     }
   }, [current]);
 
-
-  const handleSubmit = () => {
-    if (!form) return;
-    form.submit();
-  };
-
-  const modalFooter = done
-    ? {footer: null, onCancel: onDone}
-    : {okText: '保存', onOk: handleSubmit, onCancel};
-
   const getModalContent = () => {
-    if (done) {
-      return (
-        <Result
-          status="success"
-          title="操作成功"
-          subTitle={(
-            <div className={styles.resultImageContainer}>
-              <img src={result?.avatar || ''} style={result?.avatar ? {backgroundColor: '#4f4f4f'} : {}}/>
-              <div>
-                <span>产品名：{result?.pro_type}</span>
-                <span>备注：{result?.mark}</span>
-                <span>描述：{result?.desc}</span>
-                <span>组长价格：{result?.leader_price}</span>
-                <span>二级组员价格 ：{result?.second_price}</span>
-              </div>
-            </div>
-          )}
-          extra={
-            <Button type="primary" onClick={onDone}>
-              知道了
-            </Button>
-          }
-          className={styles.formResult}
-        />
-      );
-    }
-    const formItemLayout = {
-      labelCol: {
-        xs: {span: 24},
-        sm: {span: 4},
-      },
-      wrapperCol: {
-        xs: {span: 24},
-        sm: {span: 20},
-      },
-    };
-
-
     /**
      * 当切换Label时，获取对应的配置数据
      **/
-    const handleLabelChange = async (parameters: { value: string, index: number }) => {
-      const {value, index} = parameters;
-      const result = await queryConfInfo({label_name: value, pageSize: 99999});
+    const handleLabelChange = async ({value, index}: { value: any, index: number }) => {
+      const result = await queryConfInfo({label_name: value as string, pageSize: 99999});
       if (_.head(result.results)) {
         const lastArr: FormListType[] = [...formList] || [];
         const lastConf: NotRequired<ProductConfigListItem[]> = [...configList] || [];
@@ -128,29 +68,31 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
         setFormList(lastArr);
         setConfigList(lastConf);
       }
-    }
+    };
+
     /**
      *  当切换配置时，改变formList
      * */
-    const handleConfigChange = async (parameters: { value: number, index: number }) => {
+    const handleConfigChange = async (parameters: { value: any, index: number }) => {
       const {value, index} = parameters;
       const values = form.getFieldsValue();
       const lastArr: FormListType[] = [...formList] || [];
-      lastArr[index] = {label_name: values?.[index]?.label_name, conf_id: value};
+      lastArr[index] = {label_name: values?.[index]?.label_name, conf_id: value as number};
       setFormList(lastArr);
     }
 
     //  拦截生成FormData进行请求，请求完成回调返回结果并显示结果页
-    const onFinish = (values:Store) => {
-      console.log('Received values of form:', values);
-      // if (onSubmit) {
-      //   onSubmit(formData as any, (response: ProductBaseListItem) => {
-      //     setResult(response);
-      //   });
-      // }
+    const onFinish = (values: Store) => {
       const result = _.zipWith((values as FormStore)?.fields, a => a?.conf_id);
-      console.log(result);
+      if (onSubmit) {
+        onSubmit(result, (success: boolean) => {
+          if (success) {
+            onCancel();
+          }
+        });
+      }
     };
+
 
     const labelOptions = labelArr?.map(d => <Option key={d.name} value={d.name}>{d.name}</Option>);
 
@@ -177,7 +119,7 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
                           filterOption={(input, option) =>
                             option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                           }
-                          onChange={val => handleLabelChange({value: val, index: index})}
+                          onChange={value => handleLabelChange({value, index})}
                         >
                           {labelOptions}
                         </Select>
@@ -242,14 +184,21 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
     );
   };
 
+  const handleSubmit = () => {
+    if (!form) return;
+    form.submit();
+  };
+
   return (
     <Modal
-      title={done ? null : '自定义配件'}
+      title={'自定义配件'}
       className={styles.standardListForm}
       width={640}
-      bodyStyle={done ? {padding: '72px 0'} : {padding: '28px 0 0'}}
+      bodyStyle={{padding: '28px 0 0'}}
       visible={visible}
-      {...modalFooter}
+      onOk={handleSubmit}
+      onCancel={onCancel}
+      okText={'保存'}
       maskClosable={false}
       forceRender={true}
     >

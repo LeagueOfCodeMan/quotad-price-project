@@ -22,7 +22,7 @@ import {ProductBaseListItem} from "@/pages/dfdk/product/product-base/data";
 import {
   addProduct,
   deleteProduct,
-  ModifyProductMemberPrice, queryConfigListByProductId,
+  ModifyProductMemberPrice, queryConfigListByProductId, updateConfigListByProductId,
   updateProduct
 } from "@/pages/dfdk/product/product-base/service";
 import ProductCustomConfig from "@/pages/dfdk/product/product-base/components/ProductCustomConfig";
@@ -70,7 +70,7 @@ const ListContent = ({
   (
     <div className={styles.listContent}>
       <div className={styles.listContentItem} style={{textAlign: 'center'}}>
-        <span>配置系列</span>
+        <span>系列</span>
         <p><Tag color="blue">{label_name || '未定义标签'}</Tag></p>
       </div>
       <div className={styles.listContentItem}>
@@ -127,7 +127,7 @@ export const ProductBaseList: FC<BasicListProps> = props => {
   const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
   const [configVisible, setConfigVisible] = useState<boolean>(false);
   const [current, setCurrent] = useState<NotRequired<ProductBaseListItem>>({});
-  const [confList, setConfList] = useState<NotRequired<ProductConfigList>>([]);
+  const [confList, setConfList] = useState<NotRequired<ProductConfigList>>({});
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>("");
   const [listParams, setListParams] = useState<ListSearchParams>({
@@ -136,13 +136,13 @@ export const ProductBaseList: FC<BasicListProps> = props => {
 
   const {results = [], count = 0} = productList;
   // TODO 分类label
-  const productLabel = _.head(labelList.results) && labelList.results.filter(i=>i.label_type === 1);
-  const configLabel = _.head(labelList.results) && labelList.results.filter(i=>i.label_type === 2);
+  const productLabel = _.head(labelList.results) && labelList.results.filter(i => i.label_type === 1);
+  const configLabel = _.head(labelList.results) && labelList.results.filter(i => i.label_type === 2);
 
   useEffect(() => {
     dispatch({
       type: 'user/fetchLabels',
-      payload: { pageSize: 99999}
+      payload: {pageSize: 99999}
     })
   }, [1])
 
@@ -172,14 +172,15 @@ export const ProductBaseList: FC<BasicListProps> = props => {
   };
 
   const showModal = () => {
-    setVisible(true);
     setCurrent({});
+    setVisible(true);
   };
 
   const showConfigModal = async (item: ProductBaseListItem) => {
+    setCurrent(item);
     setConfigVisible(true);
     const result = await queryConfigListByProductId({id: item?.id});
-    if (Array.isArray(result)) {
+    if (Array.isArray(result?.results)) {
       setConfList(result);
     }
   };
@@ -187,11 +188,11 @@ export const ProductBaseList: FC<BasicListProps> = props => {
   const editAndDelete = (key: string, currentItem: ProductBaseListItem) => {
     if (key === 'delete') {
       setValidateType(ValidateType.DELETE_CONFIG);
+      setValidateVisible(true);
     } else if (key === 'edit') {
       setVisible(true);
     }
     setCurrent(currentItem);
-    setValidateVisible(true);
   };
 
   //        TODO 只要组长才需要发布
@@ -275,6 +276,25 @@ export const ProductBaseList: FC<BasicListProps> = props => {
       reloadList();
     } else {
       new ValidatePwdResult(promise).validate('成功处理', null, undefined);
+    }
+  };
+
+  // ======= 给产品增删自定义配置 ================
+
+  const handleSubmitCustomConfig = async (values: number[], callback: Function) => {
+    const id = current ? current.id : '';
+
+    let promise;
+    if (id) {
+      promise = await updateConfigListByProductId({id, data: {conf_list: values}})
+    }
+    const success = new ValidatePwdResult(promise).validate('成功处理', null, undefined);
+
+    // 成功则回调
+    if (success) {
+      setConfList({});
+      setCurrent({});
+      callback(success);
     }
   };
 
@@ -438,13 +458,16 @@ export const ProductBaseList: FC<BasicListProps> = props => {
         labelArr={productLabel || []}
       />
       <ProductCustomConfig
-        done={done}
         confList={confList}
         labelArr={configLabel || []}
         visible={configVisible}
-        onDone={handleDone}
-        onCancel={handleCancel}
-        onSubmit={handleSubmit}
+        onCancel={() => {
+          setConfList({});
+          setCurrent({});
+          console.log(111)
+          setConfigVisible(false);
+        }}
+        onSubmit={handleSubmitCustomConfig}
       />
       <PublishModal
         onSubmit={async (value, callback) => {

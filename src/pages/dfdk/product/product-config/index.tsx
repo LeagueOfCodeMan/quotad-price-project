@@ -67,7 +67,7 @@ const ListContent = ({
   (
     <div className={styles.listContent}>
       <div className={styles.listContentItem} style={{textAlign: 'center'}}>
-        <span>产品系列</span>
+        <span>系列</span>
         <p><Tag color="blue">{label_name || '未定义标签'}</Tag></p>
       </div>
       <div className={styles.listContentItem}>

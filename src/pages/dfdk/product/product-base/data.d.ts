@@ -1,4 +1,3 @@
-import {LabelType} from "@/utils/utils";
 
 export interface ProductBaseListItem {
   id: number;
