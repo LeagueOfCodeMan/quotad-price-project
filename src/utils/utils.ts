@@ -209,6 +209,8 @@ export function getModifyUserComponentProps(type: ModifyType): ModifyUserInfoTyp
 type CommonResponseBody = {
   count: number;
   results: any[];
+  next?: null | string;
+  previous?: null | string;
   [propName: string]: any;
 }
 

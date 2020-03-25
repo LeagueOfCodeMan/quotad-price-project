@@ -59,6 +59,7 @@ export default {
   'menu.dfdk': '产品管理',
   'menu.dfdk.product': '产品配置',
   'menu.dfdk.label': '标签管理',
+  'menu.dfdk.purchased': '产品购买',
   'menu.dfdk.product.product-base': '标准配置',
   'menu.dfdk.product.product-config': '配件配置',
 };

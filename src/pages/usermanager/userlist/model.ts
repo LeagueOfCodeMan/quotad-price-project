@@ -34,7 +34,7 @@ const Model: ModelType = {
   state: {
     userlist: {},
     areaList: {
-      results:[]
+      results: []
     },
   },
 
@@ -54,8 +54,8 @@ const Model: ModelType = {
       }
     },
 
-    * fetchAreas(_, {call, put}) {
-      const response = yield call(queryAreas);
+    * fetchAreas({payload}, {call, put}) {
+      const response = yield call(queryAreas, payload);
       if (typeof response === 'string') {
         message.error(response);
       } else if (response?.results) {

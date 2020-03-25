@@ -148,6 +148,7 @@ const OperationModal: FC<OperationModalProps> = props => {
 
     //  拦截生成FormData进行请求，请求完成回调返回结果并显示结果页
     const onFinish = (values: Store) => {
+      console.log(values);
       const formData = new FormData();
       Object.keys(values).map((item) => {
         if (item === 'avatar') {
@@ -162,6 +163,7 @@ const OperationModal: FC<OperationModalProps> = props => {
         });
       }
     };
+
     return (
       <Form form={form}  {...formLayout} onFinish={onFinish}>
         <Form.Item

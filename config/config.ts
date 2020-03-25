@@ -167,6 +167,14 @@ export default {
                       component: './dfdk/product/product-config',
                     },
                   ],
+
+                },
+                {
+                  name: 'purchased',
+                  path: '/dfdk/product-purchased',
+                  icon: 'smile',
+                  component: './dfdk/product-purchased',
+                  authority: needUserAuthority,
                 },
               ],
             },

@@ -20,8 +20,10 @@ export async function queryUsers(params?: TableListParams) {
   });
 }
 
-export async function queryAreas(): Promise<any> {
-  return request('/api/area');
+export async function queryAreas(params?: TableListParams): Promise<any> {
+  return request('/api/area', {
+    params
+  });
 }
 
 export async function updateUser(params?: { id: number, data: UpdateUser }) {

@@ -78,7 +78,8 @@ const UserList: React.FC<UserListProps> = (props) => {
 
   useEffect(() => {
     dispatch({
-      type: 'userlist/fetchAreas'
+      type: 'userlist/fetchAreas',
+      payload: {pageSize: 99999}
     })
   }, []);
 
