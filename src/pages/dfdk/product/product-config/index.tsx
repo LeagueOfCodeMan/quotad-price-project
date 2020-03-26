@@ -202,8 +202,8 @@ export const ProductConfigList: FC<BasicListProps> = props => {
         </RadioGroup>
         : null}
       <Search
-        className={styles.extraContentSearch} placeholder="请输入配件名称/系列"
-        onSearch={(value) => setListParams({...listParams, conf_name: value})}/>
+        className={styles.extraContentSearch} placeholder="请输入搜索内容"
+        onSearch={(value) => setListParams({...listParams, search: value})}/>
     </div>
   );
 

@@ -12,6 +12,7 @@ export interface ProductConfigListItem {
   conf_mark: string; // 备注
   label_id: number;
   label_name: string;
+  count?:number;
 
   [propName: string]: any;
 }

@@ -26,4 +26,11 @@ export async function queryLabels(params: { label_type: 1 | 2 | undefined,pageSi
   return request('/api/label', {params});
 }
 
+/**
+ * 地址管理
+ */
+export async function queryAddress(params?: TableListParams): Promise<any> {
+  return request('/api/addr', {params});
+}
+
 

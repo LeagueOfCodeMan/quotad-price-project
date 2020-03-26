@@ -47,7 +47,6 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
         const {label_name, id} = d;
         initFormList.push({label_name, conf_id: id});
       })
-      console.log(initFormList)
       setFormList(initFormList);
     }
   }, [current]);

@@ -1,4 +1,4 @@
-import {Radio, BackTop, Button, Card, Divider, List, Select, Skeleton, Typography} from 'antd';
+import {BackTop, Button, Card, Divider, List, Radio, Select, Skeleton, Typography} from 'antd';
 import React, {FC, useEffect, useState} from 'react';
 
 import {Dispatch} from 'redux';
@@ -13,6 +13,8 @@ import {ProductStateType} from "@/pages/dfdk/product-purchased/model";
 import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
 import yuntong from '@/assets/yuntong.png';
 import _ from "lodash";
+import CustomConfigForm from "@/pages/dfdk/product-purchased/components/CustomConfigForm";
+import {RadioChangeEvent} from "antd/es/radio";
 
 const {Paragraph, Text} = Typography;
 const {Option} = Select;
@@ -42,12 +44,13 @@ const CardList: FC<CardListProps> = props => {
   const [list, setList] = useState<ProductDetailListItem[]>([]);
   const [data, setData] = useState<ProductInfo>([]);
   const [current, setCurrent] = useState<number>(0);
-  const [labelId, setLabelId] = useState<number>(0);
-  const [initLoading, setInitLoading] = useState<boolean>(false);
   const [isLoadMore, setIsLoadMore] = useState<boolean>(true);
+  const [showDrawer, setShowDrawer] = useState<boolean>(false);
+  const [drawerMessage, setDrawerMessage] = useState<NotRequired<ProductDetailListItem>>({});
+  const [checkValue, setCheckValue] = useState<string>('standard');
   const [customVisibleList, setCustomVisibleList] =
     useState<{ visible: boolean, names: { label_name: string; conf_names: string[]; }[], min_price: string }[]>([]);
-
+  const [labelId, setLabelId] = useState<number>(0);
 
   const {productData, countStatistics} = product;
 
@@ -58,12 +61,14 @@ const CardList: FC<CardListProps> = props => {
       type: 'user/fetchLabels',
       payload: {pageSize: 99999}
     })
+  }, [1]);
+
+  useEffect(() => {
     getProductData();
-  }, [1])
+  }, [labelId])
 
   useEffect(() => {
     if (productData?.results) {
-      setInitLoading(false);
       setData([...data, ...productData?.results]);
       setList([...data, ...productData?.results]);
       window.dispatchEvent(new Event('resize'));
@@ -81,7 +86,8 @@ const CardList: FC<CardListProps> = props => {
   const getProductData = () => {
     dispatch({
       type: 'product/fetch',
-      payload: {pageSize: size, current: current + 1},
+      payload: labelId ?
+        {pageSize: size, current: current + 1, label_id: labelId} : {pageSize: size, current: current + 1,},
     });
     setCurrent(current + 1);
   };
@@ -120,9 +126,13 @@ const CardList: FC<CardListProps> = props => {
   /**
    * pageWrapper定义
    */
-  const handleProductLabelChange = e => {
-    console.log(e.target.value)
+  const handleProductLabelChange = (e: RadioChangeEvent) => {
+    setData([]);
+    setList([]);
+    setCurrent(0);
+    setCustomVisibleList([]);
     setLabelId(e.target.value);
+    setIsLoadMore(false);
   }
 
   const content = (
@@ -156,16 +166,25 @@ const CardList: FC<CardListProps> = props => {
     title: false,
     content,
     extraContent,
-    breadcrumb: false,
+    breadcrumb: undefined,
     className: styles.pageHeaderWrapperStyle
   }
 
   /**
    * card操作项
    */
-  const actions = () => {
+  const actions = (item: Partial<ProductDetailListItem>, index: number) => {
     return [
-      <span key="option1" style={{color: '#fff'}} className={styles.actionButton}>一键加购</span>
+      <span
+        key="option1" style={{color: '#fff'}} className={styles.actionButton}
+        onClick={() => {
+          console.log(111)
+          setShowDrawer(true);
+          setDrawerMessage(item);
+        }}
+      >
+        一键加购
+      </span>
     ]
   }
   /**
@@ -173,7 +192,8 @@ const CardList: FC<CardListProps> = props => {
    */
   const sortConfListByActPrice = (item: ProductConfigListItem[] | ProductDetailListItem[]) => {
     return _.sortBy(item, o => parseFloat(_.join(actPrice(o), '.')));
-  }
+  };
+
   /**
    * 切换选项时处理增加配置列表展示及重新计算最低价格
    * @param value
@@ -190,13 +210,14 @@ const CardList: FC<CardListProps> = props => {
       const values: { label_name: string; conf_names: string[]; }[] = [];
       _.forEach(groupItems, (v, k) => {
         values.push({label_name: k, conf_names: _.map(sortConfListByActPrice(v as any[]), 'conf_name')})
-      })
+      });
       visibleList[index] = {visible: true, min_price, names: values};
       setCustomVisibleList(visibleList);
     } else {
       visibleList[index]['visible'] = false;
       setCustomVisibleList(visibleList);
     }
+    setCheckValue(value);
   };
 
   /**
@@ -211,7 +232,7 @@ const CardList: FC<CardListProps> = props => {
   };
 
   const loadMore =
-    !initLoading && !fetch ? (
+    !fetch ? (
       <div
         style={{
           textAlign: 'center',
@@ -287,11 +308,30 @@ const CardList: FC<CardListProps> = props => {
 
   return (
     <PageHeaderWrapper {...pageProps}>
+      <CustomConfigForm
+        onSubmit={async (value, callback) => {
+          // const response = await ModifyMemberPrice({id: current?.id as number, data: value});
+          // const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
+          // if (success) {
+          //   callback();
+          //   setShowDrawer(false);
+          //   setDrawerMessage({});
+          // }
+        }}
+        onCancel={() => {
+          setShowDrawer(false);
+          setDrawerMessage({});
+        }}
+        visible={showDrawer}
+        current={drawerMessage}
+        currentUser={currentUser}
+        checkValue={checkValue}
+      />
       <div className={styles.cardList}>
         <List<Partial<ProductDetailListItem>>
           rowKey="id"
           loadMore={loadMore}
-          loading={initLoading}
+          loading={fetch}
           grid={{gutter: 24, xl: 3, lg: 3, md: 2, sm: 1, xs: 1}}
           dataSource={list || []}
           renderItem={(item, index) => {
@@ -301,7 +341,7 @@ const CardList: FC<CardListProps> = props => {
                   <Card
                     hoverable
                     className={styles.card}
-                    actions={actions()}
+                    actions={actions(item, index)}
                     cover={
                       <div>
                         <div style={{backgroundImage: `url(${item.avatar})`}} className={styles.coverWrapper}>

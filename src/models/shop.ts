@@ -18,7 +18,7 @@ export interface UserModelState {
 }
 
 export interface UserModelType {
-  namespace: 'user';
+  namespace: 'shop';
   state: UserModelState;
   effects: {
     fetchCurrent: Effect;
@@ -32,8 +32,8 @@ export interface UserModelType {
   };
 }
 
-const UserModel: UserModelType = {
-  namespace: 'user',
+const ShopModel: UserModelType = {
+  namespace: 'shop',
 
   state: {
     currentUser: {},
@@ -105,4 +105,4 @@ const UserModel: UserModelType = {
   },
 };
 
-export default UserModel;
+export default ShopModel;

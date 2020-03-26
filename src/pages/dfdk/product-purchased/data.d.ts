@@ -15,6 +15,7 @@ export interface ProductDetailListItem {
   label_name: string;
   conf_list: ProductConfigListItem[];
   loading?:boolean;
+  count?:number;
 
   [propName: string]: any;
 }

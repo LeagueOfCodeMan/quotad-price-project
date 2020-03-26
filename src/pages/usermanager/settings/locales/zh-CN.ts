@@ -4,6 +4,7 @@ export default {
   'accountandsettings.menuMap.binding': '账号绑定',
   'accountandsettings.menuMap.notification': '新消息通知',
   'accountandsettings.menuMap.parent': '联系管理员',
+  'accountandsettings.menuMap.address': '收货地址',
   'accountandsettings.basic.avatar': '头像',
   'accountandsettings.basic.change-avatar': '更换头像',
   'accountandsettings.basic.email': '邮箱',

@@ -18,7 +18,7 @@ export interface Loading {
     setting?: boolean;
     user?: boolean;
     login?: boolean;
-    product?: boolean;
+    shop?: boolean;
   };
 }
 

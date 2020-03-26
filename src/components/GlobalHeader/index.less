@@ -86,9 +86,11 @@
   :global(.ant-divider-vertical) {
     vertical-align: unset;
   }
+
   .name {
     display: none;
   }
+
   .right {
     position: absolute;
     top: 0;
@@ -101,5 +103,20 @@
     .search {
       display: none;
     }
+  }
+}
+
+.shopping {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  margin-left: 8px;
+  &:hover {
+    color: #de6c4b;
+  }
+  .shoppingIcon {
+    margin-top: -2px;
+    margin-right: 3px;
+    font-size: 20px;
   }
 }

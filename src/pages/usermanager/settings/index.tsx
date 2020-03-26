@@ -9,6 +9,7 @@ import BaseView from './components/base';
 import BindingView from './components/binding';
 import ParentInfo from './components/parentInfo';
 import SecurityView from './components/security';
+import AddressInfo from './components/address';
 import styles from './style.less';
 import {CurrentUser, UserModelState} from "@/models/user";
 import {ModifyType, ResultType, ValidatePwdResult} from "@/utils/utils";
@@ -26,7 +27,7 @@ interface SettingsProps {
   user: UserModelState;
 }
 
-type SettingsStateKeys = 'base' | 'security' | 'binding' | 'notification' | 'parent';
+type SettingsStateKeys = 'base' | 'security' | 'binding' | 'notification' | 'parent' | 'address';
 
 
 interface SettingsState {
@@ -61,6 +62,12 @@ class Settings extends Component<SettingsProps, SettingsState> {
           defaultMessage="Account Binding"
         />
       ),
+      address: (
+        <FormattedMessage
+          id="accountandsettings.menuMap.address"
+          defaultMessage="Address"
+        />
+      ),
       // notification: (
       //   <FormattedMessage
       //     id="accountandsettings.menuMap.notification"
@@ -92,8 +99,16 @@ class Settings extends Component<SettingsProps, SettingsState> {
     });
   }
 
+  resetAddress = () => {
+    const {dispatch} = this.props;
+    dispatch({
+      type: 'user/fetchAddress',
+    });
+  }
+
   componentDidMount() {
     this.resetDispatch();
+    this.resetAddress();
     window.addEventListener('resize', this.resize);
     this.resize();
   }
@@ -161,12 +176,16 @@ class Settings extends Component<SettingsProps, SettingsState> {
     }
   };
 
+  handleAddressUpdate = () => {
+    this.resetAddress();
+  }
+
   renderChildren = () => {
     const {selectKey} = this.state;
     switch (selectKey) {
       case 'base':
         return <BaseView onSubmit={this.updateBase} hadUploadImage={() => {
-         this.resetDispatch();
+          this.resetDispatch();
         }}/>;
       case 'security':
         return <SecurityView handleSecurityUpdate={this.handleSecurityUpdate}/>;
@@ -175,7 +194,9 @@ class Settings extends Component<SettingsProps, SettingsState> {
       // case 'notification':
       //   return <NotificationView/>;
       case 'parent':
-        return <ParentInfo/>
+        return <ParentInfo/>;
+      case 'address':
+        return <AddressInfo handleAddressUpdate={this.handleAddressUpdate}/>;
       default:
         break;
     }

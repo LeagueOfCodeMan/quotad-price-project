@@ -52,7 +52,7 @@ export async function queryConfigListByProductId(params: { id: number }) {
 
 export async function updateConfigListByProductId(params: { id: number, data: ParamsType }) {
   return request('/api/product/' + params.id + '/conf_list', {
-    method: 'PUT',
+    method: 'POST',
     data: params.data,
   });
 }

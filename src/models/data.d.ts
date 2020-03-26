@@ -1,5 +1,7 @@
 import {NotRequired} from "@/models/user";
 import {AreaListItem, UserListItem} from "@/pages/usermanager/userlist/data";
+import {ProductDetailListItem} from "@/pages/dfdk/product-purchased/data";
+import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
 
 export interface TableListPagination {
   total: number;
@@ -18,7 +20,7 @@ export interface TableListParams {
 }
 
 
-export type UsersInfo =  {
+export type UsersInfo = {
   results: NotRequired<UserListItem[]>;
   count?: number;
   [propNmae: string]: any;
@@ -80,3 +82,9 @@ export type AreasInfo = {
   [propNmae: string]: any;
 }
 
+export interface ShoppingCartItem {
+  product: ProductDetailListItem[];
+  count: number;
+  conf_list: ProductConfigListItem[] | [];
+  total_price: string;
+}

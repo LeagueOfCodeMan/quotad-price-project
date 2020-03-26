@@ -213,8 +213,8 @@ const ProductBaseList: FC<BasicListProps> = props => {
         </RadioGroup>
         : null}
       <Search
-        className={styles.extraContentSearch} placeholder="请输入产品名称/系列"
-        onSearch={(value) => setListParams({...listParams, pro_type: value})}/>
+        className={styles.extraContentSearch} placeholder="请输入搜索内容"
+        onSearch={(value) => setListParams({...listParams, search: value})}/>
     </div>
   );
 
