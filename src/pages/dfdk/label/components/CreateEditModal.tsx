@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Form, Input, Modal,Select} from 'antd';
 import styles from '@/pages/yuntai.less';
 import {LabelListItem} from "@/pages/dfdk/label/data";
@@ -15,15 +15,15 @@ interface CreateFormProps {
 
 const CreateEditModal: React.FC<CreateFormProps> = props => {
   const [form] = Form.useForm();
+  const [formRef, setFormRef] = useState<any>();
 
   const {modalVisible: visible, onSubmit: handleAdd, onCancel, current} = props;
 
   useEffect(() => {
-    setTimeout(() => {
-      if (form && !visible) {
-        form.resetFields()
-      }
-    })
+    if (form && !visible && formRef) {
+      setTimeout(() => form.resetFields(), 0)
+
+    }
   }, [visible]);
 
   useEffect(() => {
@@ -58,6 +58,7 @@ const CreateEditModal: React.FC<CreateFormProps> = props => {
       width={320}
     >
       <Form form={form}
+            ref={(ref) => setFormRef(ref)}
             layout="vertical"
             className={styles.formStyleCommon}
       >

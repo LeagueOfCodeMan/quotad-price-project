@@ -1,0 +1,60 @@
+@import '~antd/es/style/themes/default.less';
+
+.divDisplayFlexCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.textCenter {
+  text-align: center;
+  word-break: keep-all;
+}
+
+.textLeft {
+  text-align: left;
+  word-break: keep-all;
+}
+
+.drawerContainer {
+  font-family: PingFangSC, helvetica neue, hiragino sans gb, arial, microsoft yahei ui, microsoft yahei, simsun, sans-serif !important;
+  :global {
+    .ant-drawer-body {
+      padding: 0;
+      overflow: hidden;
+    }
+    .ant-pro-table .ant-table-row .ant-table-cell:first-child {
+      padding-left: 5px;
+    }
+    .ant-table.ant-table-small tbody > tr > td {
+      padding: 4px;
+    }
+    .ant-table-tbody {
+      font-size: 12px;
+      line-height: 25px;
+    }
+    .ant-typography {
+      &:not(.ant-typography-danger){
+        color: #181818 !important;
+      }
+    }
+    .ant-table thead > tr > th {
+      text-align: center !important;
+    }
+  }
+  .configListStyle {
+    margin: 10px auto;
+    :global {
+      ul li {
+        display: flex;
+        align-items: center;
+        margin: 0;
+        color: #181818;
+        font-size: 12px;
+        line-height: 25px;
+        list-style-type: none;
+      }
+    }
+  }
+}

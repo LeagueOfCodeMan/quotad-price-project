@@ -4,7 +4,7 @@ import React, {FC, useEffect, useState} from 'react';
 import {Dispatch} from 'redux';
 import {PageHeaderWrapper} from '@ant-design/pro-layout';
 import {connect} from 'dva';
-import {ProductDetailListItem} from './data.d';
+import {ProductDetailInfo, ProductDetailListItem} from './data.d';
 import styles from './style.less';
 import {CurrentUser, UserModelState} from "@/models/user";
 import {LabelList} from "@/pages/dfdk/label/data";
@@ -15,6 +15,9 @@ import yuntong from '@/assets/yuntong.png';
 import _ from "lodash";
 import CustomConfigForm from "@/pages/dfdk/product-purchased/components/CustomConfigForm";
 import {RadioChangeEvent} from "antd/es/radio";
+import {LocalStorageShopType, ShoppingCartItem} from "@/models/data";
+import {isNormalResponseBody} from "@/utils/utils";
+import {useLocalStorage} from "react-use";
 
 const {Paragraph, Text} = Typography;
 const {Option} = Select;
@@ -36,7 +39,6 @@ const CardList: FC<CardListProps> = props => {
   const {
     fetch,
     dispatch,
-    product,
     currentUser,
     labelList
   } = props;
@@ -51,43 +53,51 @@ const CardList: FC<CardListProps> = props => {
   const [customVisibleList, setCustomVisibleList] =
     useState<{ visible: boolean, names: { label_name: string; conf_names: string[]; }[], min_price: string }[]>([]);
   const [labelId, setLabelId] = useState<number>(0);
-
-  const {productData, countStatistics} = product;
-
   const productLabel = _.head(labelList.results) && labelList.results.filter(i => i.label_type === 1);
+
+  const [cartList, setCartList] = useLocalStorage<LocalStorageShopType>('shopping-cart', []);
 
   useEffect(() => {
     dispatch({
       type: 'user/fetchLabels',
       payload: {pageSize: 99999}
     })
-  }, [1]);
+  }, []);
+
+  const initUseState = () => {
+    setData([]);
+    setList([]);
+    setCurrent(0);
+    setCustomVisibleList([]);
+    setIsLoadMore(false);
+  }
+
 
   useEffect(() => {
     getProductData();
   }, [labelId])
 
-  useEffect(() => {
-    if (productData?.results) {
-      setData([...data, ...productData?.results]);
-      setList([...data, ...productData?.results]);
-      window.dispatchEvent(new Event('resize'));
-    }
-    if (!productData.next) {
-      setIsLoadMore(false);
-    } else {
-      setIsLoadMore(true);
-    }
-  }, [productData]);
-
   /**
    * 加载产品信息
    */
   const getProductData = () => {
+    console.log('===========', current)
     dispatch({
       type: 'product/fetch',
       payload: labelId ?
         {pageSize: size, current: current + 1, label_id: labelId} : {pageSize: size, current: current + 1,},
+      callback: (response: ProductDetailInfo) => {
+        if (isNormalResponseBody(response)) {
+          setData([...data, ...response?.results]);
+          setList([...data, ...response?.results]);
+          window.dispatchEvent(new Event('resize'));
+        }
+        if (!response.next) {
+          setIsLoadMore(false);
+        } else {
+          setIsLoadMore(true);
+        }
+      }
     });
     setCurrent(current + 1);
   };
@@ -127,12 +137,8 @@ const CardList: FC<CardListProps> = props => {
    * pageWrapper定义
    */
   const handleProductLabelChange = (e: RadioChangeEvent) => {
-    setData([]);
-    setList([]);
-    setCurrent(0);
-    setCustomVisibleList([]);
+    initUseState();
     setLabelId(e.target.value);
-    setIsLoadMore(false);
   }
 
   const content = (
@@ -178,7 +184,6 @@ const CardList: FC<CardListProps> = props => {
       <span
         key="option1" style={{color: '#fff'}} className={styles.actionButton}
         onClick={() => {
-          console.log(111)
           setShowDrawer(true);
           setDrawerMessage(item);
         }}
@@ -225,8 +230,8 @@ const CardList: FC<CardListProps> = props => {
    */
   const onLoadMore = () => {
     // @ts-ignore
-    setList(data.concat([...new Array(size)].map(() => ({
-      loading: true
+    setList(data.concat([...new Array(size)].map((index) => ({
+      loading: true, id: index + '-' + Math.random()
     }))))
     getProductData();
   };
@@ -306,18 +311,27 @@ const CardList: FC<CardListProps> = props => {
     )
   }
 
+  /**
+   * 提交到购物车
+   * @param values
+   */
+  const dispatchToShopModel = (values: ShoppingCartItem) => {
+    const {username} = currentUser;
+    const copyCartList = [...cartList];
+    const target = _.remove(copyCartList, d => d.user === username) || [];
+    const result: LocalStorageShopType = [...copyCartList, {
+      user: username as string,
+      shop: _.concat(_.head(target)?.shop || [], values)
+    }];
+    setCartList(result);
+    setShowDrawer(false);
+    setDrawerMessage({});
+  }
+
   return (
     <PageHeaderWrapper {...pageProps}>
       <CustomConfigForm
-        onSubmit={async (value, callback) => {
-          // const response = await ModifyMemberPrice({id: current?.id as number, data: value});
-          // const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
-          // if (success) {
-          //   callback();
-          //   setShowDrawer(false);
-          //   setDrawerMessage({});
-          // }
-        }}
+        onSubmit={dispatchToShopModel}
         onCancel={() => {
           setShowDrawer(false);
           setDrawerMessage({});
@@ -336,7 +350,7 @@ const CardList: FC<CardListProps> = props => {
           dataSource={list || []}
           renderItem={(item, index) => {
             return (
-              <List.Item key={item.id || '' + '-' + item.pro_type + '-' + item.label_id + '-' + index}>
+              <List.Item key={item.id + '=' + index}>
                 <Skeleton loading={item.loading} active>
                   <Card
                     hoverable

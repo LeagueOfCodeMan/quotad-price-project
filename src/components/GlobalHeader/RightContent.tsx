@@ -1,11 +1,12 @@
 import {Badge, Tag} from 'antd';
-import React from 'react';
+import React, {useState} from 'react';
 import {connect} from 'dva';
 import {ConnectProps, ConnectState} from '@/models/connect';
 import Avatar from './AvatarDropdown';
 import SelectLang from '../SelectLang';
 import styles from './index.less';
 import {ShoppingCartOutlined} from "@ant-design/icons/lib";
+import ShoppingCart from '@/components/ShoppingCart';
 
 export type SiderTheme = 'light' | 'dark';
 
@@ -21,6 +22,8 @@ const ENVTagColor = {
 };
 
 const GlobalHeaderRight: React.SFC<GlobalHeaderRightProps> = props => {
+  const [showDrawer, setShowDrawer] = useState<boolean>(false);
+
   const {theme, layout} = props;
   let className = styles.right;
 
@@ -30,7 +33,17 @@ const GlobalHeaderRight: React.SFC<GlobalHeaderRightProps> = props => {
 
   return (
     <div className={className}>
-      <span className={styles.shopping}>
+      <ShoppingCart
+        onSubmit={() => {
+        }}
+        onCancel={() => {
+          setShowDrawer(false);
+        }}
+        visible={showDrawer}
+      />
+      <span className={styles.shopping} onClick={() => {
+        setShowDrawer(true);
+      }}>
         <Badge count={5} offset={[-20, 0]}>
         <ShoppingCartOutlined className={styles.shoppingIcon}/>
         </Badge>

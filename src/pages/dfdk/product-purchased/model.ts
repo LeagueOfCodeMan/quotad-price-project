@@ -31,6 +31,7 @@ export interface ProductModelType {
   reducers: {
     save: Reducer<NotRequired<ProductBaseList>>;
     saveCountStatistics: Reducer<NotRequired<CountStatistics>>;
+    clearData:Reducer<any>;
   };
 }
 
@@ -50,7 +51,7 @@ const Model: ProductModelType = {
   },
 
   effects: {
-    * fetch({payload}, {call, put}) {
+    * fetch({payload,callback}, {call, put}) {
       const response = yield call(queryProductAndConfig, payload);
       if (isNormalResponseBody(response)) {
         yield put({
@@ -58,6 +59,7 @@ const Model: ProductModelType = {
           payload: response,
         });
       }
+      callback(response);
     },
     * countStatistics(_, {call, put}) {
       const response = yield call(countStatistics);
@@ -83,6 +85,19 @@ const Model: ProductModelType = {
         countStatistics: action.payload,
       };
     },
+    clearData(){
+      return {
+        productData: {
+          results: [],
+          count: 0,
+        },
+        countStatistics: {
+          total_count: 0,
+          published_count: 0,
+          unpublished: 0,
+        },
+      }
+    }
   },
 };
 

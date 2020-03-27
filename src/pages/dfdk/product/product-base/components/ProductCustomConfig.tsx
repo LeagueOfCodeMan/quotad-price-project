@@ -93,7 +93,7 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
     };
 
 
-    const labelOptions = labelArr?.map(d => <Option key={d.name} value={d.name}>{d.name}</Option>);
+    const labelOptions = labelArr?.map(d => <Option key={d.name} value={d.name} label={d.name}>{d.name}</Option>);
 
     return (
       <Form form={form} ref={formRef} className={styles.productCustomConfigForm}
@@ -115,9 +115,9 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
                           showSearch
                           placeholder="选择配置类别"
                           optionFilterProp="children"
-                          filterOption={(input, option) =>
-                            option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                          }
+                          filterOption={(input, option) => {
+                            return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                          }}
                           onChange={value => handleLabelChange({value, index})}
                         >
                           {labelOptions}
@@ -137,12 +137,11 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
                           placeholder="选择配置"
                           optionFilterProp="children"
                           filterOption={(input, option) => {
-                            console.log(input, option)
-                            return option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                            return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
                           }}
                           onChange={val => handleConfigChange({value: val, index: index})}
                         >
-                          {(configList[index])?.map((d: ProductConfigListItem) => <Option key={d.id} value={d.id}>
+                          {(configList[index])?.map((d: ProductConfigListItem) => <Option key={d.id} value={d.id} label={d.conf_name +'-' + d.conf_mark}>
                             <div>
                               <span>{d.conf_name}</span>
                               <Divider type="vertical"/>

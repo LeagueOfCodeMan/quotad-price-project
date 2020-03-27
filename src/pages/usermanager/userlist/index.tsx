@@ -1,5 +1,5 @@
-import {DownOutlined, PlusOutlined} from '@ant-design/icons';
-import {Button, Divider, Dropdown, Menu, message, Modal} from 'antd';
+import { PlusOutlined} from '@ant-design/icons';
+import {Button, Divider, message, Modal} from 'antd';
 import React, {useEffect, useRef, useState} from 'react';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import _ from 'lodash';
@@ -235,44 +235,15 @@ const UserList: React.FC<UserListProps> = (props) => {
         size="small"
         actionRef={actionRef}
         rowKey={record => record.id}
-        toolBarRender={(action, {selectedRows}) => {
+        toolBarRender={() => {
           return [
             <Button icon={<PlusOutlined/>} type="primary" onClick={() => handleModalVisible(true)}>
               新建
             </Button>,
-            selectedRows && selectedRows.length > 0 && (
-              <Dropdown
-                overlay={
-                  <Menu
-                    onClick={async e => {
-                      if (e.key === 'remove') {
-                        // await handleRemove(selectedRows);
-                        action.reload();
-                      }
-                    }}
-                    selectedKeys={[]}
-                  >
-                    <Menu.Item key="remove">批量删除</Menu.Item>
-                    <Menu.Item key="approval">批量审批</Menu.Item>
-                  </Menu>
-                }
-              >
-                <Button>
-                  批量操作 <DownOutlined/>
-                </Button>
-              </Dropdown>
-            ),
           ];
         }}
-        tableAlertRender={(selectedRowKeys, selectedRows) => (
-          <div>
-            已选择 <a style={{fontWeight: 600}}>{selectedRowKeys.length}</a> 项&nbsp;&nbsp;
-          </div>
-        )}
-        tableAlertOptionRender={false}
         request={request}
         columns={columns}
-        // rowSelection={{}}
         columnsStateMap={columnsStateMap}
         onColumnsStateChange={map => setColumnsStateMap(map)}
         pagination={{pageSize: 5, showQuickJumper: true}}

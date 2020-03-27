@@ -1,108 +1,96 @@
-import {Effect} from 'dva';
 import {Reducer} from 'redux';
-import {router} from 'umi';
-import {message} from 'antd';
+import {ShoppingCartItem} from "@/models/data";
+import {Effect} from "dva";
+import ld from 'lodash';
 
-import {queryAddress, queryCurrent, queryLabels} from '@/services/user';
-import {UserListItem} from "@/models/data";
-import {isNormalResponseBody} from "@/utils/utils";
-import {LabelList} from "@/pages/dfdk/label/data";
-import {AddressInfo} from "@/pages/usermanager/settings/data";
-
-export type CurrentUser = NotRequired<UserListItem>;
-
-export interface UserModelState {
-  currentUser: CurrentUser;
-  labelList: LabelList;
-  addressList: AddressInfo
+export interface ShopModelState {
+  cartList: ShoppingCartItem[];
 }
 
-export interface UserModelType {
+export interface ShopModelType {
   namespace: 'shop';
-  state: UserModelState;
+  state: ShopModelState;
   effects: {
-    fetchCurrent: Effect;
-    fetchLabels: Effect;
-    fetchAddress: Effect;
+    fetchShoppingCart: Effect;
   };
   reducers: {
-    saveCurrentUser: Reducer<CurrentUser>;
-    saveLabels: Reducer<NotRequired<LabelList>>;
-    saveAddressList: Reducer<NotRequired<AddressInfo>>;
+    saveCartItem: Reducer<ShopModelState>;
+    saveCart: Reducer<ShopModelState>;
+    clearCart: Reducer<ShopModelState>;
   };
 }
 
-const ShopModel: UserModelType = {
+const ShopModel: ShopModelType = {
   namespace: 'shop',
 
   state: {
-    currentUser: {},
-    labelList: {
-      results: [],
-      count: undefined
-    },
-    addressList: {
-      results: [],
-      count: 0
-    },
+    cartList: []
   },
 
   effects: {
-    * fetchCurrent(_, {call, put}) {
-      const response = yield call(queryCurrent);
-      if (response?.id) {
+    * fetchShoppingCart(_, {put}) {
+      const result = getShoppingCart();
+      console.log(result,'dispatch')
+      if (ld.head(result)) {
         yield put({
-          type: 'saveCurrentUser',
-          payload: response,
-        });
-      } else {
-        message.info('当前登录已失效，请重新登录!')
-        router.push("/user/login")
-      }
-    },
-
-    * fetchLabels({payload}, {call, put}) {
-      const response = yield call(queryLabels, payload);
-      if (isNormalResponseBody(response)) {
-        yield put({
-          type: 'saveLabels',
-          payload: response,
-        });
-      }
-    },
-
-    * fetchAddress({payload}, {call, put}) {
-      const response = yield call(queryAddress, payload);
-      if (isNormalResponseBody(response)) {
-        yield put({
-          type: 'saveAddressList',
-          payload: response,
-        });
+          type: 'saveCart',
+          payload: result
+        })
       }
     },
   },
 
   reducers: {
-    saveCurrentUser(state, action) {
+    saveCartItem(state, {payload}): ShopModelState {
+      const list = state?.cartList || [];
+      setShoppingCart([...list, payload]);
       return {
         ...state,
-        currentUser: action.payload || {},
+        cartList: [...list, payload]
       };
     },
-    saveLabels(state, action) {
+    saveCart(state, action): ShopModelState {
       return {
         ...state,
-        labelList: action.payload || {},
+        cartList: action.payload || [],
       };
     },
-    saveAddressList(state, action) {
+    clearCart(): ShopModelState {
+      clearShoppingCart();
       return {
-        ...state,
-        addressList: action.payload || {},
-      };
-    },
+        cartList: []
+      }
+    }
 
   },
+
 };
 
 export default ShopModel;
+
+export function getShoppingCart(): ShoppingCartItem[] {
+  let result = localStorage.getItem('antd-pro-shopping-cart');
+  try {
+    if (result) {
+      result = JSON.parse(result);
+      if (Array.isArray(result)) {
+        return result;
+      } else {
+        clearShoppingCart();
+      }
+    }
+  } catch (e) {
+    return [];
+  }
+  return [];
+}
+
+export function setShoppingCart(cartList: ShoppingCartItem[]): void {
+  if (Array.isArray(cartList)) {
+    localStorage.setItem('antd-pro-shopping-cart', JSON.stringify(cartList));
+  }
+}
+
+export function clearShoppingCart(): void {
+  localStorage.removeItem('antd-pro-shopping-cart');
+}

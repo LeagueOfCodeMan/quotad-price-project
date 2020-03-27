@@ -232,7 +232,7 @@ export default {
                 },
               ],
             },
-            {path: '/', redirect: '/usermanager/settings', authority: needUserAuthority},
+            {path: '/', redirect: '/dfdk/product-purchased', authority: needUserAuthority},
 
             {
               component: '404',

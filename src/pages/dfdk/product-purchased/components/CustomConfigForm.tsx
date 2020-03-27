@@ -22,6 +22,7 @@ import _ from "lodash";
 import {CurrentUser} from "@/models/user";
 import {RadioChangeEvent} from "antd/es/radio";
 import {ShoppingCartItem} from "@/models/data";
+import { v4 as uuidv4 } from 'uuid';
 
 const {Option} = Select;
 const {Paragraph, Text} = Typography;
@@ -154,15 +155,12 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
 
 
   /**
-   * 提交加入购物车，数据结构
-   * {product:ProductDetailListItem;count:number;conf_list:ProductConfigListItem[];total_price:string}
+   * 提交加入购物车，数据结构ShoppingCartItem
    */
   const onFinish = () => {
-    console.log(groupItems);
     const {production, conf_par} = form.getFieldsValue() as FormListType;
     const checkedProductConfigList: number[] = _.map(_.filter(conf_par, o => o.count) as ConfPar, 'id');
     const findAtChecked = _.map(_.result(current, ['conf_list']) as ProductConfigListItem[], (d) => {
-      console.log(_.indexOf(checkedProductConfigList, d.id));
       if (_.indexOf(checkedProductConfigList, d.id) > -1) {
         return {
           ...d,
@@ -171,14 +169,14 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
       }
       return undefined;
     });
-    console.log(findAtChecked);
     const result = {
-      product: current, count: production,
-      check_conf_list: _.filter(findAtChecked, o => o), total_price: totalPrice
+      uuid:uuidv4(),
+      ..._.omit(current, ['conf_list']), count: production,
+      conf_list: _.filter(findAtChecked, o => o) as ProductConfigListItem[] | [], total_price: totalPrice
     };
-    console.log(result);
     if (handleAdd) {
-      handleAdd(result);
+      handleAdd(result as ShoppingCartItem);
+      console.log(result);
     }
   };
 
@@ -211,7 +209,7 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
             <span style={{color: '#FF8A00'}}> ¥</span>
             <span style={{fontSize: '24px', color: '#FF8A00'}}>{totalPrice}</span>
           </div>
-          <Button onClick={onFinish} style={{backgroundColor: '#FF6A00', color: '#fff'}}>
+          <Button onClick={onFinish} style={{backgroundColor: '#FF6A00', color: '#fff', borderColor: '#fff'}}>
             加入购物车
           </Button>
         </div>
@@ -244,18 +242,18 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
               </Descriptions.Item>
               <Descriptions.Item label="参数">
                 <Paragraph>
-                  <ul>
-                    {current?.desc?.split(/[\s\n]/).map((d, index) => {
-                      return (
-                        <Tooltip placement="top" title={d} key={index + '-' + d}>
+                  <Tooltip placement="top" title={current?.desc}>
+                    <ul>
+                      {current?.desc?.split(/[\s\n]/).map((d, index) => {
+                        return (
                           <li key={index + '-' + d}>
                             <CheckOutlined style={{color: 'rgb(255, 20, 80)', marginRight: '5px'}}/>
                             <Text ellipsis style={{color: '#181818', width: '90px'}}>{d}</Text>
                           </li>
-                        </Tooltip>
-                      )
-                    })}
-                  </ul>
+                        )
+                      })}
+                    </ul>
+                  </Tooltip>
                 </Paragraph>
               </Descriptions.Item>
               <Descriptions.Item label="价格">
@@ -289,13 +287,12 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
                               placeholder="选择配置"
                               optionFilterProp="children"
                               filterOption={(input, option) => {
-                                console.log(input, option)
-                                return option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                                return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
                               }}
                               onChange={change}
                             >
                               {(_.result(groupItems, labelKeys?.[index]) as ProductConfigListItem[])?.map((d: ProductConfigListItem, ii) =>
-                                <Option key={d.id + '-' + ii} value={d.id}>
+                                <Option key={d.id + '-' + ii} value={d.id} label={d.conf_name + '-' + d.conf_mark}>
                                   <div>
                                     <span>{d.conf_name}</span>
                                     <Divider type="vertical"/>

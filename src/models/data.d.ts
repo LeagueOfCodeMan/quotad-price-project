@@ -1,7 +1,7 @@
 import {NotRequired} from "@/models/user";
 import {AreaListItem, UserListItem} from "@/pages/usermanager/userlist/data";
-import {ProductDetailListItem} from "@/pages/dfdk/product-purchased/data";
 import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
+import {IdentityType} from "@/utils/utils";
 
 export interface TableListPagination {
   total: number;
@@ -83,8 +83,27 @@ export type AreasInfo = {
 }
 
 export interface ShoppingCartItem {
-  product: ProductDetailListItem[];
-  count: number;
+  id: number;
+  avatar: any; // 图
+  pro_type: string; // 产品名称
+  mark: string; // 备注
+  desc: string; // 描述参数
+  leader_price: string; // 组长价格
+  second_price: string; // 二级组员价格
+  member_price: string | null; // 一级组员价格 由组长定义，定义后再发布
+  mem_state: 1 | 2; // 1：未发布，2：已发布
+  label_id: number;
+  label_name: string;
+  loading?: boolean;
+  count?: number;
+  uuid?: string;
+
   conf_list: ProductConfigListItem[] | [];
   total_price: string;
+
+  [propName: string]: any;
+
 }
+
+export type LocalStorageShopType = { user: string; shop: ShoppingCartItem[] }[];
+
