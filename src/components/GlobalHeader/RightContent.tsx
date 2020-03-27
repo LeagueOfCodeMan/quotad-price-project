@@ -33,14 +33,17 @@ const GlobalHeaderRight: React.SFC<GlobalHeaderRightProps> = props => {
 
   return (
     <div className={className}>
-      <ShoppingCart
-        onSubmit={() => {
-        }}
-        onCancel={() => {
-          setShowDrawer(false);
-        }}
-        visible={showDrawer}
-      />
+      {showDrawer ?
+        <ShoppingCart
+          onSubmit={() => {
+          }}
+          onCancel={() => {
+            setShowDrawer(false);
+          }}
+          visible={showDrawer}
+        /> : null
+      }
+
       <span className={styles.shopping} onClick={() => {
         setShowDrawer(true);
       }}>

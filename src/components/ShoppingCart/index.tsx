@@ -1,14 +1,15 @@
-import React, {FC, useEffect, useRef, useState} from 'react';
-import {Button, Drawer, Dropdown, Input, Menu, Tooltip, Typography} from 'antd';
+import React, {FC, ReactText, useEffect, useRef, useState} from 'react';
+import {Button, Drawer, Input, Tooltip, Typography} from 'antd';
 import {ProductDetailListItem} from "@/pages/dfdk/product-purchased/data";
 import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
 import {CurrentUser, UserModelState} from "@/models/user";
 import {LocalStorageShopType, ShoppingCartItem} from "@/models/data";
 import {connect} from "react-redux";
 import ProTable, {ActionType, ColumnsState, ProColumns} from "@ant-design/pro-table";
-import {CheckOutlined, DeleteTwoTone, DownOutlined} from "@ant-design/icons/lib";
+import {CheckOutlined, DeleteTwoTone} from "@ant-design/icons/lib";
 import styles from './index.less';
 import {useLocalStorage} from "react-use";
+import _ from "lodash";
 
 const {Paragraph, Text} = Typography;
 
@@ -36,7 +37,7 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
   const [searchValue, setSearchValue] = useState("");
   const [totalPrice, setTotalPrice] = useState("0.00");
   const [cartList, setCartList] = useLocalStorage<LocalStorageShopType>('shopping-cart', []);
-
+  const [rowsSelect, setRowsSelect] = useState<ReactText[]>([]);
 
   useEffect(() => {
     if (visible) {
@@ -45,7 +46,8 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
         current.reload();
       }
     }
-  }, [visible, searchValue]);
+  }, [visible, searchValue, cartList]);
+
 
   /**
    * 根据权限对输入item，进行价格string
@@ -54,12 +56,10 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
   const actPrice = (item: any): string => {
     const {identity} = currentUser;
     const val = item as ProductDetailListItem | ProductConfigListItem;
-    console.log(val);
     let result = '0.00';
     switch (identity) {
       case 1 || 2:
         result = (val?.leader_price || '0.00').toString();
-        debugger
         break;
       case 3:
         result = (val?.member_price || '0.00').toString();
@@ -142,7 +142,7 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
                       <ul>
                         <li>
                           <span>单价：</span>
-                          <Text type="danger">¥ {actPrice(text)}</Text>
+                          <Text type="danger">¥ {actPrice(d)}</Text>
                         </li>
                         <li>
                           <span>数量：</span>
@@ -187,20 +187,54 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
       key: 'option',
       width: 60,
       valueType: 'option',
-      render: () => [
+      render: (text, record) => [
         <DeleteTwoTone
           twoToneColor="#eb2f96"
           style={{fontSize: '16px'}}
           onClick={() => {
+            const {username} = currentUser;
+            const {uuid} = record;
+            console.log(uuid);
+            const copyCartList = [...cartList];
+            const target = _.remove(copyCartList, d => d.user === username) || [];
+            const lost = _.filter(_.head(target)?.shop || [], d => d.uuid !== uuid);
+            const result: LocalStorageShopType = [...copyCartList, {
+              user: username as string,
+              shop: lost
+            }];
+            console.log(target, result);
+            const rowsCheck = rowsSelect?.filter(i => i !== uuid);
+            setCartList(result);
+            calculate(lost);
+            setRowsSelect(rowsCheck);
           }}
         />
       ],
     },
   ];
-
+  /**
+   * 表格操作
+   * @param value
+   */
   const handleSearch = (value: string): void => {
-    console.log(value)
     setSearchValue(value);
+  };
+  /**
+   * 计算价格
+   * @param selectedRowKeys
+   * @param selectedRows
+   */
+  const calculate = (selectedRows: ShoppingCartItem[]) => {
+    const tPrice = _.reduce(selectedRows, (sum, n) => {
+      return sum + parseFloat(n?.total_price || '0');
+    }, 0) || 0;
+    const fPrice: string = tPrice % 1 !== 0 ? tPrice.toString() : tPrice + '.00';
+    setTotalPrice(fPrice);
+  }
+
+  const rowSelectChange = (selectedRowKeys: ReactText[], selectedRows: ShoppingCartItem[]) => {
+    calculate(selectedRows);
+    setRowsSelect(selectedRowKeys);
   };
 
   return (
@@ -212,7 +246,6 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
       getContainer={false}
       bodyStyle={{paddingBottom: 80}}
       className={styles.drawerContainer}
-      destroyOnClose
       footer={
         <div
           style={{
@@ -224,13 +257,37 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
             <span style={{color: '#FF8A00'}}> ¥</span>
             <span style={{fontSize: '24px', color: '#FF8A00', marginLeft: '5px'}}>{totalPrice}</span>
           </div>
-          <Button style={{
-            backgroundColor: '#FF6A00', color: '#fff', borderColor: '#fff',
-            margin: ' 18px 80px -4px 0px', height: '36px'
-          }}
-          >
-            创建项目
-          </Button>
+          {
+            _.head(rowsSelect) ?
+              <Button
+                style={{
+                  backgroundColor: '#FF6A00',
+                  color: '#fff',
+                  borderColor: '#fff',
+                  margin: ' 18px 80px -4px 0px',
+                  height: '36px'
+                }}
+                onClick={() => {
+                  const {current} = actionRef;
+                  if (current) {
+                    current.reload();
+                  }
+                }}
+
+              >
+                创建项目
+              </Button> :
+              <Button
+                style={{
+                  margin: ' 18px 80px -4px 0px',
+                  height: '36px'
+                }}
+                disabled={true}
+              >
+                创建项目
+              </Button>
+
+          }
         </div>
       }
       zIndex={1000}
@@ -241,11 +298,10 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
             columns={columns}
             actionRef={actionRef}
             options={{
-              reload: true, fullScreen: true, setting: true, density: false
+              reload: false, fullScreen: true, setting: true, density: false
             }}
             size="small"
             request={() => {
-              console.log(cartList);
               const cartListByCurrentUser = _.find(cartList, d => d.user === currentUser?.username)?.shop || [];
               const dataSource = searchValue ? cartListByCurrentUser?.filter(d => d.pro_type.toLowerCase().includes(searchValue.toLowerCase())) : cartListByCurrentUser;
               return Promise.resolve({
@@ -254,44 +310,53 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
               })
             }}
             scroll={{y: 300}}
-            rowSelection={{}}
+            rowSelection={{onChange: rowSelectChange, selectedRowKeys: rowsSelect}}
             rowKey={record => record?.uuid || record?.id}
             pagination={false}
             columnsStateMap={columnsStateMap}
             onColumnsStateChange={map => setColumnsStateMap(map)}
             search={false}
             dateFormatter="string"
-            headerTitle="简单搜索"
+            // headerTitle="简单搜索"
             toolBarRender={(action, {selectedRows}) => [<Input.Search onSearch={handleSearch}
                                                                       placeholder="请输入产品名"/>,
-              selectedRows && selectedRows.length > 0 && (
-                <Dropdown
-                  overlay={
-                    <Menu
-                      onClick={async e => {
-                        if (e.key === 'remove') {
-                          // await handleRemove(selectedRows);
-                          action.reload();
-                        }
-                      }}
-                      selectedKeys={[]}
-                    >
-                      <Menu.Item key="remove">批量删除</Menu.Item>
-                      <Menu.Item key="approval">批量审批</Menu.Item>
-                    </Menu>
-                  }
-                >
-                  <Button>
-                    批量操作 <DownOutlined/>
-                  </Button>
-                </Dropdown>
-              ),]}
+              // selectedRows && selectedRows.length > 0 && (
+              //   <Dropdown
+              //     overlay={
+              //       <Menu
+              //         onClick={async e => {
+              //           if (e.key === 'remove') {
+              //             // await handleRemove(selectedRows);
+              //             action.reload();
+              //           }
+              //         }}
+              //         selectedKeys={[]}
+              //       >
+              //         <Menu.Item key="remove">批量删除</Menu.Item>
+              //         <Menu.Item key="approval">批量审批</Menu.Item>
+              //       </Menu>
+              //     }
+              //   >
+              //     <Button>
+              //       批量操作 <DownOutlined/>
+              //     </Button>
+              //   </Dropdown>
+              // ),
+            ]}
             tableAlertRender={(selectedRowKeys, selectedRows) => (
               <div>
                 已选择 <a style={{fontWeight: 600}}>{selectedRowKeys.length}</a> 项&nbsp;&nbsp;
               </div>
             )}
-            tableAlertOptionRender={false}
+            tableAlertOptionRender={props => {
+              const {onCleanSelected} = props;
+              return [
+                <a onClick={() => {
+                  onCleanSelected();
+                  setTotalPrice("0.00");
+                }}>清空</a>,
+              ];
+            }}
           />
         </>
       </div>
