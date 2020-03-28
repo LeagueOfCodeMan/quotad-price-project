@@ -1,5 +1,6 @@
 import request from '@/utils/request';
 import {TableListParams} from "@/models/data";
+import {CreateProjectParams} from "@/components/ShoppingCart";
 
 export async function queryUsers(params?: TableListParams) {
   return request('/api/user', {
@@ -22,7 +23,7 @@ export async function testPassword(params: { password: string; }): Promise<any> 
   });
 }
 
-export async function queryLabels(params: { label_type: 1 | 2 | undefined,pageSize:number }) {
+export async function queryLabels(params: { label_type: 1 | 2 | undefined, pageSize: number }) {
   return request('/api/label', {params});
 }
 
@@ -34,3 +35,12 @@ export async function queryAddress(params?: TableListParams): Promise<any> {
 }
 
 
+/**
+ * 创建项目
+ */
+export async function createProject(params: CreateProjectParams): Promise<any> {
+  return request('/api/project', {
+    method: 'POST',
+    data: params
+  });
+}

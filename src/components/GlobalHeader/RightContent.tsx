@@ -1,4 +1,4 @@
-import {Badge, Tag} from 'antd';
+import {Tag} from 'antd';
 import React, {useState} from 'react';
 import {connect} from 'dva';
 import {ConnectProps, ConnectState} from '@/models/connect';
@@ -35,11 +35,8 @@ const GlobalHeaderRight: React.SFC<GlobalHeaderRightProps> = props => {
     <div className={className}>
       {showDrawer ?
         <ShoppingCart
-          onSubmit={() => {
-          }}
-          onCancel={() => {
-            setShowDrawer(false);
-          }}
+          onSubmit={() => setShowDrawer(false)}
+          onCancel={() => setShowDrawer(false)}
           visible={showDrawer}
         /> : null
       }
@@ -47,9 +44,7 @@ const GlobalHeaderRight: React.SFC<GlobalHeaderRightProps> = props => {
       <span className={styles.shopping} onClick={() => {
         setShowDrawer(true);
       }}>
-        <Badge count={5} offset={[-20, 0]}>
         <ShoppingCartOutlined className={styles.shoppingIcon}/>
-        </Badge>
                 购物车
       </span>
       {/*<HeaderSearch*/}

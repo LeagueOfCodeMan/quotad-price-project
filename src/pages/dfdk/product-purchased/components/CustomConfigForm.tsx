@@ -130,7 +130,8 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
     const val = item as ProductDetailListItem | ProductConfigListItem;
     let result = '0.00';
     switch (identity) {
-      case 1 || 2:
+      case 1:
+      case 2:
         result = (val?.leader_price || '0.00').toString();
         break;
       case 3:
@@ -176,7 +177,6 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
     };
     if (handleAdd) {
       handleAdd(result as ShoppingCartItem);
-      console.log(result);
     }
   };
 

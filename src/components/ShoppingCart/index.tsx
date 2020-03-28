@@ -1,5 +1,5 @@
 import React, {FC, ReactText, useEffect, useRef, useState} from 'react';
-import {Button, Drawer, Input, Tooltip, Typography} from 'antd';
+import {Alert, Button, DatePicker, Divider, Drawer, Form, Input, Result, Select, Tooltip, Typography} from 'antd';
 import {ProductDetailListItem} from "@/pages/dfdk/product-purchased/data";
 import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
 import {CurrentUser, UserModelState} from "@/models/user";
@@ -10,19 +10,50 @@ import {CheckOutlined, DeleteTwoTone} from "@ant-design/icons/lib";
 import styles from './index.less';
 import {useLocalStorage} from "react-use";
 import _ from "lodash";
+import {AddressInfo, AddressListItem} from "@/pages/usermanager/settings/data";
+import {Dispatch} from "redux";
+import {Moment} from "moment";
+import {createProject} from "@/services/user";
+import {ValidatePwdResult} from "@/utils/utils";
+import {Link} from "umi";
+import moment from 'moment';
 
 const {Paragraph, Text} = Typography;
+const {Option} = Select;
 
 interface ShoppingCartProps {
   visible: boolean;
-  onSubmit: (fieldsValue: ShoppingCartItem) => void;
+  onSubmit: () => void;
   onCancel: () => void;
   currentUser: CurrentUser;
+  dispatch: Dispatch<any>;
+  addressList: AddressInfo;
+}
 
+type ProductListType = {
+  production: number;
+  count: number;
+  conf_par: { id: number; count: number; }[]
+}[];
+
+interface FormType {
+  project_name: string;
+  project_company: string;
+  project_addr: number;
+  delivery_time: Moment;
+}
+
+export interface CreateProjectParams {
+  project_name: string;
+  project_company: string;
+  project_addr: number;
+  delivery_time: string;
+  product_list: ProductListType;
 }
 
 const ShoppingCart: FC<ShoppingCartProps> = props => {
-  const {visible, onSubmit: handleAdd, onCancel, currentUser} = props;
+  const {visible, onSubmit, addressList, onCancel, currentUser, dispatch} = props;
+  const [form] = Form.useForm();
   const actionRef = useRef<ActionType | undefined>(undefined);
   const [columnsStateMap, setColumnsStateMap] = useState<{
     [key: string]: ColumnsState;
@@ -37,7 +68,10 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
   const [searchValue, setSearchValue] = useState("");
   const [totalPrice, setTotalPrice] = useState("0.00");
   const [cartList, setCartList] = useLocalStorage<LocalStorageShopType>('shopping-cart', []);
-  const [rowsSelect, setRowsSelect] = useState<ReactText[]>([]);
+  const [rowsSelectKeys, setRowsSelectKeys] = useState<ReactText[]>([]);
+  const [rowsSelect, setRowsSelect] = useState<ShoppingCartItem[]>([]);
+  const [childrenDrawerVisible, setChildrenDrawerVisible] = useState<boolean>(false);
+  const [done, setDone] = useState<boolean>(false);
 
   useEffect(() => {
     if (visible) {
@@ -48,6 +82,9 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
     }
   }, [visible, searchValue, cartList]);
 
+  const findShopCartByCurrentUserFromLocalStorage = () => {
+    return _.find(cartList, d => d.user === currentUser?.username)?.shop || [];
+  };
 
   /**
    * 根据权限对输入item，进行价格string
@@ -58,7 +95,8 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
     const val = item as ProductDetailListItem | ProductConfigListItem;
     let result = '0.00';
     switch (identity) {
-      case 1 || 2:
+      case 1:
+      case 2:
         result = (val?.leader_price || '0.00').toString();
         break;
       case 3:
@@ -128,14 +166,14 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
       title: '配件',
       dataIndex: 'conf_list',
       width: 200,
-      render: (text) => {
+      render: (text, record) => {
         return (
           <div className={styles.configListStyle}>
             <Paragraph>
               <ul>
                 {text?.[0] ? (text as ProductConfigListItem[])?.map((d, index) => {
                   return (
-                    <li key={index + '-' + d}>
+                    <li key={index + '-' + record?.uuid}>
                       <div>
                         <Text ellipsis style={{color: '#181818', width: '90px'}}>{d?.conf_name}</Text>
                       </div>
@@ -192,28 +230,51 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
           twoToneColor="#eb2f96"
           style={{fontSize: '16px'}}
           onClick={() => {
-            const {username} = currentUser;
-            const {uuid} = record;
-            console.log(uuid);
-            const copyCartList = [...cartList];
-            const target = _.remove(copyCartList, d => d.user === username) || [];
-            const lost = _.filter(_.head(target)?.shop || [], d => d.uuid !== uuid);
-            const result: LocalStorageShopType = [...copyCartList, {
-              user: username as string,
-              shop: lost
-            }];
-            console.log(target, result);
-            const rowsCheck = rowsSelect?.filter(i => i !== uuid);
-            setCartList(result);
-            calculate(lost);
-            setRowsSelect(rowsCheck);
+            record?.uuid && deleteColumn(record?.uuid);
           }}
         />
       ],
     },
   ];
+
   /**
-   * 表格操作
+   * 删除单个并更新localStorage和当前表格数据及选项，和重新统计金额
+   */
+  const deleteColumn = (uuid: string) => {
+    const {username} = currentUser;
+    const copyCartList = [...cartList];
+    const target = _.remove(copyCartList, d => d.user === username) || [];
+    const lost = _.filter(_.head(target)?.shop || [], d => d.uuid !== uuid);
+    const result: LocalStorageShopType = [...copyCartList, {
+      user: username as string,
+      shop: lost
+    }];
+    const rowsCheck = rowsSelect?.filter(i => i.uuid !== uuid);
+    const rowsCheckKeys = rowsSelectKeys?.filter(i => i !== uuid);
+    setCartList(result);
+    calculate(lost);
+    setRowsSelectKeys(rowsCheckKeys);
+    setRowsSelect(rowsCheck);
+  };
+  /**
+   * 成功处理后删除多个
+   */
+  const deleteHadSelect = () => {
+    const {username} = currentUser;
+    const copyCartList = [...cartList];
+    const target = _.remove(copyCartList, d => d.user === username) || [];
+    const lost = _.filter(_.head(target)?.shop || [], d => _.indexOf(rowsSelectKeys, d?.uuid) < 0);
+    const result: LocalStorageShopType = [...copyCartList, {
+      user: username as string,
+      shop: lost
+    }];
+    setCartList(result);
+    setRowsSelectKeys([]);
+    setRowsSelect([]);
+    setTotalPrice("0.00");
+  };
+  /**
+   * 表格搜索操作
    * @param value
    */
   const handleSearch = (value: string): void => {
@@ -231,10 +292,57 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
     const fPrice: string = tPrice % 1 !== 0 ? tPrice.toString() : tPrice + '.00';
     setTotalPrice(fPrice);
   }
-
+  /**
+   * 选项操作
+   * @param selectedRowKeys
+   * @param selectedRows
+   */
   const rowSelectChange = (selectedRowKeys: ReactText[], selectedRows: ShoppingCartItem[]) => {
     calculate(selectedRows);
-    setRowsSelect(selectedRowKeys);
+    setRowsSelectKeys(selectedRowKeys);
+    setRowsSelect(selectedRows);
+  };
+  /**
+   * 提交表单请求创建项目
+   */
+  const onFinish = (fieldsValue: FormType) => {
+    const productList = _.map(rowsSelect, (d) => {
+      const conf_par = _.map(d?.conf_list, dd => ({id: dd?.id, count: dd?.count}));
+      if (conf_par?.[0]) {
+        return {
+          production: d?.id,
+          count: d?.count,
+          conf_par
+        }
+      } else {
+        return {
+          production: d?.id,
+          count: d?.count,
+        }
+      }
+
+    });
+    const values = {
+      ...fieldsValue, delivery_time: fieldsValue['delivery_time'].format('YYYY-MM-DD'),
+      product_list: productList as ProductListType
+    };
+    const success = dispatchCreateProject(values);
+    if (success) {
+      deleteHadSelect();
+      setDone(true);
+      if(_.head(findShopCartByCurrentUserFromLocalStorage())){
+        onSubmit();
+      }
+    }
+  };
+
+  /**
+   * 询问用户是否跳转至项目管理
+   * 成功后清理当前已提交数据和重新设置localStorage
+   */
+  const dispatchCreateProject = async (params: CreateProjectParams) => {
+    const response = await createProject(params);
+    return new ValidatePwdResult(response).validate("创建成功", null, undefined);
   };
 
   return (
@@ -243,7 +351,7 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
       width={1024}
       onClose={onCancel}
       visible={visible}
-      getContainer={false}
+      getContainer={() => document.body}
       bodyStyle={{paddingBottom: 80}}
       className={styles.drawerContainer}
       footer={
@@ -264,14 +372,14 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
                   backgroundColor: '#FF6A00',
                   color: '#fff',
                   borderColor: '#fff',
-                  margin: ' 18px 80px -4px 0px',
+                  marginRight: '80px',
                   height: '36px'
                 }}
                 onClick={() => {
-                  const {current} = actionRef;
-                  if (current) {
-                    current.reload();
-                  }
+                  dispatch({
+                    type: 'user/fetchAddress',
+                  })
+                  setChildrenDrawerVisible(true);
                 }}
 
               >
@@ -279,7 +387,7 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
               </Button> :
               <Button
                 style={{
-                  margin: ' 18px 80px -4px 0px',
+                  marginRight: '80px',
                   height: '36px'
                 }}
                 disabled={true}
@@ -294,6 +402,109 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
     >
       <div>
         <>
+          <Drawer
+            title="创建项目"
+            width={320}
+            closable={false}
+            onClose={() => setChildrenDrawerVisible(false)}
+            visible={childrenDrawerVisible}
+            className={styles.drawerContainerInner}
+          >
+            {done ?
+              <Result
+                status="success"
+                title="项目创建成功"
+                extra={[
+                  <Link to="/" key="console">
+                    <Button type="primary">
+                      查看已创建项目
+                    </Button>
+                  </Link>,
+                  <Button key="buy" onClick={() => setChildrenDrawerVisible(false)}>继续购买</Button>,
+                ]}
+              /> :
+              <Form form={form} className={styles.productCustomConfigForm} onFinish={(values) => {
+                onFinish(values as FormType)
+              }}>
+                <Alert
+                  message="购买须知"
+                  description="生成项目后，可在项目管理查看项目跟进状态"
+                  type="error"
+                  closable
+                />
+                <Form.Item
+                  name="project_name"
+                  rules={[{required: true, message: '项目名称'}]}
+                  style={{marginTop: '20px'}}
+                >
+                  <Input placeholder="项目名称"/>
+                </Form.Item>
+                <Form.Item
+                  name="project_company"
+                  rules={[{required: true, message: '项目单位'}]}
+                >
+                  <Input placeholder="项目单位"/>
+                </Form.Item>
+                <Form.Item
+                  name="project_addr"
+                  rules={[{required: true, message: '交货地址'}]}
+                >
+                  <Select
+                    showSearch
+                    placeholder={!addressList?.results?.[0] ? '请前往个人设置填写地址' : '请选择地址'}
+                    optionFilterProp="children"
+                    filterOption={(input, option) => {
+                      return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                    }}
+                  >
+                    {addressList?.results?.map((d: AddressListItem, ii: number) => (
+                      <Option key={d.id + '-' + ii} value={d.id} label={d.recipients + '-' + d.tel + '-' + d.addr}>
+                        <div>
+                          <span>{d.recipients}</span>
+                          <Divider type="vertical"/>
+                          <span>{d.tel}</span>
+                          <Divider type="vertical"/>
+                          <span>{d.addr}</span>
+                        </div>
+                      </Option>))
+                    }
+                  </Select>
+                </Form.Item>
+                <Form.Item
+                  name="delivery_time"
+                  rules={[{required: true, message: '交货日期'}]}
+                >
+                  <DatePicker
+                    disabledDate={current => {
+                      return current && current < moment().subtract(1, "days");
+                    }}
+                    style={{width: '100%'}}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  wrapperCol={{
+                    xs: {span: 24, offset: 0},
+                    sm: {span: 16, offset: 8},
+                  }}
+                >
+                  <Button
+                    htmlType="submit"
+                    style={{
+                      backgroundColor: '#FF6A00',
+                      color: '#fff',
+                      borderColor: '#fff',
+                      marginRight: '80px',
+                      height: '36px'
+                    }}
+                  >
+                    生成项目
+                  </Button>
+                </Form.Item>
+              </Form>
+
+            }
+          </Drawer>
           <ProTable<ShoppingCartItem>
             columns={columns}
             actionRef={actionRef}
@@ -302,46 +513,25 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
             }}
             size="small"
             request={() => {
-              const cartListByCurrentUser = _.find(cartList, d => d.user === currentUser?.username)?.shop || [];
-              const dataSource = searchValue ? cartListByCurrentUser?.filter(d => d.pro_type.toLowerCase().includes(searchValue.toLowerCase())) : cartListByCurrentUser;
+              const dataSourceAtCurrent = findShopCartByCurrentUserFromLocalStorage();
+              const dataSource = searchValue ? dataSourceAtCurrent?.filter(
+                d => d.pro_type.toLowerCase().includes(searchValue.toLowerCase())) : dataSourceAtCurrent;
               return Promise.resolve({
                 data: dataSource,
                 success: true,
               })
             }}
             scroll={{y: 300}}
-            rowSelection={{onChange: rowSelectChange, selectedRowKeys: rowsSelect}}
-            rowKey={record => record?.uuid || record?.id}
+            rowSelection={{onChange: rowSelectChange, selectedRowKeys: rowsSelectKeys}}
+            rowKey={record => record?.uuid as string}
             pagination={false}
             columnsStateMap={columnsStateMap}
             onColumnsStateChange={map => setColumnsStateMap(map)}
             search={false}
             dateFormatter="string"
             // headerTitle="简单搜索"
-            toolBarRender={(action, {selectedRows}) => [<Input.Search onSearch={handleSearch}
-                                                                      placeholder="请输入产品名"/>,
-              // selectedRows && selectedRows.length > 0 && (
-              //   <Dropdown
-              //     overlay={
-              //       <Menu
-              //         onClick={async e => {
-              //           if (e.key === 'remove') {
-              //             // await handleRemove(selectedRows);
-              //             action.reload();
-              //           }
-              //         }}
-              //         selectedKeys={[]}
-              //       >
-              //         <Menu.Item key="remove">批量删除</Menu.Item>
-              //         <Menu.Item key="approval">批量审批</Menu.Item>
-              //       </Menu>
-              //     }
-              //   >
-              //     <Button>
-              //       批量操作 <DownOutlined/>
-              //     </Button>
-              //   </Dropdown>
-              // ),
+            toolBarRender={() => [<Input.Search key="search" onSearch={handleSearch}
+                                                placeholder="请输入产品名"/>,
             ]}
             tableAlertRender={(selectedRowKeys, selectedRows) => (
               <div>
@@ -351,10 +541,13 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
             tableAlertOptionRender={props => {
               const {onCleanSelected} = props;
               return [
-                <a onClick={() => {
-                  onCleanSelected();
-                  setTotalPrice("0.00");
-                }}>清空</a>,
+                <a
+                  key="clear"
+                  onClick={() => {
+                    onCleanSelected();
+                    setTotalPrice("0.00");
+                  }}
+                >清空</a>,
               ];
             }}
           />
@@ -377,6 +570,7 @@ export default connect(
     user: UserModelState;
   }) => ({
     currentUser: user.currentUser,
+    addressList: user.addressList,
   }),
 )(ShoppingCart);
 

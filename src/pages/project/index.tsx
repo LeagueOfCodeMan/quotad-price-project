@@ -20,11 +20,11 @@ class Product extends Component<ProductProps> {
     const {match} = this.props;
     const url = match.url === '/' ? '' : match.url;
     switch (key) {
-      case 'product-base':
-        router.push(`${url}/product-base`);
+      case 'list':
+        router.push(`${url}/list`);
         break;
-      case 'product-config':
-        router.push(`${url}/product-config`);
+      case 'detail':
+        router.push(`${url}/detail`);
         break;
       default:
         break;
@@ -39,34 +39,29 @@ class Product extends Component<ProductProps> {
     if (tabKey && tabKey !== '/') {
       return tabKey;
     }
-    return 'product-base';
+    return 'list';
   };
 
   render() {
     const tabList = [
       {
-        key: 'product-base',
-        tab: '标准配置',
+        key: 'list',
+        tab: '项目列表',
       },
       {
-        key: 'product-config',
-        tab: '配件配置',
+        key: 'detail',
+        tab: '项目详情',
       },
     ];
 
     const {children} = this.props;
 
-    const onClose = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-      console.log(e, 'I was closed.');
-    };
-
     return (
       <PageHeaderWrapper
         content={<Alert
-          message="产品配置分为两部分：标准配置和扩展配置，若需要给产品增加扩展配置，请定义配件后在标准配置中添加"
-          type="info"
+          message="项目若是下单状态，则不可撤销。若需要请及时联系代理处，避免带来不必要的损失。"
+          type="error"
           closable
-          onClose={onClose}
         />}
         tabList={tabList}
         tabActiveKey={this.getTabKey()}

@@ -62,4 +62,9 @@ export default {
   'menu.dfdk.purchased': '产品购买',
   'menu.dfdk.product.product-base': '标准配置',
   'menu.dfdk.product.product-config': '配件配置',
+
+  'menu.project': '项目管理',
+  'menu.project.list': '项目列表',
+  'menu.project.detail': '项目详情',
+
 };

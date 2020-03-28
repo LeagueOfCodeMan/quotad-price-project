@@ -13,14 +13,14 @@ import {ExclamationCircleOutlined} from "@ant-design/icons/lib";
 
 const {confirm} = Modal;
 
-interface SecurityViewProps {
+interface AddressViewProps {
   currentUser?: CurrentUser;
   handleAddressUpdate: () => void;
   addressList?: AddressInfo;
 
 }
 
-const AddressInfo: FC<SecurityViewProps> = props => {
+const AddressInfo: FC<AddressViewProps> = props => {
   const {addressList, handleAddressUpdate} = props;
   const [visible, setVisible] = useState(false);
   const [current, setCurrent] = useState<NotRequired<AddressListItem>>({});

@@ -179,6 +179,31 @@ export default {
               ],
             },
             {
+              path:'/project',
+              icon:'smile',
+              name:'project',
+              component: './project',
+              authority:needUserAuthority,
+              routes: [
+                {
+                  path: '/project',
+                  redirect: '/project/list',
+                },
+                {
+                  name: 'list',
+                  icon: 'smile',
+                  path: '/project/list',
+                  component: './project/list',
+                },
+                {
+                  name: 'detail',
+                  icon: 'smile',
+                  path: '/project/detail',
+                  component: './project/detail',
+                },
+              ],
+            },
+            {
               path: '/usermanager',
               icon: 'user',
               name: 'usermanager',

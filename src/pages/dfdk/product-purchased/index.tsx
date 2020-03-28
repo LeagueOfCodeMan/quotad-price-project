@@ -1,4 +1,4 @@
-import {BackTop, Button, Card, Divider, List, Radio, Select, Skeleton, Typography} from 'antd';
+import {BackTop, Button, Card, Divider, List, Radio, Select, Skeleton, Typography, message} from 'antd';
 import React, {FC, useEffect, useState} from 'react';
 
 import {Dispatch} from 'redux';
@@ -81,7 +81,6 @@ const CardList: FC<CardListProps> = props => {
    * 加载产品信息
    */
   const getProductData = () => {
-    console.log('===========', current)
     dispatch({
       type: 'product/fetch',
       payload: labelId ?
@@ -111,7 +110,8 @@ const CardList: FC<CardListProps> = props => {
     const val = item as ProductDetailListItem | ProductConfigListItem;
     let result = '0.00';
     switch (identity) {
-      case 1 || 2:
+      case 1:
+      case 2:
         result = (val?.leader_price || '0.00').toString();
         break;
       case 3:
@@ -122,7 +122,10 @@ const CardList: FC<CardListProps> = props => {
         break;
       default:
         result = '0.00';
+
         break;
+
+
     }
     let final = result.split('.');
     if (_.nth(final, 1)) {
@@ -326,6 +329,7 @@ const CardList: FC<CardListProps> = props => {
     setCartList(result);
     setShowDrawer(false);
     setDrawerMessage({});
+    message.success('已加入购物车！')
   }
 
   return (
