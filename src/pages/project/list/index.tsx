@@ -1,9 +1,9 @@
 import React, {FC, useEffect, useState} from 'react';
 import {DownOutlined} from '@ant-design/icons';
 import {
-  Avatar,
   Card,
-  Descriptions, Divider,
+  Descriptions,
+  Divider,
   Dropdown,
   Input,
   List,
@@ -80,10 +80,12 @@ const ListContent = ({
         }
       </Descriptions.Item>
       <Descriptions.Item label="项目采购总价" span={2}>
-        {identity === 2 ? <><Text style={{color: '#1890FF'}}>组长：</Text><Text style={{color: '#FF6A00'}}>¥ {leader_tatal_quota}</Text><Divider
+        {identity === 2 ? <><Text style={{color: '#1890FF'}}>组长：</Text><Text
+          style={{color: '#FF6A00'}}>¥ {leader_tatal_quota}</Text><Divider
           type="vertical"/></> : null}
         {identity === (2 || 3) && !member_tatal_quota ?
-          <><Text style={{color: '#61C37A'}}>{identity === 2 ? '组员：' : ''}</Text><Text style={{color: '#FF6A00'}}>¥ {member_tatal_quota}</Text></> : null}
+          <><Text style={{color: '#61C37A'}}>{identity === 2 ? '组员：' : ''}</Text><Text
+            style={{color: '#FF6A00'}}>¥ {member_tatal_quota}</Text></> : null}
         {identity === 4 ? <><Text style={{color: '#FF6A00'}}> ¥ {second_tatal_quota}</Text></> : null}
       </Descriptions.Item>
       <Descriptions.Item label="交货时间" span={2}>

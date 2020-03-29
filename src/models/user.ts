@@ -14,7 +14,8 @@ export type CurrentUser = NotRequired<UserListItem>;
 export interface UserModelState {
   currentUser: CurrentUser;
   labelList: LabelList;
-  addressList: AddressInfo
+  addressList: AddressInfo;
+  shopCount: number;
 }
 
 export interface UserModelType {
@@ -29,6 +30,7 @@ export interface UserModelType {
     saveCurrentUser: Reducer<CurrentUser>;
     saveLabels: Reducer<NotRequired<LabelList>>;
     saveAddressList: Reducer<NotRequired<AddressInfo>>;
+    saveShopCount: Reducer<{ shopCount: number }>;
   };
 }
 
@@ -45,10 +47,11 @@ const UserModel: UserModelType = {
       results: [],
       count: 0
     },
+    shopCount: 0,
   },
 
   effects: {
-    * fetchCurrent(_, {call, put}) {
+    * fetchCurrent({_, callback}, {call, put}) {
       const response = yield call(queryCurrent);
       if (response?.id) {
         yield put({
@@ -58,6 +61,9 @@ const UserModel: UserModelType = {
       } else {
         message.info('当前登录已失效，请重新登录!')
         router.push("/user/login")
+      }
+      if(callback && typeof callback === 'function'){
+        callback(response)
       }
     },
 
@@ -101,7 +107,13 @@ const UserModel: UserModelType = {
         addressList: action.payload || {},
       };
     },
-
+    saveShopCount(state, action) {
+      console.log(action);
+      return {
+        ...state,
+        shopCount: action.payload || 0,
+      }
+    }
   },
 };
 

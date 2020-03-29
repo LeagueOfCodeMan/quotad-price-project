@@ -210,7 +210,7 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
             <span style={{fontSize: '24px', color: '#FF8A00'}}>{totalPrice}</span>
           </div>
           <Button onClick={onFinish} style={{backgroundColor: '#FF6A00', color: '#fff', borderColor: '#fff'}}>
-            加入购物车
+            确认商品
           </Button>
         </div>
       }
@@ -307,7 +307,7 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
                           </Form.Item>
                         </Col>
                         <Col style={{width: '30%', marginLeft: '2%', display: 'flex'}}>
-                          <span style={{marginTop: '5px'}}>购买数量：</span>
+                          <span style={{marginTop: '5px'}}>采购数量：</span>
                           <Form.Item
                             shouldUpdate={true}
                             name={[field.name, "count"]}
@@ -327,7 +327,7 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
             </Form.List> : null
           }
           <div style={{display: 'flex', marginLeft: '60px'}}>
-            <span style={{marginTop: '5px'}}>购买产品数量：</span>
+            <span style={{marginTop: '5px'}}>采购产品数量：</span>
             <Form.Item name="production">
               <InputNumber onChange={change} min={1} style={{margin: '0 5px'}}/>
             </Form.Item>

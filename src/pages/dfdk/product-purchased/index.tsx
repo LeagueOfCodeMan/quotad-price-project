@@ -1,4 +1,4 @@
-import {BackTop, Button, Card, Divider, List, Radio, Select, Skeleton, Typography, message} from 'antd';
+import {BackTop, Button, Card, Divider, List, Radio, Select, Skeleton, Typography} from 'antd';
 import React, {FC, useEffect, useState} from 'react';
 
 import {Dispatch} from 'redux';
@@ -147,7 +147,7 @@ const CardList: FC<CardListProps> = props => {
   const content = (
     <div className={styles.pageHeaderContent}>
       <p>
-        <span style={{fontSize: '16px', fontWeight: 'bold'}}>产品购买须知：</span>产品分为标配和选配，进行批量一键加购后，生成项目。
+        <span style={{fontSize: '16px', fontWeight: 'bold'}}>产品采购须知：</span>产品分为标配和选配，进行批量一键采购后，在清单列表中添加至项目或生成项目。
         一级组员生成项目由组长进行下单，二级组员自行下单。
       </p>
       <div style={{fontSize: '16px', fontWeight: 'bold'}}>产品系列</div>
@@ -191,7 +191,7 @@ const CardList: FC<CardListProps> = props => {
           setDrawerMessage(item);
         }}
       >
-        一键加购
+        加入采购清单
       </span>
     ]
   }
@@ -322,14 +322,18 @@ const CardList: FC<CardListProps> = props => {
     const {username} = currentUser;
     const copyCartList = [...cartList];
     const target = _.remove(copyCartList, d => d.user === username) || [];
+    const shop = _.concat(_.head(target)?.shop || [], values);
     const result: LocalStorageShopType = [...copyCartList, {
       user: username as string,
-      shop: _.concat(_.head(target)?.shop || [], values)
+      shop
     }];
+    dispatch({
+      type: 'user/saveShopCount',
+      payload: shop?.length || 0
+    })
     setCartList(result);
     setShowDrawer(false);
     setDrawerMessage({});
-    message.success('已加入购物车！')
   }
 
   return (

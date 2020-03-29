@@ -1,4 +1,4 @@
-import {Tag} from 'antd';
+import {Badge, Tag} from 'antd';
 import React, {useState} from 'react';
 import {connect} from 'dva';
 import {ConnectProps, ConnectState} from '@/models/connect';
@@ -13,6 +13,7 @@ export type SiderTheme = 'light' | 'dark';
 export interface GlobalHeaderRightProps extends ConnectProps {
   theme?: SiderTheme;
   layout: 'sidemenu' | 'topmenu';
+  shopCount: number;
 }
 
 const ENVTagColor = {
@@ -23,6 +24,8 @@ const ENVTagColor = {
 
 const GlobalHeaderRight: React.SFC<GlobalHeaderRightProps> = props => {
   const [showDrawer, setShowDrawer] = useState<boolean>(false);
+  const {shopCount} = props;
+
 
   const {theme, layout} = props;
   let className = styles.right;
@@ -30,7 +33,6 @@ const GlobalHeaderRight: React.SFC<GlobalHeaderRightProps> = props => {
   if (theme === 'dark' && layout === 'topmenu') {
     className = `${styles.right}  ${styles.dark}`;
   }
-
   return (
     <div className={className}>
       {showDrawer ?
@@ -44,8 +46,9 @@ const GlobalHeaderRight: React.SFC<GlobalHeaderRightProps> = props => {
       <span className={styles.shopping} onClick={() => {
         setShowDrawer(true);
       }}>
+        <Badge count={shopCount} offset={[-23, 0]}>
         <ShoppingCartOutlined className={styles.shoppingIcon}/>
-                购物车
+        </Badge>
       </span>
       {/*<HeaderSearch*/}
       {/*className={`${styles.action} ${styles.search}`}*/}

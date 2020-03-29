@@ -109,7 +109,7 @@
 .shopping {
   display: flex;
   align-items: center;
-  margin-left: 8px;
+  margin-left: 20px;
   font-size: 12px;
   &:hover {
     color: #de6c4b;
@@ -118,5 +118,14 @@
     margin-top: -2px;
     margin-right: 3px;
     font-size: 20px;
+  }
+  :global {
+    .ant-badge-count {
+      min-width: 15px;
+      height: 15px;
+      padding: 0 3px;
+      line-height: 15px;
+      border-radius: 15px;
+    }
   }
 }

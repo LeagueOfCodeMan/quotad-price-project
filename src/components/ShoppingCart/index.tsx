@@ -1,22 +1,42 @@
 import React, {FC, ReactText, useEffect, useRef, useState} from 'react';
-import {Alert, Button, DatePicker, Divider, Drawer, Form, Input, Result, Select, Tooltip, Typography} from 'antd';
+import {
+  Alert,
+  Button,
+  DatePicker,
+  Divider,
+  Drawer,
+  Form,
+  Input,
+  Result,
+  Select,
+  Table,
+  Tooltip,
+  Typography
+} from 'antd';
 import {ProductDetailListItem} from "@/pages/dfdk/product-purchased/data";
 import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
 import {CurrentUser, UserModelState} from "@/models/user";
 import {LocalStorageShopType, ShoppingCartItem} from "@/models/data";
 import {connect} from "react-redux";
 import ProTable, {ActionType, ColumnsState, ProColumns} from "@ant-design/pro-table";
-import {CheckOutlined, DeleteTwoTone} from "@ant-design/icons/lib";
+import {
+  CheckOutlined,
+  DeleteTwoTone,
+  PlusSquareOutlined, ProjectOutlined,
+  RollbackOutlined,
+  ShoppingCartOutlined
+} from "@ant-design/icons/lib";
 import styles from './index.less';
-import {useLocalStorage} from "react-use";
+import {useLocalStorage, useToggle} from "react-use";
 import _ from "lodash";
 import {AddressInfo, AddressListItem} from "@/pages/usermanager/settings/data";
 import {Dispatch} from "redux";
-import {Moment} from "moment";
+import moment, {Moment} from "moment";
 import {createProject} from "@/services/user";
-import {ValidatePwdResult} from "@/utils/utils";
+import {isNormalResponseBody, ValidatePwdResult} from "@/utils/utils";
 import {Link} from "umi";
-import moment from 'moment';
+import {queryProject} from "@/pages/project/list/service";
+import {ProjectListItem} from "@/pages/project/list/data";
 
 const {Paragraph, Text} = Typography;
 const {Option} = Select;
@@ -72,6 +92,10 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
   const [rowsSelect, setRowsSelect] = useState<ShoppingCartItem[]>([]);
   const [childrenDrawerVisible, setChildrenDrawerVisible] = useState<boolean>(false);
   const [done, setDone] = useState<boolean>(false);
+
+  const [on, toggle] = useToggle(true);
+  const [projectNames, setProjectNames] = useState<ProjectListItem[]>([]);
+  const [current, setCurrent] = useState<ProjectListItem | {}>({});
 
   useEffect(() => {
     if (visible) {
@@ -320,17 +344,18 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
           count: d?.count,
         }
       }
-
     });
+
     const values = {
       ...fieldsValue, delivery_time: fieldsValue['delivery_time'].format('YYYY-MM-DD'),
       product_list: productList as ProductListType
     };
+
     const success = dispatchCreateProject(values);
     if (success) {
       deleteHadSelect();
       setDone(true);
-      if(_.head(findShopCartByCurrentUserFromLocalStorage())){
+      if (_.head(findShopCartByCurrentUserFromLocalStorage())) {
         onSubmit();
       }
     }
@@ -344,10 +369,49 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
     const response = await createProject(params);
     return new ValidatePwdResult(response).validate("创建成功", null, undefined);
   };
+  /**
+   * 点击添加至项目
+   */
+  const addToProject = async () => {
+    dispatch({
+      type: 'user/fetchAddress',
+    });
+    const result = await queryProject({pageSize: 99999});
+    if (isNormalResponseBody(result)) {
+      setProjectNames(result?.results);
+      setCurrent(result?.results?.[0] || {});
+    }
+    setChildrenDrawerVisible(true);
+  };
+
+  /**
+   * 项目列表及操作
+   */
+  const columns2 = [
+    {
+      title: '项目名',
+      dataIndex: 'project_name',
+      width: 150,
+      render: (text: string) => {
+        return (<div>
+          <ProjectOutlined style={{marginRight: '9px', fontSize: '16px', color: '#CCCCCC'}}/>
+          <span style={{color: '#333'}}>{text}</span>
+        </div>)
+      }
+    }
+  ];
+
+  const onRowClickManager = (record: ProjectListItem) => {
+    setCurrent(record);
+  };
+
+  const setClassNameManager = (record: ProjectListItem) => {
+    return record.id === current?.id ? 'l-table-row-active' : '';
+  };
 
   return (
     <Drawer
-      title="购物车"
+      title={<ShoppingCartOutlined style={{color: '#eb3323', fontSize: '40px'}}/>}
       width={1024}
       onClose={onCancel}
       visible={visible}
@@ -375,15 +439,10 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
                   marginRight: '80px',
                   height: '36px'
                 }}
-                onClick={() => {
-                  dispatch({
-                    type: 'user/fetchAddress',
-                  })
-                  setChildrenDrawerVisible(true);
-                }}
+                onClick={addToProject}
 
               >
-                创建项目
+                添加至项目
               </Button> :
               <Button
                 style={{
@@ -392,7 +451,7 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
                 }}
                 disabled={true}
               >
-                创建项目
+                添加至项目
               </Button>
 
           }
@@ -401,16 +460,50 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
       zIndex={1000}
     >
       <div>
-        <>
-          <Drawer
-            title="创建项目"
-            width={320}
-            closable={false}
-            onClose={() => setChildrenDrawerVisible(false)}
-            visible={childrenDrawerVisible}
-            className={styles.drawerContainerInner}
-          >
-            {done ?
+        <Drawer
+          title={on ?
+            <div className={styles.titleStyle}>加入项目<PlusSquareOutlined
+              onClick={() => toggle(false)}/>
+            </div> :
+            <div className={styles.titleStyle}>加入新项目<RollbackOutlined
+              onClick={() => toggle(true)}
+            />
+            </div>
+          }
+          width={320}
+          closable={false}
+          onClose={() => setChildrenDrawerVisible(false)}
+          visible={childrenDrawerVisible}
+          className={styles.drawerContainerInner}
+        >
+          {on ?
+            <div className={styles.projectNameStyle}>
+              <Table
+                rowKey={row => row?.id as number}
+                loading={!_.head(projectNames)}
+                columns={columns2}
+                dataSource={projectNames || []}
+                scroll={{y: 400}}
+                showHeader={false}
+                pagination={false}
+                onRow={(record, index) => ({
+                  onClick: (event) => {
+                    onRowClickManager(record);
+                  },
+                })}
+                rowClassName={setClassNameManager}
+              />
+              <div className={styles.buttonWrapper}>
+                <Button type="primary" disabled={!_.has(current,'id')}>确定</Button>
+                <Button
+                  type="danger"
+                  onClick={() => {
+                    toggle(true);
+                    setChildrenDrawerVisible(false);
+                  }}
+                >取消</Button>
+              </div>
+            </div> : done ?
               <Result
                 status="success"
                 title="项目创建成功"
@@ -423,7 +516,8 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
                   <Button key="buy" onClick={() => setChildrenDrawerVisible(false)}>继续购买</Button>,
                 ]}
               /> :
-              <Form form={form} className={styles.productCustomConfigForm} onFinish={(values) => {
+              <Form
+                form={form} className={styles.productCustomConfigForm} onFinish={(values) => {
                 onFinish(values as FormType)
               }}>
                 <Alert
@@ -458,7 +552,8 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
                     }}
                   >
                     {addressList?.results?.map((d: AddressListItem, ii: number) => (
-                      <Option key={d.id + '-' + ii} value={d.id} label={d.recipients + '-' + d.tel + '-' + d.addr}>
+                      <Option key={d.id + '-' + ii} value={d.id}
+                              label={d.recipients + '-' + d.tel + '-' + d.addr}>
                         <div>
                           <span>{d.recipients}</span>
                           <Divider type="vertical"/>
@@ -502,58 +597,56 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
                   </Button>
                 </Form.Item>
               </Form>
-
-            }
-          </Drawer>
-          <ProTable<ShoppingCartItem>
-            columns={columns}
-            actionRef={actionRef}
-            options={{
-              reload: false, fullScreen: true, setting: true, density: false
-            }}
-            size="small"
-            request={() => {
-              const dataSourceAtCurrent = findShopCartByCurrentUserFromLocalStorage();
-              const dataSource = searchValue ? dataSourceAtCurrent?.filter(
-                d => d.pro_type.toLowerCase().includes(searchValue.toLowerCase())) : dataSourceAtCurrent;
-              return Promise.resolve({
-                data: dataSource,
-                success: true,
-              })
-            }}
-            scroll={{y: 300}}
-            rowSelection={{onChange: rowSelectChange, selectedRowKeys: rowsSelectKeys}}
-            rowKey={record => record?.uuid as string}
-            pagination={false}
-            columnsStateMap={columnsStateMap}
-            onColumnsStateChange={map => setColumnsStateMap(map)}
-            search={false}
-            dateFormatter="string"
-            // headerTitle="简单搜索"
-            toolBarRender={() => [<Input.Search key="search" onSearch={handleSearch}
-                                                placeholder="请输入产品名"/>,
-            ]}
-            tableAlertRender={(selectedRowKeys, selectedRows) => (
-              <div>
-                已选择 <a style={{fontWeight: 600}}>{selectedRowKeys.length}</a> 项&nbsp;&nbsp;
-              </div>
-            )}
-            tableAlertOptionRender={props => {
-              const {onCleanSelected} = props;
-              return [
-                <a
-                  key="clear"
-                  onClick={() => {
-                    onCleanSelected();
-                    setTotalPrice("0.00");
-                  }}
-                >清空</a>,
-              ];
-            }}
-          />
-        </>
+          }
+        </Drawer>
+        <ProTable<ShoppingCartItem>
+          columns={columns}
+          actionRef={actionRef}
+          options={{
+            reload: false, fullScreen: true, setting: true, density: false
+          }}
+          size="small"
+          request={() => {
+            const dataSourceAtCurrent = findShopCartByCurrentUserFromLocalStorage();
+            const dataSource = searchValue ? dataSourceAtCurrent?.filter(
+              d => d.pro_type.toLowerCase().includes(searchValue.toLowerCase())) : dataSourceAtCurrent;
+            return Promise.resolve({
+              data: dataSource,
+              success: true,
+            })
+          }}
+          scroll={{y: 300}}
+          rowSelection={{onChange: rowSelectChange, selectedRowKeys: rowsSelectKeys}}
+          rowKey={record => record?.uuid as string}
+          pagination={false}
+          columnsStateMap={columnsStateMap}
+          onColumnsStateChange={map => setColumnsStateMap(map)}
+          search={false}
+          dateFormatter="string"
+          // headerTitle="简单搜索"
+          toolBarRender={() => [<Input.Search key="search" onSearch={handleSearch}
+                                              placeholder="请输入产品名"/>,
+          ]}
+          tableAlertRender={(selectedRowKeys, selectedRows) => (
+            <div>
+              已选择 <a style={{fontWeight: 600}}>{selectedRowKeys.length}</a> 项&nbsp;&nbsp;
+            </div>
+          )}
+          tableAlertOptionRender={props => {
+            const {onCleanSelected} = props;
+            return [
+              <a
+                key="clear"
+                onClick={() => {
+                  onCleanSelected();
+                  setTotalPrice("0.00");
+                }}
+              >清空</a>,
+            ];
+          }}
+        />
       </div>
-    </Drawer>
+    </ Drawer>
   );
 };
 
