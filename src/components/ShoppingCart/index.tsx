@@ -22,7 +22,8 @@ import ProTable, {ActionType, ColumnsState, ProColumns} from "@ant-design/pro-ta
 import {
   CheckOutlined,
   DeleteTwoTone,
-  PlusSquareOutlined, ProjectOutlined,
+  PlusSquareOutlined,
+  ProjectOutlined,
   RollbackOutlined,
   ShoppingCartOutlined
 } from "@ant-design/icons/lib";
@@ -32,11 +33,9 @@ import _ from "lodash";
 import {AddressInfo, AddressListItem} from "@/pages/usermanager/settings/data";
 import {Dispatch} from "redux";
 import moment, {Moment} from "moment";
-import {createProject} from "@/services/user";
+import {createProject, queryMyProject, updateProject} from "@/services/user";
 import {isNormalResponseBody, ValidatePwdResult} from "@/utils/utils";
 import {Link} from "umi";
-import {queryProject} from "@/pages/project/list/service";
-import {ProjectListItem} from "@/pages/project/list/data";
 
 const {Paragraph, Text} = Typography;
 const {Option} = Select;
@@ -50,7 +49,7 @@ interface ShoppingCartProps {
   addressList: AddressInfo;
 }
 
-type ProductListType = {
+export type ProductListType = {
   production: number;
   count: number;
   conf_par: { id: number; count: number; }[]
@@ -70,6 +69,8 @@ export interface CreateProjectParams {
   delivery_time: string;
   product_list: ProductListType;
 }
+
+export type ProjectNameType = { id: number; project_name: string; };
 
 const ShoppingCart: FC<ShoppingCartProps> = props => {
   const {visible, onSubmit, addressList, onCancel, currentUser, dispatch} = props;
@@ -94,8 +95,8 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
   const [done, setDone] = useState<boolean>(false);
 
   const [on, toggle] = useToggle(true);
-  const [projectNames, setProjectNames] = useState<ProjectListItem[]>([]);
-  const [current, setCurrent] = useState<ProjectListItem | {}>({});
+  const [projectNames, setProjectNames] = useState<ProjectNameType[]>([]);
+  const [current, setCurrent] = useState<ProjectNameType | {}>({});
 
   useEffect(() => {
     if (visible) {
@@ -134,7 +135,7 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
         break;
     }
     return result;
-  }
+  };
 
   const columns: ProColumns<ShoppingCartItem>[] = [
     {
@@ -315,7 +316,8 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
     }, 0) || 0;
     const fPrice: string = tPrice % 1 !== 0 ? tPrice.toString() : tPrice + '.00';
     setTotalPrice(fPrice);
-  }
+  };
+
   /**
    * 选项操作
    * @param selectedRowKeys
@@ -326,10 +328,12 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
     setRowsSelectKeys(selectedRowKeys);
     setRowsSelect(selectedRows);
   };
+
   /**
-   * 提交表单请求创建项目
+   * 处理选中条目提交信息
    */
-  const onFinish = (fieldsValue: FormType) => {
+
+  const handleSelectToSubmit = () => {
     const productList = _.map(rowsSelect, (d) => {
       const conf_par = _.map(d?.conf_list, dd => ({id: dd?.id, count: dd?.count}));
       if (conf_par?.[0]) {
@@ -345,6 +349,14 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
         }
       }
     });
+    return productList;
+  };
+
+  /**
+   * 提交表单请求创建项目
+   */
+  const onFinish = (fieldsValue: FormType) => {
+    const productList = handleSelectToSubmit();
 
     const values = {
       ...fieldsValue, delivery_time: fieldsValue['delivery_time'].format('YYYY-MM-DD'),
@@ -376,7 +388,7 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
     dispatch({
       type: 'user/fetchAddress',
     });
-    const result = await queryProject({pageSize: 99999});
+    const result = await queryMyProject();
     if (isNormalResponseBody(result)) {
       setProjectNames(result?.results);
       setCurrent(result?.results?.[0] || {});
@@ -401,13 +413,31 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
     }
   ];
 
-  const onRowClickManager = (record: ProjectListItem) => {
+  /**
+   * 表格行点击
+   * @param record
+   */
+  const onRowClickManager = (record: ProjectNameType) => {
     setCurrent(record);
   };
 
-  const setClassNameManager = (record: ProjectListItem) => {
-    return record.id === current?.id ? 'l-table-row-active' : '';
+  const setClassNameManager = (record: ProjectNameType) => {
+    return record.id === _.result(current, 'id') ? 'l-table-row-active' : '';
   };
+
+  const addProductListToProject = async () => {
+    const productList = handleSelectToSubmit();
+    const response = await updateProject({
+      id: _.result(current, 'id'),
+      type: 1,
+      product_list: productList as ProductListType
+    });
+    const success = new ValidatePwdResult(response).validate(null, null, undefined);
+    if (success) {
+      deleteHadSelect();
+      setDone(true);
+    }
+  }
 
   return (
     <Drawer
@@ -476,7 +506,7 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
           visible={childrenDrawerVisible}
           className={styles.drawerContainerInner}
         >
-          {on ?
+          {!done ? on ?
             <div className={styles.projectNameStyle}>
               <Table
                 rowKey={row => row?.id as number}
@@ -494,7 +524,10 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
                 rowClassName={setClassNameManager}
               />
               <div className={styles.buttonWrapper}>
-                <Button type="primary" disabled={!_.has(current,'id')}>确定</Button>
+                <Button type="primary"
+                        disabled={!_.has(current, 'id')}
+                        onClick={addProductListToProject}
+                >确定</Button>
                 <Button
                   type="danger"
                   onClick={() => {
@@ -503,100 +536,102 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
                   }}
                 >取消</Button>
               </div>
-            </div> : done ?
-              <Result
-                status="success"
-                title="项目创建成功"
-                extra={[
-                  <Link to="/" key="console">
-                    <Button type="primary">
-                      查看已创建项目
-                    </Button>
-                  </Link>,
-                  <Button key="buy" onClick={() => setChildrenDrawerVisible(false)}>继续购买</Button>,
-                ]}
-              /> :
-              <Form
-                form={form} className={styles.productCustomConfigForm} onFinish={(values) => {
-                onFinish(values as FormType)
-              }}>
-                <Alert
-                  message="购买须知"
-                  description="生成项目后，可在项目管理查看项目跟进状态"
-                  type="error"
-                  closable
-                />
-                <Form.Item
-                  name="project_name"
-                  rules={[{required: true, message: '项目名称'}]}
-                  style={{marginTop: '20px'}}
-                >
-                  <Input placeholder="项目名称"/>
-                </Form.Item>
-                <Form.Item
-                  name="project_company"
-                  rules={[{required: true, message: '项目单位'}]}
-                >
-                  <Input placeholder="项目单位"/>
-                </Form.Item>
-                <Form.Item
-                  name="project_addr"
-                  rules={[{required: true, message: '交货地址'}]}
-                >
-                  <Select
-                    showSearch
-                    placeholder={!addressList?.results?.[0] ? '请前往个人设置填写地址' : '请选择地址'}
-                    optionFilterProp="children"
-                    filterOption={(input, option) => {
-                      return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
-                    }}
-                  >
-                    {addressList?.results?.map((d: AddressListItem, ii: number) => (
-                      <Option key={d.id + '-' + ii} value={d.id}
-                              label={d.recipients + '-' + d.tel + '-' + d.addr}>
-                        <div>
-                          <span>{d.recipients}</span>
-                          <Divider type="vertical"/>
-                          <span>{d.tel}</span>
-                          <Divider type="vertical"/>
-                          <span>{d.addr}</span>
-                        </div>
-                      </Option>))
-                    }
-                  </Select>
-                </Form.Item>
-                <Form.Item
-                  name="delivery_time"
-                  rules={[{required: true, message: '交货日期'}]}
-                >
-                  <DatePicker
-                    disabledDate={current => {
-                      return current && current < moment().subtract(1, "days");
-                    }}
-                    style={{width: '100%'}}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  wrapperCol={{
-                    xs: {span: 24, offset: 0},
-                    sm: {span: 16, offset: 8},
+            </div> :
+            <Form
+              form={form} className={styles.productCustomConfigForm} onFinish={(values) => {
+              onFinish(values as FormType)
+            }}>
+              <Alert
+                message="购买须知"
+                description="生成项目后，可在项目管理查看项目跟进状态"
+                type="error"
+                closable
+              />
+              <Form.Item
+                name="project_name"
+                rules={[{required: true, message: '项目名称'}]}
+                style={{marginTop: '20px'}}
+              >
+                <Input placeholder="项目名称"/>
+              </Form.Item>
+              <Form.Item
+                name="project_company"
+                rules={[{required: true, message: '项目单位'}]}
+              >
+                <Input placeholder="项目单位"/>
+              </Form.Item>
+              <Form.Item
+                name="project_addr"
+                rules={[{required: true, message: '交货地址'}]}
+              >
+                <Select
+                  showSearch
+                  placeholder={!addressList?.results?.[0] ? '请前往个人设置填写地址' : '请选择地址'}
+                  optionFilterProp="children"
+                  filterOption={(input, option) => {
+                    return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
                   }}
                 >
-                  <Button
-                    htmlType="submit"
-                    style={{
-                      backgroundColor: '#FF6A00',
-                      color: '#fff',
-                      borderColor: '#fff',
-                      marginRight: '80px',
-                      height: '36px'
-                    }}
-                  >
-                    生成项目
+                  {addressList?.results?.map((d: AddressListItem, ii: number) => (
+                    <Option key={d.id + '-' + ii} value={d.id}
+                            label={d.recipients + '-' + d.tel + '-' + d.addr}>
+                      <div>
+                        <span>{d.recipients}</span>
+                        <Divider type="vertical"/>
+                        <span>{d.tel}</span>
+                        <Divider type="vertical"/>
+                        <span>{d.addr}</span>
+                      </div>
+                    </Option>))
+                  }
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="delivery_time"
+                rules={[{required: true, message: '交货日期'}]}
+              >
+                <DatePicker
+                  disabledDate={current => {
+                    return current && current < moment().subtract(1, "days");
+                  }}
+                  style={{width: '100%'}}
+                />
+              </Form.Item>
+
+              <Form.Item
+                wrapperCol={{
+                  xs: {span: 24, offset: 0},
+                  sm: {span: 16, offset: 8},
+                }}
+              >
+                <Button
+                  htmlType="submit"
+                  style={{
+                    backgroundColor: '#FF6A00',
+                    color: '#fff',
+                    borderColor: '#fff',
+                    marginRight: '80px',
+                    height: '36px'
+                  }}
+                >
+                  生成项目
+                </Button>
+              </Form.Item>
+            </Form> :
+            <Result
+              status="success"
+              title="操作成功"
+              extra={[
+                <Link to="/project/list" key="console">
+                  <Button type="primary" onClick={()=>{
+                    onSubmit();
+                  }}>
+                    查看已创建项目
                   </Button>
-                </Form.Item>
-              </Form>
+                </Link>,
+                <Button key="buy" onClick={() => setChildrenDrawerVisible(false)}>继续购买</Button>,
+              ]}
+            />
           }
         </Drawer>
         <ProTable<ShoppingCartItem>

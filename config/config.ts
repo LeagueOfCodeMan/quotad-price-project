@@ -79,6 +79,7 @@ if (isAntDesignProPreview) {
 
 const needUserAuthority: string[] = ['user_lv1', 'user_lv2', 'user_lv3', 'user_lv4'];
 const needManagerAuthority: string[] = ['user_lv1', 'user_lv2'];
+const needNormalUser: string[] = ['user_lv2', 'user_lv3', 'user_lv4'];
 
 export default {
   plugins,
@@ -179,11 +180,11 @@ export default {
               ],
             },
             {
-              path:'/project',
-              icon:'smile',
-              name:'project',
+              path: '/project',
+              icon: 'smile',
+              name: 'project',
               component: './project',
-              authority:needUserAuthority,
+              authority: needNormalUser,
               routes: [
                 {
                   path: '/project',

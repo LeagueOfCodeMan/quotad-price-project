@@ -1,5 +1,5 @@
-import request from '@/utils/request';
-import {ProjectListItem} from "@/pages/project/list/data";
+import request from '../../utils/request';
+import {ProjectListItem} from "@/pages/project/data";
 
 
 interface ParamsType extends Partial<ProjectListItem> {
@@ -14,6 +14,6 @@ export async function queryProject(params: ParamsType) {
 }
 
 export async function queryProjectOneDetail(params: { id: number }) {
-  return request('/api/product/' + params.id
+  return request('/api/project/' + params.id
   );
 }

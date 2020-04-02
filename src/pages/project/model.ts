@@ -1,10 +1,15 @@
 import {AnyAction, Reducer} from 'redux';
 import {EffectsCommandMap} from 'dva';
+import {message} from "antd";
+import {UserListModalState} from "../usermanager/userlist/model";
+import {ProjectListInfo} from "@/pages/project/data";
+import {UsersInfo} from "@/models/data";
+import {queryProject} from "@/pages/project/service";
 import {isNormalResponseBody} from "@/utils/utils";
-import {queryProject} from "@/pages/project/list/service";
-import {ProjectListInfo} from "@/pages/project/list/data";
+import {queryUsers} from "@/services/user";
 
 export interface ProjectStateType {
+  userlist?: NotRequired<UsersInfo>;
   projectList: NotRequired<ProjectListInfo>;
 }
 
@@ -18,9 +23,11 @@ export interface ProductBaseModelType {
   state: ProjectStateType;
   effects: {
     fetch: Effect;
+    fetchUsers: Effect;
   };
   reducers: {
-    save: Reducer<NotRequired<ProjectStateType>>;
+    save: Reducer<NotRequired<ProjectListInfo>>;
+    saveUsers: Reducer<UserListModalState>;
   };
 }
 
@@ -28,6 +35,10 @@ const Model: ProductBaseModelType = {
   namespace: 'project',
 
   state: {
+    userlist: {
+      results: [],
+      count: 0
+    },
     projectList: {
       results: [],
       count: 0
@@ -44,6 +55,20 @@ const Model: ProductBaseModelType = {
         });
       }
     },
+    * fetchUsers({payload, callback}, {call, put}) {
+      const response = yield call(queryUsers, payload);
+      if (typeof response === 'string') {
+        message.error(response);
+      } else if (response?.results) {
+        yield put({
+          type: 'saveUsers',
+          payload: response,
+        });
+      }
+      if (callback && typeof callback === 'function') {
+        callback(response);
+      }
+    },
   },
 
   reducers: {
@@ -51,6 +76,12 @@ const Model: ProductBaseModelType = {
       return {
         ...state,
         projectList: action.payload,
+      };
+    },
+    saveUsers(state, action) {
+      return {
+        ...state,
+        userlist: action.payload,
       };
     },
   },

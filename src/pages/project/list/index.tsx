@@ -12,14 +12,16 @@ import {
   Modal,
   Radio,
   Skeleton,
+  TreeSelect,
   Typography,
 } from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
-import {ProjectStateType} from './model';
+import {ProjectStateType} from '../model';
 import styles from './style.less';
 import {CurrentUser, UserModelState} from "@/models/user";
 import Tag from "antd/lib/tag";
+import router from 'umi/router';
 
 import {ResultType, ValidatePwdResult} from "@/utils/utils";
 import ValidatePassword from "@/components/ValidatePassword";
@@ -27,19 +29,21 @@ import {testPassword} from "@/services/user";
 import {ExclamationCircleOutlined} from "@ant-design/icons/lib";
 import _ from 'lodash';
 import {deleteProduct} from "@/pages/dfdk/product/product-base/service";
-import {ProjectListItem} from "@/pages/project/list/data";
+import {ProjectListItem} from "@/pages/project/data";
 import {PaginationConfig} from "antd/lib/pagination";
+import {useEffectOnce} from "react-use";
 
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
 const {Search} = Input;
 const {confirm} = Modal;
-const {Paragraph, Text} = Typography;
+const {Text} = Typography;
 
 interface BasicListProps {
   project: ProjectStateType;
   dispatch: Dispatch<any>;
   fetch: boolean;
+  queryProjectOneDetail: boolean;
   currentUser: CurrentUser;
 }
 
@@ -52,8 +56,8 @@ const ListContent = ({
                        data: {
                          project_name, project_company,
                          create_time, delivery_time, pro_status, username,
-                         leader_tatal_quota, second_tatal_quota, member_tatal_quota,
-                         leader_tatal_price, second_tatal_price, member_tatal_price,
+                         leader_total_quota, second_total_quota, member_total_quota,
+                         leader_total_price, second_total_price, member_total_price,
                          project_addr: {recipients, addr, tel}
                        }, currentUser: {identity}
                      }: { data: ProjectListItem; currentUser: CurrentUser; }) => (
@@ -68,7 +72,7 @@ const ListContent = ({
       <Descriptions.Item label="创建时间">
         <Text style={{color: '#181818'}}>{create_time}</Text>
       </Descriptions.Item>
-      <Descriptions.Item label="状态" span={2}>
+      <Descriptions.Item label="状态">
         {
           <p>{pro_status === 1 ?
             <Tag color="red">未下单</Tag> :
@@ -81,12 +85,12 @@ const ListContent = ({
       </Descriptions.Item>
       <Descriptions.Item label="项目采购总价" span={2}>
         {identity === 2 ? <><Text style={{color: '#1890FF'}}>组长：</Text><Text
-          style={{color: '#FF6A00'}}>¥ {leader_tatal_quota}</Text><Divider
+          style={{color: '#FF6A00'}}>¥ {leader_total_quota}</Text><Divider
           type="vertical"/></> : null}
-        {identity === (2 || 3) && !member_tatal_quota ?
+        {identity === (2 || 3) && !member_total_quota ?
           <><Text style={{color: '#61C37A'}}>{identity === 2 ? '组员：' : ''}</Text><Text
-            style={{color: '#FF6A00'}}>¥ {member_tatal_quota}</Text></> : null}
-        {identity === 4 ? <><Text style={{color: '#FF6A00'}}> ¥ {second_tatal_quota}</Text></> : null}
+            style={{color: '#FF6A00'}}>¥ {member_total_quota}</Text></> : null}
+        {identity === 4 ? <><Text style={{color: '#FF6A00'}}> ¥ {second_total_quota}</Text></> : null}
       </Descriptions.Item>
       <Descriptions.Item label="交货时间" span={2}>
         <Text style={{color: '#181818'}}>{delivery_time}</Text>
@@ -107,6 +111,7 @@ interface ListSearchParams {
   pageSize?: number;
   pro_status?: 1 | 2 | 3;
   search?: string;
+  username?: string;
 
   [propName: string]: any;
 }
@@ -115,8 +120,8 @@ const ProjectList: FC<BasicListProps> = props => {
   const {
     fetch,
     dispatch,
-    project: {projectList},
-    currentUser,
+    project: {projectList, userlist},
+    currentUser, queryProjectOneDetail,
   } = props;
   const [current, setCurrent] = useState<NotRequired<ProjectListItem>>({});
   const [validateVisible, setValidateVisible] = useState(false);
@@ -127,10 +132,19 @@ const ProjectList: FC<BasicListProps> = props => {
 
   const {results = [], count = 0} = projectList;
 
+  useEffectOnce(() => {
+    dispatch({
+      type: 'project/fetchUsers',
+      payload: {
+        pageSize: 99999
+      },
+    });
+  });
+
   useEffect(() => {
     reloadList();
     console.log(111)
-  }, [listParams])
+  }, [listParams]);
 
   const reloadList = () => {
     dispatch({
@@ -160,44 +174,57 @@ const ProjectList: FC<BasicListProps> = props => {
     setCurrent(currentItem);
   };
 
+  const treeData = () => {
+    const children = userlist?.results?.map((d: { username: string }) => {
+      return {
+        title: <b style={{color: '#08c'}}>{d?.username}</b>,
+        value: d?.username
+      }
+    });
+    return [{title: '一级组员', value: 'all', children}];
+  };
   //        TODO 只要组长才需要发布
   const extraContent = (
-    <div className={styles.extraContent}>
-      {currentUser?.identity === 2 ?
+    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+      {
+        currentUser?.identity === 2 ?
+          <TreeSelect
+            showSearch
+            style={{width: 150, marginRight: '25px'}}
+            value={listParams?.username}
+            dropdownStyle={{maxHeight: 400, overflow: 'auto'}}
+            placeholder="请选择用户"
+            allowClear
+            treeData={treeData()}
+            treeDefaultExpandAll
+            onChange={(value) => {
+              if (value !== 'all') {
+                setListParams({...listParams, username: value});
+              } else {
+                setListParams({..._.omit(listParams, ['username'])});
+              }
+            }}
+          /> : null
+      }
+      <div className={styles.extraContent}>
         <RadioGroup defaultValue="all" onChange={e => {
           if (e.target.value !== 'all') {
-            setListParams({...listParams, mem_state: e.target.value - 0 as (1 | 2)});
+            setListParams({...listParams, pro_status: e.target.value - 0 as (1 | 2 | 3)});
           } else {
-            setListParams({..._.omit(listParams, ['mem_state'])});
+            setListParams({..._.omit(listParams, ['pro_status'])});
           }
 
         }}>
-          <RadioButton value="all">未下单</RadioButton>
+          <RadioButton value="all">全部</RadioButton>
+          <RadioButton value="1">未下单</RadioButton>
           <RadioButton value="2">已下单</RadioButton>
-          <RadioButton value="1">已完成</RadioButton>
+          <RadioButton value="3">已完成</RadioButton>
         </RadioGroup>
-        : null}
-      <Search
-        className={styles.extraContentSearch} placeholder="请输入搜索内容"
-        onSearch={(value) => setListParams({...listParams, search: value})}/>
+        <Search
+          className={styles.extraContentSearch} placeholder="请输入搜索内容"
+          onSearch={(value) => setListParams({...listParams, search: value})}/>
+      </div>
     </div>
-  );
-
-  const MoreBtn: React.FC<{
-    item: ProjectListItem;
-  }> = ({item}) => (
-    <Dropdown
-      overlay={
-        <Menu onClick={({key}) => editAndDelete(key, item)}>
-          <Menu.Item key="edit">编辑</Menu.Item>
-          <Menu.Item key="delete">删除</Menu.Item>
-        </Menu>
-      }
-    >
-      <a>
-        更多 <DownOutlined/>
-      </a>
-    </Dropdown>
   );
 
   //  =========== 密码校验 ======================
@@ -242,34 +269,72 @@ const ProjectList: FC<BasicListProps> = props => {
   }
 
   // ================= 列表操作 ================
+  const MoreBtn: React.FC<{
+    item: ProjectListItem;
+  }> = ({item}) => (
+    <Dropdown
+      overlay={
+        <Menu onClick={({key}) => editAndDelete(key, item)}>
+          <Menu.Item key="edit">编辑</Menu.Item>
+          <Menu.Item key="delete">撤销</Menu.Item>
+        </Menu>
+      }
+    >
+      <a>
+        更多 <DownOutlined/>
+      </a>
+    </Dropdown>
+  );
+
   const actions = (item: ProjectListItem): any[] => {
+    const {id} = item;
+    const template = [
+      <a
+        key="detail"
+        onClick={e => {
+          e.preventDefault();
+          dispatch({
+            type: 'user/queryProjectOneDetail',
+            payload: {project: item, id},
+            callback: (res: any) => {
+              if (Array.isArray(res)) {
+                router.push('/project/detail')
+              }
+            }
+          })
+        }}
+      >
+        商品详情
+      </a>
+    ];
     switch (currentUser?.identity) {
-      case 1:
-        return [
+      case 2:
+        return template.concat([
           <a
+            key="order"
             onClick={e => {
               e.preventDefault();
             }}
           >
-            配置
+            下单
           </a>,
           <MoreBtn key="more" item={item}/>,
-        ];
-      case 2:
-        return [
+        ]);
+      case 3:
+        return template.concat([
           <a
+            key="order"
             onClick={e => {
               e.preventDefault();
-              setCurrent(item);
             }}
           >
-            {item?.mem_state === 1 ? '发布' : '编辑'}
-          </a>
-        ];
-
+            提交最终修改
+          </a>,
+          <MoreBtn key="more" item={item}/>,
+        ]);
     }
-    return [];
-  }
+    return template;
+  };
 
   return (
     <div>
@@ -280,8 +345,10 @@ const ProjectList: FC<BasicListProps> = props => {
           style={{marginTop: 24}}
           bodyStyle={{padding: '0 32px 40px 32px'}}
           extra={extraContent}
+          loading={queryProjectOneDetail}
         >
           <List
+            itemLayout="vertical"
             size="large"
             rowKey={record => record.id.toString()}
             loading={fetch}
@@ -289,6 +356,7 @@ const ProjectList: FC<BasicListProps> = props => {
             dataSource={results}
             renderItem={item => (
               <List.Item
+                key={item?.id}
                 actions={actions(item)}
               >
                 <Skeleton avatar title={false} loading={fetch} active>
@@ -336,5 +404,6 @@ export default connect(
     project,
     currentUser: user.currentUser,
     fetch: loading.effects['project/fetch'],
+    queryProjectOneDetail: loading.effects['user/queryProjectOneDetail'],
   }),
 )(ProjectList);
