@@ -17,18 +17,6 @@ interface BasicListProps {
   projectDetailList: ProjectDetailListItem[];
 }
 
-enum ValidateType {
-  DELETE_CONFIG = 'DELETE_CONFIG',
-}
-
-interface ListSearchParams {
-  current?: number;
-  pageSize?: number;
-  mem_state?: 1 | 2;
-  conf_name?: string;
-
-  [propName: string]: any;
-};
 
 export const ProjectDetail: FC<BasicListProps> = props => {
   const [validateVisible, setValidateVisible] = useState(false);
