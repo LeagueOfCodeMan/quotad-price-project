@@ -184,7 +184,7 @@ export default {
               icon: 'smile',
               name: 'project',
               component: './project',
-              authority: needNormalUser,
+              authority: needUserAuthority,
               routes: [
                 {
                   path: '/project',
