@@ -6,7 +6,7 @@ import {findDOMNode} from 'react-dom';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import OperationModal from './components/OperationModal';
-import {ProductBaseStateType} from './model';
+import {ProductBaseStateType} from '../model';
 import styles from './style.less';
 import {CurrentUser, UserModelState} from "@/models/user";
 import Tag from "antd/lib/tag";
@@ -18,16 +18,14 @@ import {ExclamationCircleOutlined} from "@ant-design/icons/lib";
 import {PaginationConfig} from "antd/lib/pagination";
 import PublishModal from "@/pages/dfdk/product/product-config/components/PublishModal";
 import _ from 'lodash';
-import {ProductBaseListItem} from "@/pages/dfdk/product/product-base/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/data";
 import {
   addProduct,
   deleteProduct,
-  ModifyProductMemberPrice, queryConfigListByProductId, updateConfigListByProductId,
+  modifyProductMemberPrice, queryConfigListByProductId, updateConfigListByProductId,
   updateProduct
-} from "@/pages/dfdk/product/product-base/service";
-import ProductCustomConfig from "@/pages/dfdk/product/product-base/components/ProductCustomConfig";
-import {LabelList} from "@/pages/dfdk/label/data";
-import {ProductConfigList} from "@/pages/dfdk/product/product-config/data";
+} from "@/pages/dfdk/product/service";
+// import ProductCustomConfig from "@/pages/dfdk/product/product-base/components/ProductCustomConfig";
 
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
@@ -39,7 +37,6 @@ interface BasicListProps {
   dispatch: Dispatch<any>;
   loading: boolean;
   currentUser: CurrentUser;
-  labelList: LabelList;
 }
 
 enum ValidateType {
@@ -127,7 +124,7 @@ const ProductBaseList: FC<BasicListProps> = props => {
   const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
   const [configVisible, setConfigVisible] = useState<boolean>(false);
   const [current, setCurrent] = useState<NotRequired<ProductBaseListItem>>({});
-  const [confList, setConfList] = useState<NotRequired<ProductConfigList>>({});
+  const [confList, setConfList] = useState<NotRequired<any>>({});
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>("");
   const [listParams, setListParams] = useState<ListSearchParams>({
@@ -138,13 +135,6 @@ const ProductBaseList: FC<BasicListProps> = props => {
   // TODO 分类label
   const productLabel = _.head(labelList.results) && labelList.results.filter(i => i.label_type === 1);
   const configLabel = _.head(labelList.results) && labelList.results.filter(i => i.label_type === 2);
-
-  useEffect(() => {
-    dispatch({
-      type: 'user/fetchLabels',
-      payload: {pageSize: 99999}
-    })
-  }, [1])
 
   useEffect(() => {
     reloadList();
@@ -374,20 +364,6 @@ const ProductBaseList: FC<BasicListProps> = props => {
   return (
     <div>
       <div className={styles.standardList}>
-        <Card bordered={false}>
-          <Row>
-            <Col sm={8} xs={24}>
-              <Info title="产品总数" value={countStatistics?.total_count} bordered/>
-            </Col>
-            <Col sm={8} xs={24}>
-              <Info title="未发布数" value={<span style={{color: 'gold'}}>{countStatistics?.unpublished}</span>} bordered/>
-            </Col>
-            <Col sm={8} xs={24}>
-              <Info title="已发布数" value={<span style={{color: 'blue'}}>{countStatistics?.published_count}</span>}/>
-            </Col>
-          </Row>
-        </Card>
-
         <Card
           className={styles.listCard}
           bordered={false}
@@ -457,21 +433,21 @@ const ProductBaseList: FC<BasicListProps> = props => {
         onSubmit={handleSubmit}
         labelArr={productLabel || []}
       />
-      <ProductCustomConfig
-        confList={confList}
-        labelArr={configLabel || []}
-        visible={configVisible}
-        onCancel={() => {
-          setConfList({});
-          setCurrent({});
-          console.log(111)
-          setConfigVisible(false);
-        }}
-        onSubmit={handleSubmitCustomConfig}
-      />
+      {/*<ProductCustomConfig*/}
+        {/*confList={confList}*/}
+        {/*labelArr={configLabel || []}*/}
+        {/*visible={configVisible}*/}
+        {/*onCancel={() => {*/}
+          {/*setConfList({});*/}
+          {/*setCurrent({});*/}
+          {/*console.log(111)*/}
+          {/*setConfigVisible(false);*/}
+        {/*}}*/}
+        {/*onSubmit={handleSubmitCustomConfig}*/}
+      {/*/>*/}
       <PublishModal
         onSubmit={async (value, callback) => {
-          const response = await ModifyProductMemberPrice({id: current?.id as number, data: value});
+          const response = await modifyProductMemberPrice({id: current?.id as number, data: value});
           const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
           if (success) {
             callback();

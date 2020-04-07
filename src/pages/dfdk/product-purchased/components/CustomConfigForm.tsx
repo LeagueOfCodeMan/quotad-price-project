@@ -16,7 +16,7 @@ import {
 } from 'antd';
 import styles from '../style.less';
 import {ProductDetailListItem} from "@/pages/dfdk/product-purchased/data";
-import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
 import {CheckOutlined} from "@ant-design/icons/lib";
 import _ from "lodash";
 import {CurrentUser} from "@/models/user";
@@ -74,7 +74,7 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
       setTimeout(() => {
         const conf_par: ConfPar = [];
         _.forEach(groupItems, (v, k) => {
-          conf_par.push({id: (_.head(sortConfListByActPrice(v as any[])) as ProductConfigListItem)?.id, count: 0})
+          conf_par.push({id: (_.head(sortConfListByActPrice(v as any[])) as ProductBaseListItem)?.id, count: 0})
         });
         form.setFieldsValue({production: 1, conf_par});
       }, 0)
@@ -105,7 +105,7 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
     if (production) {
       if (_.head(checkHadCountConf)) {
         const confPrice: number = _.reduce(checkHadCountConf as ConfPar, (sum, {id, count}) => {
-          const findAtChecked = _.find(_.result(current, ['conf_list']) as ProductConfigListItem[], o => o.id === id);
+          const findAtChecked = _.find(_.result(current, ['conf_list']) as ProductBaseListItem[], o => o.id === id);
           if (parseFloat(actPrice(findAtChecked))) {
             return sum + parseFloat(actPrice(findAtChecked)) * count;
           }
@@ -127,7 +127,7 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
    */
   const actPrice = (item: any): string => {
     const {identity} = currentUser;
-    const val = item as ProductDetailListItem | ProductConfigListItem;
+    const val = item as ProductDetailListItem | ProductBaseListItem;
     let result = '0.00';
     switch (identity) {
       case 1:
@@ -150,7 +150,7 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
   /**
    * 切换标准与选配，选配时，处理数据
    */
-  const sortConfListByActPrice = (item: ProductConfigListItem[] | ProductDetailListItem[]) => {
+  const sortConfListByActPrice = (item: ProductBaseListItem[] | ProductDetailListItem[]) => {
     return _.sortBy(item, o => parseFloat(actPrice(o)));
   };
 
@@ -161,7 +161,7 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
   const onFinish = () => {
     const {production, conf_par} = form.getFieldsValue() as FormListType;
     const checkedProductConfigList: number[] = _.map(_.filter(conf_par, o => o.count) as ConfPar, 'id');
-    const findAtChecked = _.map(_.result(current, ['conf_list']) as ProductConfigListItem[], (d) => {
+    const findAtChecked = _.map(_.result(current, ['conf_list']) as ProductBaseListItem[], (d) => {
       if (_.indexOf(checkedProductConfigList, d.id) > -1) {
         return {
           ...d,
@@ -173,7 +173,7 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
     const result = {
       uuid:uuidv4(),
       ..._.omit(current, ['conf_list']), count: production,
-      conf_list: _.filter(findAtChecked, o => o) as ProductConfigListItem[] | [], total_price: totalPrice
+      conf_list: _.filter(findAtChecked, o => o) as ProductBaseListItem[] | [], total_price: totalPrice
     };
     if (handleAdd) {
       handleAdd(result as ShoppingCartItem);
@@ -291,7 +291,7 @@ const CustomConfigForm: React.FC<CustomConfigFormProps> = props => {
                               }}
                               onChange={change}
                             >
-                              {(_.result(groupItems, labelKeys?.[index]) as ProductConfigListItem[])?.map((d: ProductConfigListItem, ii) =>
+                              {(_.result(groupItems, labelKeys?.[index]) as ProductBaseListItem[])?.map((d: ProductBaseListItem, ii) =>
                                 <Option key={d.id + '-' + ii} value={d.id} label={d.conf_name + '-' + d.conf_mark}>
                                   <div>
                                     <span>{d.conf_name}</span>

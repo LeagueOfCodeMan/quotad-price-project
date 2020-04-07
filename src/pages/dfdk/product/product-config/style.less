@@ -1,5 +1,5 @@
 @import '~antd/es/style/themes/default.less';
-@import './utils/utils.less';
+@import '../utils/utils.less';
 
 .standardList {
   :global {
@@ -269,5 +269,18 @@
     flex-direction: column;
     align-items: flex-start;
     margin: 20px;
+  }
+}
+
+.listContentWrapper {
+  margin: 10px;
+  font-family: PingFangSC, helvetica neue, hiragino sans gb, arial, microsoft yahei ui, microsoft yahei, simsun, sans-serif !important;
+  :global {
+    .ant-descriptions-row > th, .ant-descriptions-row > td {
+      padding-bottom: 6px;
+    }
+    .ant-descriptions-item-content {
+      font-size: 12px;
+    }
   }
 }

@@ -1,7 +1,7 @@
 import {AnyAction, Reducer} from 'redux';
 import {EffectsCommandMap} from 'dva';
 import {isNormalResponseBody} from "@/utils/utils";
-import {ProductBaseList} from "@/pages/dfdk/product/product-base/data";
+import {ProductBaseList} from "@/pages/dfdk/product/data";
 import {countStatistics, queryProductAndConfig} from "@/pages/dfdk/product-purchased/service";
 import {ProductDetailInfo} from "@/pages/dfdk/product-purchased/data";
 

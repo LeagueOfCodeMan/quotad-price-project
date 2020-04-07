@@ -4,6 +4,7 @@ import {Alert} from 'antd';
 import {PageHeaderWrapper} from '@ant-design/pro-layout';
 import {connect} from 'dva';
 import router from 'umi/router';
+import {CurrentUser, UserModelState} from "@/models/user";
 
 interface ProductProps {
   match: {
@@ -13,6 +14,7 @@ interface ProductProps {
   location: {
     pathname: string;
   };
+  currentUser: CurrentUser;
 }
 
 class Product extends Component<ProductProps> {
@@ -43,14 +45,20 @@ class Product extends Component<ProductProps> {
   };
 
   render() {
-    const tabList = [
-      {
-        key: 'product-base',
-        tab: '标准配置',
-      },
+    const {currentUser: {identity}} = this.props;
+    const tabList = identity === 1 ? [
       {
         key: 'product-config',
-        tab: '配件配置',
+        tab: '产品库',
+      },
+      {
+        key: 'product-base',
+        tab: '标准产品',
+      },
+    ] : [
+      {
+        key: 'product-base',
+        tab: '标准产品',
       },
     ];
 
@@ -62,12 +70,12 @@ class Product extends Component<ProductProps> {
 
     return (
       <PageHeaderWrapper
-        content={<Alert
-          message="产品配置分为两部分：标准配置和扩展配置，若需要给产品增加扩展配置，请定义配件后在标准配置中添加"
+        content={identity === 1 ? <Alert
+          message="产品配置流程：在产品库中定义产品、配件、服务等，然后通过组装生成标准产品"
           type="info"
           closable
           onClose={onClose}
-        />}
+        /> : null}
         tabList={tabList}
         tabActiveKey={this.getTabKey()}
         onTabChange={this.handleTabChange}
@@ -80,4 +88,12 @@ class Product extends Component<ProductProps> {
   }
 }
 
-export default connect()(Product);
+export default connect(
+  ({
+     user,
+   }: {
+    user: UserModelState;
+  }) => ({
+    currentUser: user.currentUser,
+  }),
+)(Product);

@@ -5,7 +5,7 @@ import styles from '../style.less';
 import {EyeOutlined, InboxOutlined} from "@ant-design/icons/lib";
 import {UploadListType} from "antd/lib/upload/interface";
 import _ from 'lodash';
-import {ProductBaseListItem} from "@/pages/dfdk/product/product-base/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/data";
 import {LabelListItem} from "@/pages/dfdk/label/data";
 
 const {Option} = Select;

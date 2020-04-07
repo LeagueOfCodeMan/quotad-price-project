@@ -3,7 +3,7 @@ import {Store} from 'rc-field-form/lib/interface';
 import {Button, Col, Divider, Form, Modal, Row, Select} from 'antd';
 import styles from '../style.less';
 import {MinusCircleOutlined, PlusOutlined} from "@ant-design/icons/lib";
-import {ProductConfigList, ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductConfigList, ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
 import {LabelListItem} from "@/pages/dfdk/label/data";
 import _ from "lodash";
 import {queryConfInfo} from "@/pages/dfdk/product/product-config/service";
@@ -29,7 +29,7 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
   const [form] = Form.useForm();
   const {visible, confList: current, onCancel, onSubmit, labelArr} = props;
   const [formList, setFormList] = useState<FormListType[]>([]);
-  const [configList, setConfigList] = useState<NotRequired<ProductConfigListItem[]>>([]);
+  const [configList, setConfigList] = useState<NotRequired<ProductBaseListItem[]>>([]);
   const formRef = useRef(null);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
       const result = await queryConfInfo({label_name: value as string, pageSize: 99999});
       if (_.head(result.results)) {
         const lastArr: FormListType[] = [...formList] || [];
-        const lastConf: NotRequired<ProductConfigListItem[]> = [...configList] || [];
+        const lastConf: NotRequired<ProductBaseListItem[]> = [...configList] || [];
         const confList = result.results;
         const {label_name, id} = confList?.[0];
         lastArr[index] = {label_name, conf_id: id};
@@ -141,7 +141,7 @@ const ProductCustomConfig: FC<OperationModalProps> = props => {
                           }}
                           onChange={val => handleConfigChange({value: val, index: index})}
                         >
-                          {(configList[index])?.map((d: ProductConfigListItem) => <Option key={d.id} value={d.id} label={d.conf_name +'-' + d.conf_mark}>
+                          {(configList[index])?.map((d: ProductBaseListItem) => <Option key={d.id} value={d.id} label={d.conf_name +'-' + d.conf_mark}>
                             <div>
                               <span>{d.conf_name}</span>
                               <Divider type="vertical"/>

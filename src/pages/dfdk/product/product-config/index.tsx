@@ -1,42 +1,45 @@
 import React, {FC, useEffect, useRef, useState} from 'react';
 import {DownOutlined, PlusOutlined} from '@ant-design/icons';
-import {Avatar, Button, Card, Col, Dropdown, Input, List, Menu, message, Modal, Radio, Row,} from 'antd';
+import {
+  Avatar,
+  Button,
+  Card,
+  Col,
+  Descriptions,
+  Dropdown,
+  Input,
+  List,
+  Menu,
+  message,
+  Modal,
+  Row,
+  Typography,
+} from 'antd';
 
 import {findDOMNode} from 'react-dom';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import OperationModal from './components/OperationModal';
-import {ProductConfigStateType} from './model';
 import styles from './style.less';
 import {CurrentUser, UserModelState} from "@/models/user";
-import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
-import Tag from "antd/lib/tag";
-import {
-  addConfInfo,
-  deleteConfInfo,
-  ModifyMemberPrice,
-  updateConfInfo
-} from "@/pages/dfdk/product/product-config/service";
-import {ResultType, ValidatePwdResult} from "@/utils/utils";
+import {addProduct, deleteProduct, updateProduct} from "@/pages/dfdk/product/service";
+import {ProductType, productType, ResultType, ValidatePwdResult} from "@/utils/utils";
 import ValidatePassword from "@/components/ValidatePassword";
 import {testPassword} from "@/services/user";
 import {ExclamationCircleOutlined} from "@ant-design/icons/lib";
 import {PaginationConfig} from "antd/lib/pagination";
-import PublishModal from "@/pages/dfdk/product/product-config/components/PublishModal";
-import _ from 'lodash';
-import {LabelList} from "@/pages/dfdk/label/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/data";
+import {ProductBaseStateType} from "@/pages/dfdk/product/model";
 
-const RadioButton = Radio.Button;
-const RadioGroup = Radio.Group;
 const {Search} = Input;
 const {confirm} = Modal;
+const {Text} = Typography;
 
 interface BasicListProps {
-  productConfig: ProductConfigStateType;
   dispatch: Dispatch<any>;
   loading: boolean;
   currentUser: CurrentUser;
-  labelList: LabelList;
+  productBase: ProductBaseStateType;
 }
 
 enum ValidateType {
@@ -58,49 +61,34 @@ const Info: FC<{
 
 const ListContent = ({
                        data: {
-                         con_desc, leader_price, second_price, member_price,
-                         mem_state, label_name
+                         desc, leader_price, second_price, member_price,
+                         genre
                        }, currentUser: {identity}
                      }: {
-  data: ProductConfigListItem; currentUser: CurrentUser;
-}) =>
-  (
-    <div className={styles.listContent}>
-      <div className={styles.listContentItem} style={{textAlign: 'center'}}>
-        <span>系列</span>
-        <p><Tag color="blue">{label_name || '未定义标签'}</Tag></p>
-      </div>
-      <div className={styles.listContentItem}>
-        <span>参数描述</span>
-        <p>{con_desc}</p>
-      </div>
-      <div className={styles.listContentItem}>
-        <span>是否发布</span>
-        <p>{mem_state === 1 ? <Tag color="red">未发布</Tag> : <Tag color="geekblue">已发布</Tag>}</p>
-      </div>
-      <div className={styles.listContentItem}>
-        <span>组长价格</span>
-        <p>{leader_price}</p>
-      </div>
-      /*
-        一级组员价格
-       */
-      {identity === (2 || 3) ?
-        <div className={styles.listContentItem}>
-          <span>{identity === 2 ? '一级组员价格' : '价格'}</span>
-          <p>{member_price || <Tag color="red">未定义</Tag>}</p>
-        </div> : null
-      }
-      /*
-        二级组员价格
-       */
-      {identity === (1 || 4) ?
-        <div className={styles.listContentItem}>
-          <span>{identity === 1 ? '二级组员价格' : '价格'}</span>
-          <p>{second_price}</p>
-        </div> : null}
-    </div>
-  );
+  data: ProductBaseListItem; currentUser: CurrentUser;
+}) => (
+  <div className={styles.listContentWrapper}>
+    <Descriptions column={4} layout="vertical">
+      <Descriptions.Item label="类型">
+        <Text style={{color: '#181818'}}>{productType(genre)}</Text>
+      </Descriptions.Item>
+      <Descriptions.Item label="产品采购总价">
+        <>
+          <Text style={{color: '#1890FF'}}>组长：</Text>
+          <Text style={{color: '#FF6A00'}}>¥ {leader_price}</Text>
+        </>
+      </Descriptions.Item>
+      <Descriptions.Item label="描述" span={2}>
+        {desc?.split(" ")?.map(o => {
+          return (
+            <Text style={{color: '#181818'}}>{o}</Text>
+          )
+        })}
+      </Descriptions.Item>
+
+    </Descriptions>
+  </div>
+);
 
 interface ListSearchParams {
   current?: number;
@@ -116,29 +104,19 @@ export const ProductConfigList: FC<BasicListProps> = props => {
   const {
     loading,
     dispatch,
-    productConfig: {configList, countStatistics},
-    currentUser,labelList
+    productBase: {productList, countStatistics},
+    currentUser
   } = props;
   const [done, setDone] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
-  const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
-  const [current, setCurrent] = useState<NotRequired<ProductConfigListItem>>({});
+  const [current, setCurrent] = useState<NotRequired<ProductBaseListItem>>({});
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>("");
   const [listParams, setListParams] = useState<ListSearchParams>({
     current: 1, pageSize: 5
   });
 
-  const {results = [], count = 0} = configList;
-  // TODO 分类label
-  const configLabel = _.head(labelList.results) && labelList.results.filter(i=>i.label_type === 2);
-
-  useEffect(() => {
-    dispatch({
-      type: 'user/fetchLabels',
-      payload: {pageSize: 99999}
-    })
-  }, [1])
+  const {results = [], count = 0} = productList;
 
   useEffect(() => {
     reloadList();
@@ -146,13 +124,13 @@ export const ProductConfigList: FC<BasicListProps> = props => {
 
   const reloadList = () => {
     dispatch({
-      type: 'productConfig/fetch',
+      type: 'productBase/fetch',
       payload: {
         ...listParams
       },
     });
     dispatch({
-      type: 'productConfig/countStatistics',
+      type: 'productBase/countStatistics',
     });
   };
 
@@ -170,13 +148,13 @@ export const ProductConfigList: FC<BasicListProps> = props => {
     setCurrent({});
   };
 
-  const showEditModal = (item: ProductConfigListItem) => {
-    console.log(item,'编辑');
+  const showEditModal = (item: ProductBaseListItem) => {
+    console.log(item, '编辑');
     setCurrent(item);
     setVisible(true);
   };
 
-  const editAndDelete = (key: string, currentItem: ProductConfigListItem) => {
+  const editAndDelete = (key: string, currentItem: ProductBaseListItem) => {
     if (key === 'delete') {
       setValidateType(ValidateType.DELETE_CONFIG);
     }
@@ -187,20 +165,6 @@ export const ProductConfigList: FC<BasicListProps> = props => {
   // TODO 只要组长才需要发布
   const extraContent = (
     <div className={styles.extraContent}>
-      {currentUser?.identity === 2 ?
-        <RadioGroup defaultValue="all" onChange={e => {
-          if (e.target.value !== 'all') {
-            setListParams({...listParams, mem_state: e.target.value - 0 as (1 | 2)});
-          } else {
-            setListParams({..._.omit(listParams, ['mem_state'])});
-          }
-
-        }}>
-          <RadioButton value="all">全部</RadioButton>
-          <RadioButton value="2">已发布</RadioButton>
-          <RadioButton value="1">未发布</RadioButton>
-        </RadioGroup>
-        : null}
       <Search
         className={styles.extraContentSearch} placeholder="请输入搜索内容"
         onSearch={(value) => setListParams({...listParams, search: value})}/>
@@ -208,7 +172,7 @@ export const ProductConfigList: FC<BasicListProps> = props => {
   );
 
   const MoreBtn: React.FC<{
-    item: ProductConfigListItem;
+    item: ProductBaseListItem;
   }> = ({item}) => (
     <Dropdown
       overlay={
@@ -233,25 +197,25 @@ export const ProductConfigList: FC<BasicListProps> = props => {
 
   const handleDone = () => {
     setAddBtnblur();
-    setCurrent({});
     setDone(false);
     setVisible(false);
+    setCurrent({});
   };
 
   const handleCancel = () => {
     setAddBtnblur();
-    setCurrent({});
     setVisible(false);
+    setCurrent({});
   };
 
-  const handleSubmit = async (values: ProductConfigListItem, callback: Function) => {
+  const handleSubmit = async (values: ProductBaseListItem, callback: Function) => {
     const id = current ? current.id : '';
 
     let promise;
     if (id) {
-      promise = await updateConfInfo({id, data: values})
+      promise = await updateProduct({id, data: values})
     } else {
-      promise = await addConfInfo(values);
+      promise = await addProduct(values);
     }
     // 成功则回调
     if (promise?.id) {
@@ -272,24 +236,24 @@ export const ProductConfigList: FC<BasicListProps> = props => {
   };
 
   const validatePasswordSuccessToDo = () => {
-    const {id, conf_mark, con_desc, conf_name} = current as ProductConfigListItem;
+    const {id, pro_type, desc, mark} = current as ProductBaseListItem;
     if (validateType === ValidateType.DELETE_CONFIG) {
       const hide = () => {
         message.loading('正在删除')
       };
       confirm({
-        title: '删除配件',
+        title: '删除产品',
         icon: <ExclamationCircleOutlined/>,
         content: (<div style={{display: 'flex', flexDirection: 'column'}}>
-          <span>配件名：<span>{conf_name}</span></span>
-          <span>备注：<span>{conf_mark}</span></span>
-          <span>描述：<span>{con_desc}</span></span>
+          <span>产品名：<span>{pro_type}</span></span>
+          <span>备注：<span>{mark}</span></span>
+          <span>描述：<span>{desc}</span></span>
         </div>),
         okText: '确认',
         okType: 'danger',
         cancelText: '取消',
         onOk: async () => {
-          const result: ResultType | string = await deleteConfInfo({id});
+          const result: ResultType | string = await deleteProduct({id});
           const success: boolean = new ValidatePwdResult(result).validate('删除成功', null, hide);
           // 刷新数据
           if (success) {
@@ -298,67 +262,50 @@ export const ProductConfigList: FC<BasicListProps> = props => {
           }
         },
         onCancel() {
+          console.log('Cancel');
           setCurrent({});
         },
       });
-
-
     }
   }
 
-  const actions = (item: ProductConfigListItem): any[] => {
-    switch (currentUser?.identity) {
-      case 1:
-        return [
-          <a
-            key="edit"
-            onClick={e => {
-              e.preventDefault();
-              showEditModal(item);
-            }}
-          >
-            编辑
-          </a>,
-          <MoreBtn key="more" item={item}/>,
-        ];
-      case 2:
-        return [
-          <a
-            onClick={e => {
-              e.preventDefault();
-              setCurrent(item);
-              handleUpdateModalVisible(true);
-            }}
-          >
-            {item?.mem_state === 1 ? '发布' : '编辑'}
-          </a>
-        ];
-
-    }
-    return [];
+  const actions = (item: ProductBaseListItem): any[] => {
+    return [
+      <a
+        key="edit"
+        onClick={e => {
+          e.preventDefault();
+          showEditModal(item);
+        }}
+      >
+        编辑
+      </a>,
+      <MoreBtn key="more" item={item}/>,
+    ];
   }
-
+  console.log(countStatistics);
   return (
     <div>
       <div className={styles.standardList}>
         <Card bordered={false}>
+
           <Row>
-            <Col sm={8} xs={24}>
-              <Info title="配件总数" value={countStatistics?.total_count} bordered/>
-            </Col>
-            <Col sm={8} xs={24}>
-              <Info title="未发布数" value={<span style={{color: 'gold'}}>{countStatistics?.unpublished}</span>} bordered/>
-            </Col>
-            <Col sm={8} xs={24}>
-              <Info title="已发布数" value={<span style={{color: 'blue'}}>{countStatistics?.published_count}</span>}/>
-            </Col>
+            {(productType(0) as ProductType[]).map(d => {
+              return (
+                <Col flex={80} key={d.key}>
+                  <Info title={d.label} value={countStatistics?.[d.key] || 0} bordered/>
+                </Col>
+              )
+            })}
+
           </Row>
+
         </Card>
 
         <Card
           className={styles.listCard}
           bordered={false}
-          title="配件列表"
+          title="产品库"
           style={{marginTop: 24}}
           bodyStyle={{padding: '0 32px 40px 32px'}}
           extra={extraContent}
@@ -385,12 +332,17 @@ export const ProductConfigList: FC<BasicListProps> = props => {
               <List.Item
                 actions={actions(item)}
               >
-                <List.Item.Meta
-                  avatar={<Avatar src={item.avatar} shape="square" size="large"/>}
-                  title={<div>{item.conf_name}</div>}
-                  description={item.conf_mark}
-                />
-                <ListContent data={item} currentUser={currentUser}/>
+                <div style={{flexDirection: 'column'}}>
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar src={item.avatar} shape="square" size="large"/>
+
+                    }
+                    title={<div>{item.pro_type}</div>}
+                    description={item.mark}
+                  />
+                  <ListContent data={item} currentUser={currentUser}/>
+                </div>
               </List.Item>
             )}
           />
@@ -419,24 +371,6 @@ export const ProductConfigList: FC<BasicListProps> = props => {
         onDone={handleDone}
         onCancel={handleCancel}
         onSubmit={handleSubmit}
-        labelArr={configLabel || []}
-      />
-      <PublishModal
-        onSubmit={async (value, callback) => {
-          const response = await ModifyMemberPrice({id: current?.id as number, data: value});
-          const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
-          if (success) {
-            callback();
-            handleUpdateModalVisible(false);
-            setCurrent({});
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalVisible(false);
-          setCurrent({});
-        }}
-        updateModalVisible={updateModalVisible}
-        current={current}
       />
     </div>
   );
@@ -444,18 +378,17 @@ export const ProductConfigList: FC<BasicListProps> = props => {
 
 export default connect(
   ({
-     productConfig,
+     productBase,
      loading, user,
    }: {
-    productConfig: ProductConfigStateType;
+    productBase: ProductBaseStateType;
     loading: {
       models: { [key: string]: boolean };
     };
     user: UserModelState;
   }) => ({
-    productConfig,
+    productBase,
     currentUser: user.currentUser,
-    labelList: user.labelList,
-    loading: loading.models.productConfig,
+    loading: loading.models.productBase,
   }),
 )(ProductConfigList);

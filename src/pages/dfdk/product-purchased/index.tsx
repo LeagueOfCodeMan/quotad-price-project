@@ -10,7 +10,7 @@ import {CurrentUser, UserModelState} from "@/models/user";
 import {LabelList} from "@/pages/dfdk/label/data";
 import {CheckOutlined} from "@ant-design/icons/lib";
 import {ProductStateType} from "@/pages/dfdk/product-purchased/model";
-import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
 import yuntong from '@/assets/yuntong.png';
 import _ from "lodash";
 import CustomConfigForm from "@/pages/dfdk/product-purchased/components/CustomConfigForm";
@@ -107,7 +107,7 @@ const CardList: FC<CardListProps> = props => {
    */
   const actPrice = (item: any): string[] => {
     const {identity} = currentUser;
-    const val = item as ProductDetailListItem | ProductConfigListItem;
+    const val = item as ProductDetailListItem | ProductBaseListItem;
     let result = '0.00';
     switch (identity) {
       case 1:
@@ -198,7 +198,7 @@ const CardList: FC<CardListProps> = props => {
   /**
    * 切换标准与选配，选配时，处理数据
    */
-  const sortConfListByActPrice = (item: ProductConfigListItem[] | ProductDetailListItem[]) => {
+  const sortConfListByActPrice = (item: ProductBaseListItem[] | ProductDetailListItem[]) => {
     return _.sortBy(item, o => parseFloat(_.join(actPrice(o), '.')));
   };
 

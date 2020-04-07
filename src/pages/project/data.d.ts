@@ -1,5 +1,5 @@
-import {ProductBaseListItem} from "@/pages/dfdk/product/product-base/data";
-import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
 
 export interface ProjectListItem {
   id: number;
@@ -44,7 +44,7 @@ export type ProjectProductionInfo = {
   member_price: string;
   second_price: string;
   user: number;
-  conf_par: ProductConfigListItem;
+  conf_par: ProductBaseListItem;
 }[];
 
 export interface ProjectDetailListItem extends ProjectListItem {

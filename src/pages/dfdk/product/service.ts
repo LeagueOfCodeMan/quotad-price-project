@@ -1,5 +1,5 @@
-import request from '@/utils/request';
-import {ProductBaseListItem} from './data.d';
+import request from '../../../utils/request';
+import {ProductBaseListItem} from './data';
 
 
 interface ParamsType extends Partial<ProductBaseListItem> {
@@ -34,7 +34,7 @@ export async function updateProduct(params: { id: number, data: ParamsType }) {
   });
 }
 
-export async function ModifyProductMemberPrice(params: { id: number, data: ParamsType }) {
+export async function modifyProductMemberPrice(params: { id: number, data: ParamsType }) {
   return request('/api/product/' + params.id + '/mod_mem_price', {
     method: 'POST',
     data: params.data,

@@ -79,7 +79,7 @@ if (isAntDesignProPreview) {
 
 const needUserAuthority: string[] = ['user_lv1', 'user_lv2', 'user_lv3', 'user_lv4'];
 const needManagerAuthority: string[] = ['user_lv1', 'user_lv2'];
-const needNormalUser: string[] = ['user_lv2', 'user_lv3', 'user_lv4'];
+// const needNormalUser: string[] = ['user_lv2', 'user_lv3', 'user_lv4'];
 
 export default {
   plugins,
@@ -140,12 +140,6 @@ export default {
               name: 'dfdk',
               routes: [
                 {
-                  path: '/dfdk/label',
-                  name: 'label',
-                  component: './dfdk/label',
-                  authority: ['user_lv1'],
-                },
-                {
                   path: '/dfdk/product',
                   name: 'product',
                   component: './dfdk/product',
@@ -156,16 +150,16 @@ export default {
                       redirect: '/dfdk/product/product-base',
                     },
                     {
-                      name: 'product-base',
-                      icon: 'smile',
-                      path: '/dfdk/product/product-base',
-                      component: './dfdk/product/product-base',
-                    },
-                    {
                       name: 'product-config',
                       icon: 'smile',
                       path: '/dfdk/product/product-config',
                       component: './dfdk/product/product-config',
+                    },
+                    {
+                      name: 'product-base',
+                      icon: 'smile',
+                      path: '/dfdk/product/product-base',
+                      component: './dfdk/product/product-base',
                     },
                   ],
 

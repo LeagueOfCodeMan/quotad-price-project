@@ -1,18 +1,12 @@
 import {AnyAction, Reducer} from 'redux';
 import {EffectsCommandMap} from 'dva';
-import {isNormalResponseBody} from "@/utils/utils";
-import {countStatistics, queryProduct} from "@/pages/dfdk/product/product-base/service";
-import {ProductBaseList} from "@/pages/dfdk/product/product-base/data";
+import {isNormalResponseBody} from "../../../utils/utils";
+import {ProductBaseList} from "@/pages/dfdk/product/data";
+import {countStatistics, queryProduct} from "@/pages/dfdk/product/service";
 
 export interface ProductBaseStateType {
   productList: NotRequired<ProductBaseList>;
-  countStatistics: NotRequired<CountStatistics>;
-}
-
-export interface CountStatistics {
-  total_count: number;
-  published_count: number;
-  unpublished: number;
+  countStatistics: any;
 }
 
 export type Effect = (
@@ -29,7 +23,7 @@ export interface ProductBaseModelType {
   };
   reducers: {
     save: Reducer<NotRequired<ProductBaseList>>;
-    saveCountStatistics: Reducer<NotRequired<CountStatistics>>;
+    saveCountStatistics: Reducer<any>;
   };
 }
 
@@ -42,9 +36,6 @@ const Model: ProductBaseModelType = {
       count: undefined
     },
     countStatistics: {
-      total_count: 0,
-      published_count: 0,
-      unpublished: 0,
     },
   },
 
@@ -60,7 +51,7 @@ const Model: ProductBaseModelType = {
     },
     * countStatistics(_, {call, put}) {
       const response = yield call(countStatistics);
-      if (response?.total_count) {
+      if (response?.['1']) {
         yield put({
           type: 'saveCountStatistics',
           payload: response,

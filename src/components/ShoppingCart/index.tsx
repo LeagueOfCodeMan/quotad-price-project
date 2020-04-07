@@ -14,7 +14,7 @@ import {
   Typography
 } from 'antd';
 import {ProductDetailListItem} from "@/pages/dfdk/product-purchased/data";
-import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
 import {CurrentUser, UserModelState} from "@/models/user";
 import {LocalStorageShopType, ShoppingCartItem} from "@/models/data";
 import {connect} from "react-redux";
@@ -117,7 +117,7 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
    */
   const actPrice = (item: any): string => {
     const {identity} = currentUser;
-    const val = item as ProductDetailListItem | ProductConfigListItem;
+    const val = item as ProductDetailListItem | ProductBaseListItem;
     let result = '0.00';
     switch (identity) {
       case 1:
@@ -196,7 +196,7 @@ const ShoppingCart: FC<ShoppingCartProps> = props => {
           <div className={styles.configListStyle}>
             <Paragraph>
               <ul>
-                {text?.[0] ? (text as ProductConfigListItem[])?.map((d, index) => {
+                {text?.[0] ? (text as ProductBaseListItem[])?.map((d, index) => {
                   return (
                     <li key={index + '-' + record?.uuid}>
                       <div>

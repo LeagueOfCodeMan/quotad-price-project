@@ -28,7 +28,7 @@ import ValidatePassword from "@/components/ValidatePassword";
 import {testPassword} from "@/services/user";
 import {ExclamationCircleOutlined} from "@ant-design/icons/lib";
 import _ from 'lodash';
-import {deleteProduct} from "@/pages/dfdk/product/product-base/service";
+import {deleteProduct} from "@/pages/dfdk/product/service";
 import {ProjectListItem} from "@/pages/project/data";
 import {PaginationConfig} from "antd/lib/pagination";
 import {useEffectOnce} from "react-use";

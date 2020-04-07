@@ -223,13 +223,29 @@ export function isNormalResponseBody(response: CommonResponseBody): boolean {
   }
 }
 
-export type LabelType = 1 | 2;
-
-export function identifyLabel(type: LabelType): string {
-  if (type === 1) {
-    return '产品';
-  } else if (type === 2) {
-    return '配件';
-  }
-  return '未定义';
+export type ProductType = {
+  label: string;
+  key: number;
 }
+
+export function productType(genre: number) {
+  const product = [
+    {label: '一体机', key: 1},
+    {label: '云桶', key: 2},
+    {label: '公有云部署', key: 3},
+    {label: '私有云部署', key: 4},
+    {label: '传统环境部署', key: 5},
+    {label: '一体机配件', key: 6},
+    {label: '服务', key: 7},
+    {label: '其他', key: 8},
+  ];
+  switch (genre) {
+    case -1:
+      return product.slice(0, 5);
+    case 0:
+      return product;
+    default:
+      return _.head(product.filter(d => d.key === genre))?.label || '';
+  }
+}
+

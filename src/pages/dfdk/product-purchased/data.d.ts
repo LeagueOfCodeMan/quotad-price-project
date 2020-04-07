@@ -1,4 +1,4 @@
-import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
 
 
 export interface ProductDetailListItem {
@@ -13,7 +13,7 @@ export interface ProductDetailListItem {
   mem_state: 1 | 2; // 1：未发布，2：已发布
   label_id: number;
   label_name: string;
-  conf_list: ProductConfigListItem[];
+  conf_list: ProductBaseListItem[];
   loading?:boolean;
   count?:number;
 

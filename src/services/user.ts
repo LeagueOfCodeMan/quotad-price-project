@@ -23,10 +23,6 @@ export async function testPassword(params: { password: string; }): Promise<any> 
   });
 }
 
-export async function queryLabels(params: { label_type: 1 | 2 | undefined, pageSize: number }) {
-  return request('/api/label', {params});
-}
-
 /**
  * 地址管理
  */

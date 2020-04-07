@@ -1,6 +1,6 @@
 import {NotRequired} from "@/models/user";
 import {AreaListItem, UserListItem} from "@/pages/usermanager/userlist/data";
-import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
 import {IdentityType} from "@/utils/utils";
 
 export interface TableListPagination {
@@ -98,7 +98,7 @@ export interface ShoppingCartItem {
   count?: number;
   uuid?: string;
 
-  conf_list: ProductConfigListItem[] | [];
+  conf_list: ProductBaseListItem[] | [];
   total_price: string;
 
   [propName: string]: any;

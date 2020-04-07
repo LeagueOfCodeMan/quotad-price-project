@@ -2,7 +2,7 @@ import React, {FC, useEffect, useState} from 'react';
 import {Store} from 'rc-field-form/lib/interface';
 import {Button, Form, Input, InputNumber, Modal, Result, Select, Tooltip, Upload} from 'antd';
 import styles from '../style.less';
-import {ProductConfigListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
 import {EyeOutlined, InboxOutlined} from "@ant-design/icons/lib";
 import {UploadListType} from "antd/lib/upload/interface";
 import _ from 'lodash';
@@ -13,9 +13,9 @@ const {Option} = Select;
 interface OperationModalProps {
   done: boolean;
   visible: boolean;
-  current: Partial<ProductConfigListItem> | undefined;
+  current: Partial<ProductBaseListItem> | undefined;
   onDone: () => void;
-  onSubmit: (values: ProductConfigListItem, callback: Function) => void;
+  onSubmit: (values: ProductBaseListItem, callback: Function) => void;
   onCancel: () => void;
   labelArr: LabelListItem[];
 }
@@ -31,7 +31,7 @@ const OperationModal: FC<OperationModalProps> = props => {
   const {done, visible, current, onDone, onCancel, onSubmit, labelArr} = props;
   const [previewVisible, setPeviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
-  const [result, setResult] = useState<ProductConfigListItem>();
+  const [result, setResult] = useState<ProductBaseListItem>();
 
   useEffect(() => {
     if (form && !visible) {
@@ -149,7 +149,7 @@ const OperationModal: FC<OperationModalProps> = props => {
         }
       });
       if (onSubmit) {
-        onSubmit(formData as any, (response: ProductConfigListItem) => {
+        onSubmit(formData as any, (response: ProductBaseListItem) => {
           setResult(response);
         });
       }
