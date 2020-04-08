@@ -9,6 +9,7 @@ export interface ProductBaseListItem {
   member_price: string | null; // 一级组员价格 由组长定义，定义后再发布
   genre: number; // 类型
   conf_list?: ProductBaseListItem[];
+  is_required?:boolean;
 
   [propName: string]: any;
 }

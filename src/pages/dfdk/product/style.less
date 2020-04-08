@@ -22,6 +22,14 @@
       height: 48px;
       line-height: 48px;
     }
+    .ant-list-item {
+      position: relative;
+      .ant-list-item-action {
+        position: absolute;
+        top: 33px;
+        right: 0;
+      }
+    }
   }
   .headerInfo {
     position: relative;
@@ -306,11 +314,15 @@
 }
 
 .listContentWrapper {
-  margin: 10px;
+  margin: 10px 0;
   font-family: PingFangSC, helvetica neue, hiragino sans gb, arial, microsoft yahei ui, microsoft yahei, simsun, sans-serif !important;
   :global {
     .ant-typography {
       font-size: 12px;
+    }
+    .ant-table-cell {
+      font-size: 12px;
+      text-align: center;
     }
   }
 }

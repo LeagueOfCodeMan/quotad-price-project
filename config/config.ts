@@ -154,12 +154,14 @@ export default {
                       icon: 'smile',
                       path: '/dfdk/product/product-config',
                       component: './dfdk/product/product-config',
+                      authority: ['user_lv1'],
                     },
                     {
                       name: 'product-base',
                       icon: 'smile',
                       path: '/dfdk/product/product-base',
                       component: './dfdk/product/product-base',
+                      authority: needUserAuthority,
                     },
                   ],
 

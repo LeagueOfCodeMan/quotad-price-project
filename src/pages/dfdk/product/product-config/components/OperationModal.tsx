@@ -73,7 +73,6 @@ const OperationModal: FC<OperationModalProps> = props => {
                 <span>备注：{result?.mark}</span>
                 <span>描述：{result?.desc}</span>
                 <span>组长价格：{result?.leader_price}</span>
-                <span>二级组员价格 ：{result?.second_price}</span>
               </div>
             </div>
           )}

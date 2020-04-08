@@ -66,29 +66,31 @@ const ListContent = ({
                        }, currentUser: {identity}
                      }: {
   data: ProductBaseListItem; currentUser: CurrentUser;
-}) => (
-  <div className={styles.listContentWrapper}>
-    <Descriptions column={4} layout="vertical">
-      <Descriptions.Item label="类型">
-        <Text style={{color: '#181818'}}>{productType(genre)}</Text>
-      </Descriptions.Item>
-      <Descriptions.Item label="产品采购总价">
-        <>
-          <Text style={{color: '#1890FF'}}>组长：</Text>
-          <Text style={{color: '#FF6A00'}}>¥ {leader_price}</Text>
-        </>
-      </Descriptions.Item>
-      <Descriptions.Item label="描述" span={2}>
-        {desc?.split(" ")?.map((o, i) => {
-          return (
-            <Text style={{color: '#181818'}} key={i}>{o}</Text>
-          )
-        })}
-      </Descriptions.Item>
+}) => {
+  return (
+    <div className={styles.listContentWrapper}>
+      <Descriptions column={4}>
+        <Descriptions.Item label="类型" span={2}>
+          <Text style={{color: '#181818'}}>{productType(genre)}</Text>
+        </Descriptions.Item>
+        <Descriptions.Item label="产品采购总价" span={2}>
+          <>
+            <Text style={{color: '#1890FF'}}>组长：</Text>
+            <Text style={{color: '#FF6A00'}}>¥ {leader_price}</Text>
+          </>
+        </Descriptions.Item>
+        <Descriptions.Item label="描述" span={4}>
+          {desc?.split("\n")?.map((o, i) => {
+            return (
+              <div><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+            )
+          })}
+        </Descriptions.Item>
 
-    </Descriptions>
-  </div>
-);
+      </Descriptions>
+    </div>
+  )
+};
 
 interface ListSearchParams {
   current?: number;

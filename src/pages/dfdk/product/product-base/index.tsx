@@ -1,6 +1,7 @@
 import React, {FC, useEffect, useRef, useState} from 'react';
 import {DownOutlined, PlusOutlined} from '@ant-design/icons';
 import {
+  Alert,
   Avatar,
   Button,
   Card,
@@ -13,14 +14,14 @@ import {
   message,
   Modal,
   Radio,
-  Row,
+  Row, Table, Tag,
   Typography,
 } from 'antd';
 
 import {findDOMNode} from 'react-dom';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
-import OperationModal from './components/OperationModal';
+import OperationModal, {OperationModalSubmitType} from './components/OperationModal';
 import {ProductBaseStateType} from '../model';
 import styles from '@/pages/dfdk/product/style.less';
 import {CurrentUser, UserModelState} from "@/models/user";
@@ -34,7 +35,7 @@ import _ from 'lodash';
 import {ProductBaseListItem} from "@/pages/dfdk/product/data";
 import {
   addProduct,
-  deleteProduct,
+  deleteProduct, deleteStandardProduct,
   modifyProductMemberPrice, queryConfigListByProductId, updateConfigListByProductId,
   updateProduct
 } from "@/pages/dfdk/product/service";
@@ -73,33 +74,128 @@ const Info: FC<{
 const ListContent = ({
                        data: {
                          desc, leader_price, second_price, member_price,
-                         genre
+                         genre, conf_list
                        }, currentUser: {identity}
                      }: {
   data: ProductBaseListItem; currentUser: CurrentUser;
-}) => (
-  <div className={styles.listContentWrapper}>
-    <Descriptions column={4} layout="vertical">
-      <Descriptions.Item label="类型">
-        <Text style={{color: '#181818'}}>{productType(genre)}</Text>
-      </Descriptions.Item>
-      <Descriptions.Item label="产品采购总价">
-        <>
-          <Text style={{color: '#1890FF'}}>组长：</Text>
-          <Text style={{color: '#FF6A00'}}>¥ {leader_price}</Text>
-        </>
-      </Descriptions.Item>
-      <Descriptions.Item label="描述" span={2}>
-        {desc?.split(" ")?.map((o, i) => {
-          return (
-            <Text style={{color: '#181818'}} key={i}>{o}</Text>
-          )
-        })}
-      </Descriptions.Item>
+}) => {
+  const dataSource = _.sortBy(conf_list, o => !o.is_required);
+  const columns = [
 
-    </Descriptions>
-  </div>
-);
+    {
+      title: '类型',
+      dataIndex: 'genre',
+      key: 'genre',
+      width: 100,
+      render: (text: number) => {
+        return (
+          <div>
+            <Text style={{color: '#181818'}}>{productType(text)}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      title: '型号',
+      dataIndex: 'pro_type',
+      key: 'pro_type',
+      width: 100,
+      render: (text: string) => {
+        return (
+          <div>
+            <Text style={{color: '#181818'}}>{text}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      title: '采购价格',
+      dataIndex: 'price',
+      key: 'price',
+      width: 100,
+      render: (_, record: ProductBaseListItem) => (
+        <div>
+          <Text style={{color: '#1890FF'}}>组长：</Text>
+          <Text style={{color: '#FF6A00'}}>¥ {record?.leader_price}</Text>
+        </div>
+      ),
+    },
+    {
+      title: '描述',
+      key: 'desc',
+      dataIndex: 'desc',
+      render: (text: string) => (
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
+          {text?.split("\n")?.map((o, i) => {
+            return (
+              <div><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+            )
+          })}
+        </div>
+      ),
+    },
+    {
+      title: '配置类型',
+      dataIndex: 'is_required',
+      key: 'is_required',
+      width: 50,
+      render: (text: boolean) => {
+        return (
+          <div>
+            {text ?
+              <Text style={{color: '#181818'}}>附加</Text> :
+              <Text type="danger">选配</Text>
+            }
+          </div>
+        )
+      },
+    },
+  ];
+  return (
+    <div className={styles.listContentWrapper}>
+      <div style={{margin: '10px 0'}}>
+        <Alert
+          message="基本信息"
+          type="success"
+          closable
+        />
+      </div>
+      <Descriptions bordered column={4} size="small">
+        <Descriptions.Item label="类型" span={2}>
+          <Text style={{color: '#181818'}}>{productType(genre)}</Text>
+        </Descriptions.Item>
+        <Descriptions.Item label="产品采购总价" span={2}>
+          <>
+            <Text style={{color: '#1890FF'}}>组长：</Text>
+            <Text style={{color: '#FF6A00'}}>¥ {leader_price}</Text>
+          </>
+        </Descriptions.Item>
+        <Descriptions.Item label="描述" span={4}>
+          {desc?.split("\n")?.map((o, i) => {
+            return (
+              <div><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+            )
+          })}
+        </Descriptions.Item>
+      </Descriptions>
+      <div style={{margin: '10px 0'}}>
+        <Alert
+          message="服务或配件"
+          type="info"
+          closable
+        />
+      </div>
+      <Table
+        showHeader={false} bordered size="small"
+        rowKey={record => record?.id}
+        columns={columns}
+        pagination={false}
+        scroll={{y: 300}}
+        dataSource={dataSource || []}
+      />
+    </div>
+  )
+};
 
 interface ListSearchParams {
   current?: number;
@@ -121,13 +217,11 @@ const ProductBaseList: FC<BasicListProps> = props => {
   const [done, setDone] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
   const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
-  const [configVisible, setConfigVisible] = useState<boolean>(false);
   const [current, setCurrent] = useState<NotRequired<ProductBaseListItem>>({});
-  const [confList, setConfList] = useState<NotRequired<any>>({});
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>("");
   const [listParams, setListParams] = useState<ListSearchParams>({
-    current: 1, pageSize: 5
+    current: 1, pageSize: 1
   });
 
   const {results = [], count = 0} = products;
@@ -147,7 +241,7 @@ const ProductBaseList: FC<BasicListProps> = props => {
 
   const paginationProps = {
     showQuickJumper: true,
-    pageSize: 5,
+    pageSize: 1,
     total: count,
     onChange: (page: number, pageSize: number) => {
       setListParams({...listParams, current: page, pageSize});
@@ -161,19 +255,13 @@ const ProductBaseList: FC<BasicListProps> = props => {
 
   const showConfigModal = async (item: ProductBaseListItem) => {
     setCurrent(item);
-    setConfigVisible(true);
-    const result = await queryConfigListByProductId({id: item?.id});
-    if (Array.isArray(result?.results)) {
-      setConfList(result);
-    }
+    setVisible(true);
   };
 
   const editAndDelete = (key: string, currentItem: ProductBaseListItem) => {
     if (key === 'delete') {
       setValidateType(ValidateType.DELETE_CONFIG);
       setValidateVisible(true);
-    } else if (key === 'edit') {
-      setVisible(true);
     }
     setCurrent(currentItem);
   };
@@ -207,7 +295,6 @@ const ProductBaseList: FC<BasicListProps> = props => {
     <Dropdown
       overlay={
         <Menu onClick={({key}) => editAndDelete(key, item)}>
-          <Menu.Item key="edit">编辑</Menu.Item>
           <Menu.Item key="delete">删除</Menu.Item>
         </Menu>
       }
@@ -228,29 +315,33 @@ const ProductBaseList: FC<BasicListProps> = props => {
   };
 
   const handleDone = () => {
-    setAddBtnblur();
-    setCurrent({});
     setDone(false);
     setVisible(false);
   };
 
   const handleCancel = () => {
-    setAddBtnblur();
-    setCurrent({});
     setVisible(false);
   };
+
+  useEffect(() => {
+    setAddBtnblur();
+    if (visible) {
+    } else {
+      setTimeout(() => {
+        setCurrent({});
+      }, 1000)
+    }
+  }, [visible])
   // --------------------------------------------
 
   // ========= 添加和编辑产品请求 ============
-  const handleSubmit = async (values: ProductBaseListItem, callback: Function) => {
+  const handleSubmit = async (values: OperationModalSubmitType, callback: Function) => {
     const id = current ? current.id : '';
-
     let promise;
-    if (id) {
-      promise = await updateProduct({id, data: values})
-    } else {
-      promise = await addProduct(values);
-    }
+    promise = await updateConfigListByProductId({
+      id: id ? id : values?.id,
+      data: {conf_list: values?.conf_list}
+    });
     // 成功则回调
     if (promise?.id) {
       setAddBtnblur();
@@ -259,25 +350,6 @@ const ProductBaseList: FC<BasicListProps> = props => {
       reloadList();
     } else {
       new ValidatePwdResult(promise).validate('成功处理', null, undefined);
-    }
-  };
-
-  // ======= 给产品增删自定义配置 ================
-
-  const handleSubmitCustomConfig = async (values: number[], callback: Function) => {
-    const id = current ? current.id : '';
-
-    let promise;
-    if (id) {
-      promise = await updateConfigListByProductId({id, data: {conf_list: values}})
-    }
-    const success = new ValidatePwdResult(promise).validate('成功处理', null, undefined);
-
-    // 成功则回调
-    if (success) {
-      setConfList({});
-      setCurrent({});
-      callback(success);
     }
   };
 
@@ -295,7 +367,7 @@ const ProductBaseList: FC<BasicListProps> = props => {
         message.loading('正在删除')
       };
       confirm({
-        title: '删除产品',
+        title: '删除标准库',
         icon: <ExclamationCircleOutlined/>,
         content: (<div style={{display: 'flex', flexDirection: 'column'}}>
           <span>产品名：<span>{pro_type}</span></span>
@@ -306,7 +378,7 @@ const ProductBaseList: FC<BasicListProps> = props => {
         okType: 'danger',
         cancelText: '取消',
         onOk: async () => {
-          const result: ResultType | string = await deleteProduct({id});
+          const result: ResultType | string = await deleteStandardProduct({id});
           const success: boolean = new ValidatePwdResult(result).validate('删除成功', null, hide);
           // 刷新数据
           if (success) {
@@ -333,7 +405,7 @@ const ProductBaseList: FC<BasicListProps> = props => {
               showConfigModal(item);
             }}
           >
-            配置
+            编辑
           </a>,
           <MoreBtn key="more" item={item}/>,
         ];
@@ -360,7 +432,7 @@ const ProductBaseList: FC<BasicListProps> = props => {
         <Card
           className={styles.listCard}
           bordered={false}
-          title="产品列表"
+          title="标准库"
           style={{marginTop: 24}}
           bodyStyle={{padding: '0 32px 40px 32px'}}
           extra={extraContent}
@@ -427,18 +499,6 @@ const ProductBaseList: FC<BasicListProps> = props => {
         onCancel={handleCancel}
         onSubmit={handleSubmit}
       />
-      {/*<ProductCustomConfig*/}
-      {/*confList={confList}*/}
-      {/*labelArr={configLabel || []}*/}
-      {/*visible={configVisible}*/}
-      {/*onCancel={() => {*/}
-      {/*setConfList({});*/}
-      {/*setCurrent({});*/}
-      {/*console.log(111)*/}
-      {/*setConfigVisible(false);*/}
-      {/*}}*/}
-      {/*onSubmit={handleSubmitCustomConfig}*/}
-      {/*/>*/}
       <PublishModal
         onSubmit={async (value, callback) => {
           const response = await modifyProductMemberPrice({id: current?.id as number, data: value});

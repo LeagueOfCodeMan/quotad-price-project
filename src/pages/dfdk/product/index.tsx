@@ -53,12 +53,12 @@ class Product extends Component<ProductProps> {
       },
       {
         key: 'product-base',
-        tab: '标准产品',
+        tab: '标准库',
       },
     ] : [
       {
         key: 'product-base',
-        tab: '标准产品',
+        tab: '标准库',
       },
     ];
 
@@ -71,7 +71,7 @@ class Product extends Component<ProductProps> {
     return (
       <PageHeaderWrapper
         content={identity === 1 ? <Alert
-          message="产品配置流程：在产品库中定义产品、配件、服务等，然后通过组装生成标准产品"
+          message="产品配置流程：在产品库中定义产品、配件、服务等，然后在标准库通过组装生成正式产品"
           type="info"
           closable
           onClose={onClose}

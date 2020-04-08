@@ -50,18 +50,24 @@ export async function queryConfigListByProductId(params: { id: number }) {
   );
 }
 
-export async function updateConfigListByProductId(params: { id: number, data: ParamsType }) {
+export async function updateConfigListByProductId(params: { id: number, data: { conf_list: { conf: number; is_required: boolean; }[] } }) {
   return request('/api/product/' + params.id + '/conf_list', {
     method: 'POST',
     data: params.data,
   });
 }
 
-// 获取标准产品
+// 获取标准库
 
 
 export async function queryStandardProduct(params: ParamsType) {
   return request('/api/product/product_config', {
     params,
+  });
+}
+
+export async function deleteStandardProduct(params?: { id: number }) {
+  return request('/api/product/product_config/' + params?.id, {
+    method: 'DELETE',
   });
 }
