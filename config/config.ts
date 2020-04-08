@@ -164,14 +164,6 @@ export default {
                       authority: needUserAuthority,
                     },
                   ],
-
-                },
-                {
-                  name: 'purchased',
-                  path: '/dfdk/product-purchased',
-                  icon: 'smile',
-                  component: './dfdk/product-purchased',
-                  authority: needUserAuthority,
                 },
               ],
             },
@@ -254,7 +246,7 @@ export default {
                 },
               ],
             },
-            {path: '/', redirect: '/dfdk/product-purchased', authority: needUserAuthority},
+            {path: '/', redirect: '/dfdk/product/product-base', authority: needUserAuthority},
 
             {
               component: '404',

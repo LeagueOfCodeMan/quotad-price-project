@@ -30,14 +30,14 @@ class AvatarDropdown extends React.Component<GlobalHeaderRightProps> {
 
       return;
     }
-    router.push(`/account/${key}`);
+    router.push(`/usermanager/${key}`);
   };
 
   render(): React.ReactNode {
     const {
       currentUser = {
         avatar: '',
-        name: '',
+        username: '',
       },
       menu,
     } = this.props;
@@ -57,6 +57,7 @@ class AvatarDropdown extends React.Component<GlobalHeaderRightProps> {
         </Menu.Item>
       </Menu>
     );
+    console.log(currentUser,111);
     return currentUser && currentUser.username ? (
       <HeaderDropdown overlay={menuHeaderDropdown}>
         <span className={`${styles.action} ${styles.account}`}>

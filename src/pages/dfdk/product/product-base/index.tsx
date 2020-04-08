@@ -5,7 +5,6 @@ import {
   Avatar,
   Button,
   Card,
-  Col,
   Descriptions,
   Dropdown,
   Input,
@@ -14,7 +13,7 @@ import {
   message,
   Modal,
   Radio,
-  Row, Table, Tag,
+  Table,
   Typography,
 } from 'antd';
 
@@ -34,10 +33,9 @@ import {PaginationConfig} from "antd/lib/pagination";
 import _ from 'lodash';
 import {ProductBaseListItem} from "@/pages/dfdk/product/data";
 import {
-  addProduct,
-  deleteProduct, deleteStandardProduct,
-  modifyProductMemberPrice, queryConfigListByProductId, updateConfigListByProductId,
-  updateProduct
+  deleteStandardProduct,
+  modifyProductMemberPrice,
+  updateConfigListByProductId
 } from "@/pages/dfdk/product/service";
 import PublishModal from "@/pages/dfdk/product/product-base/components/PublishModal";
 
@@ -58,99 +56,88 @@ enum ValidateType {
   DELETE_CONFIG = 'DELETE_CONFIG',
 }
 
+const columns = [
 
-const Info: FC<{
-  title: React.ReactNode;
-  value: React.ReactNode;
-  bordered?: boolean;
-}> = ({title, value, bordered}) => (
-  <div className={styles.headerInfo}>
-    <span>{title}</span>
-    <p>{value}</p>
-    {bordered && <em/>}
-  </div>
-);
+  {
+    title: '类型',
+    dataIndex: 'genre',
+    key: 'genre',
+    width: 100,
+    render: (text: number) => {
+      return (
+        <div>
+          <Text style={{color: '#181818'}}>{productType(text)}</Text>
+        </div>
+      )
+    },
+  },
+  {
+    title: '型号',
+    dataIndex: 'pro_type',
+    key: 'pro_type',
+    width: 100,
+    render: (text: string) => {
+      return (
+        <div>
+          <Text style={{color: '#181818'}}>{text}</Text>
+        </div>
+      )
+    },
+  },
+  {
+    title: '采购价格',
+    dataIndex: 'price',
+    key: 'price',
+    width: 100,
+    render: (_, record: ProductBaseListItem) => (
+      <div>
+        <Text style={{color: '#1890FF'}}>组长：</Text>
+        <Text style={{color: '#FF6A00'}}>¥ {record?.leader_price}</Text>
+      </div>
+    ),
+  },
+  {
+    title: '描述',
+    key: 'desc',
+    dataIndex: 'desc',
+    render: (text: string) => (
+      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
+        {text?.split("\n")?.map((o, i) => {
+          return (
+            <div><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+          )
+        })}
+      </div>
+    ),
+  },
+  {
+    title: '配置类型',
+    dataIndex: 'is_required',
+    key: 'is_required',
+    width: 50,
+    render: (text: boolean) => {
+      return (
+        <div>
+          {text ?
+            <Text style={{color: '#181818'}}>附加</Text> :
+            <Text type="danger">选配</Text>
+          }
+        </div>
+      )
+    },
+  },
+];
+
 
 const ListContent = ({
                        data: {
                          desc, leader_price, second_price, member_price,
-                         genre, conf_list
+                         genre, conf_list, id
                        }, currentUser: {identity}
                      }: {
   data: ProductBaseListItem; currentUser: CurrentUser;
 }) => {
   const dataSource = _.sortBy(conf_list, o => !o.is_required);
-  const columns = [
-
-    {
-      title: '类型',
-      dataIndex: 'genre',
-      key: 'genre',
-      width: 100,
-      render: (text: number) => {
-        return (
-          <div>
-            <Text style={{color: '#181818'}}>{productType(text)}</Text>
-          </div>
-        )
-      },
-    },
-    {
-      title: '型号',
-      dataIndex: 'pro_type',
-      key: 'pro_type',
-      width: 100,
-      render: (text: string) => {
-        return (
-          <div>
-            <Text style={{color: '#181818'}}>{text}</Text>
-          </div>
-        )
-      },
-    },
-    {
-      title: '采购价格',
-      dataIndex: 'price',
-      key: 'price',
-      width: 100,
-      render: (_, record: ProductBaseListItem) => (
-        <div>
-          <Text style={{color: '#1890FF'}}>组长：</Text>
-          <Text style={{color: '#FF6A00'}}>¥ {record?.leader_price}</Text>
-        </div>
-      ),
-    },
-    {
-      title: '描述',
-      key: 'desc',
-      dataIndex: 'desc',
-      render: (text: string) => (
-        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
-          {text?.split("\n")?.map((o, i) => {
-            return (
-              <div><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
-            )
-          })}
-        </div>
-      ),
-    },
-    {
-      title: '配置类型',
-      dataIndex: 'is_required',
-      key: 'is_required',
-      width: 50,
-      render: (text: boolean) => {
-        return (
-          <div>
-            {text ?
-              <Text style={{color: '#181818'}}>附加</Text> :
-              <Text type="danger">选配</Text>
-            }
-          </div>
-        )
-      },
-    },
-  ];
   return (
     <div className={styles.listContentWrapper}>
       <div style={{margin: '10px 0'}}>
@@ -173,7 +160,7 @@ const ListContent = ({
         <Descriptions.Item label="描述" span={4}>
           {desc?.split("\n")?.map((o, i) => {
             return (
-              <div><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+              <div key={i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
             )
           })}
         </Descriptions.Item>
@@ -186,8 +173,9 @@ const ListContent = ({
         />
       </div>
       <Table
-        showHeader={false} bordered size="small"
-        rowKey={record => record?.id}
+        showHeader={false}
+        bordered size="small"
+        rowKey={record => id + '-' + record?.id}
         columns={columns}
         pagination={false}
         scroll={{y: 300}}
@@ -451,7 +439,7 @@ const ProductBaseList: FC<BasicListProps> = props => {
 
           <List
             size="large"
-            rowKey={record => record.id.toString()}
+            rowKey={record => record?.id + '-' + record?.avatar}
             loading={loading}
             pagination={paginationProps as PaginationConfig}
             dataSource={results}
