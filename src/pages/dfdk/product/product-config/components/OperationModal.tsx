@@ -1,7 +1,7 @@
 import React, {FC, useEffect, useState} from 'react';
 import {Store} from 'rc-field-form/lib/interface';
 import {Button, Form, Input, InputNumber, Modal, Result, Select, Tooltip, Upload} from 'antd';
-import styles from '../style.less';
+import styles from '@/pages/dfdk/product/style.less';
 import {EyeOutlined, InboxOutlined} from "@ant-design/icons/lib";
 import {UploadListType} from "antd/lib/upload/interface";
 import _ from 'lodash';

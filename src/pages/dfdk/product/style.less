@@ -1,5 +1,5 @@
-@import '~antd/es/style/themes/default.less';
-@import '../utils/utils.less';
+@import '../../../../node_modules/antd/es/style/themes/default.less';
+@import 'utils/utils.less';
 
 .standardList {
   :global {
@@ -272,14 +272,44 @@
   }
 }
 
+.productCustomConfigForm {
+  .rowWrapper {
+    width: 500px;
+    margin: auto;
+  }
+  :global(.ant-input-group-compact) {
+    width: 500px;
+  }
+  :global {
+    .dynamic-delete-button {
+      position: relative;
+      top: 7px;
+      color: #999;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .dynamic-delete-button:hover {
+      color: #777;
+    }
+    .dynamic-delete-button[disabled] {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    [data-theme="dark"] .dynamic-delete-button {
+      color: rgba(255, 255, 255, .45);
+    }
+    [data-theme="dark"] .dynamic-delete-button:hover {
+      color: rgba(255, 255, 255, .65);
+    }
+  }
+}
+
 .listContentWrapper {
   margin: 10px;
   font-family: PingFangSC, helvetica neue, hiragino sans gb, arial, microsoft yahei ui, microsoft yahei, simsun, sans-serif !important;
   :global {
-    .ant-descriptions-row > th, .ant-descriptions-row > td {
-      padding-bottom: 6px;
-    }
-    .ant-descriptions-item-content {
+    .ant-typography {
       font-size: 12px;
     }
   }

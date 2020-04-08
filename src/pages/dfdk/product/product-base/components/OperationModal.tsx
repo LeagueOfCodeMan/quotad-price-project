@@ -1,12 +1,12 @@
 import React, {FC, useEffect, useState} from 'react';
 import {Store} from 'rc-field-form/lib/interface';
 import {Button, Form, Input, InputNumber, Modal, Result, Select, Tooltip, Upload} from 'antd';
-import styles from '../style.less';
+import styles from '@/pages/dfdk/product/style.less';
 import {EyeOutlined, InboxOutlined} from "@ant-design/icons/lib";
 import {UploadListType} from "antd/lib/upload/interface";
 import _ from 'lodash';
+import {ProductType, productType} from "@/utils/utils";
 import {ProductBaseListItem} from "@/pages/dfdk/product/data";
-import {LabelListItem} from "@/pages/dfdk/label/data";
 
 const {Option} = Select;
 
@@ -17,7 +17,6 @@ interface OperationModalProps {
   onDone: () => void;
   onSubmit: (values: ProductBaseListItem, callback: Function) => void;
   onCancel: () => void;
-  labelArr: LabelListItem[];
 }
 
 const {TextArea} = Input;
@@ -28,36 +27,28 @@ const formLayout = {
 
 const OperationModal: FC<OperationModalProps> = props => {
   const [form] = Form.useForm();
-  const {done, visible, current, onDone, onCancel, onSubmit, labelArr} = props;
+  const {done, visible, current, onDone, onCancel, onSubmit} = props;
   const [previewVisible, setPeviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const [result, setResult] = useState<ProductBaseListItem>();
 
   useEffect(() => {
-    setTimeout(() => {
-      if (form && !visible) {
-        form.resetFields()
-        console.log('reset')
-      }
-    })
+    if (form && !visible) {
+      setTimeout(() => form.resetFields(), 0)
+    }
   }, [props.visible]);
 
   useEffect(() => {
-    console.log(current);
-    if (current?.id) {
+    if (current) {
       setPreviewImage(current?.avatar || '')
       setTimeout(() => {
         form.setFieldsValue({
           ..._.omit(current, ['avatar'])
+          // createdAt: current.createdAt ? moment(current.createdAt) : null,
         });
       }, 0);
-    } else {
-      setPreviewImage('')
-      setTimeout(() => {
-        form.resetFields()
-      }, 0);
     }
-  }, [props.current]);
+  }, [current]);
 
   const handleSubmit = () => {
     if (!form) return;
@@ -148,7 +139,6 @@ const OperationModal: FC<OperationModalProps> = props => {
 
     //  拦截生成FormData进行请求，请求完成回调返回结果并显示结果页
     const onFinish = (values: Store) => {
-      console.log(values);
       const formData = new FormData();
       Object.keys(values).map((item) => {
         if (item === 'avatar') {
@@ -163,24 +153,29 @@ const OperationModal: FC<OperationModalProps> = props => {
         });
       }
     };
-
     return (
-      <Form form={form}  {...formLayout} onFinish={onFinish}>
+      <Form form={form} {...formLayout} onFinish={onFinish}>
         <Form.Item
           name="pro_type"
           label="产品名称"
-          rules={[{required: true, message: '请选择产品名称'}]}
+          rules={[{required: true, message: '请输入产品名称'}]}
         >
           <Input/>
         </Form.Item>
         <Form.Item
-          name="label"
-          label="产品分类"
+          name="genre"
+          label="分类"
           rules={[{required: true, message: '请选择类别'}]}
         >
-          <Select showSearch>
-            {_.head(labelArr) && labelArr.map(i => {
-              return <Option key={i.id} value={i.id}>{i.name}</Option>
+          <Select
+            showSearch
+            optionFilterProp="children"
+            filterOption={(input, option) => {
+              return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+            }}
+          >
+            {(productType(0) as ProductType[]).map(v => {
+              return <Option key={v.key} value={v.key} label={v.label}>{v.label}</Option>
             })}
           </Select>
         </Form.Item>
@@ -226,7 +221,7 @@ const OperationModal: FC<OperationModalProps> = props => {
 
         <Form.Item
           name="desc"
-          label="产品描述"
+          label="描述"
           rules={[{required: true, message: '请输入至少五个字符的产品描述！', min: 5}]}
         >
           <TextArea rows={4} placeholder="请输入至少五个字符"/>
@@ -234,17 +229,6 @@ const OperationModal: FC<OperationModalProps> = props => {
         <Form.Item
           name="leader_price"
           label="组长价格"
-          rules={[{required: true, message: '请选择'}]}
-        >
-          <InputNumber
-            formatter={value => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={value => (value as string).replace(/¥\s?|(,*)/g, '')}
-            style={{width: '350px'}}
-          />
-        </Form.Item>
-        <Form.Item
-          name="second_price"
-          label="二级组员价格"
           rules={[{required: true, message: '请选择'}]}
         >
           <InputNumber

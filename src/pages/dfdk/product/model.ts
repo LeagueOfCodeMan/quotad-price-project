@@ -2,10 +2,11 @@ import {AnyAction, Reducer} from 'redux';
 import {EffectsCommandMap} from 'dva';
 import {isNormalResponseBody} from "../../../utils/utils";
 import {ProductBaseList} from "@/pages/dfdk/product/data";
-import {countStatistics, queryProduct} from "@/pages/dfdk/product/service";
+import {countStatistics, queryProduct, queryStandardProduct} from "@/pages/dfdk/product/service";
 
 export interface ProductBaseStateType {
   productList: NotRequired<ProductBaseList>;
+  products: NotRequired<ProductBaseList>;
   countStatistics: any;
 }
 
@@ -19,10 +20,12 @@ export interface ProductBaseModelType {
   state: ProductBaseStateType;
   effects: {
     fetch: Effect;
+    fetchStandardProduct: Effect;
     countStatistics: Effect;
   };
   reducers: {
     save: Reducer<NotRequired<ProductBaseList>>;
+    saveProducts: Reducer<NotRequired<ProductBaseList>>;
     saveCountStatistics: Reducer<any>;
   };
 }
@@ -35,8 +38,11 @@ const Model: ProductBaseModelType = {
       results: [],
       count: undefined
     },
-    countStatistics: {
+    products: {
+      results: [],
+      count: undefined
     },
+    countStatistics: {},
   },
 
   effects: {
@@ -45,6 +51,15 @@ const Model: ProductBaseModelType = {
       if (isNormalResponseBody(response)) {
         yield put({
           type: 'save',
+          payload: response,
+        });
+      }
+    },
+    * fetchStandardProduct({payload}, {call, put}) {
+      const response = yield call(queryStandardProduct, payload);
+      if (isNormalResponseBody(response)) {
+        yield put({
+          type: 'saveProducts',
           payload: response,
         });
       }
@@ -65,6 +80,12 @@ const Model: ProductBaseModelType = {
       return {
         ...state,
         productList: action.payload,
+      };
+    },
+    saveProducts(state, action) {
+      return {
+        ...state,
+        products: action.payload,
       };
     },
     saveCountStatistics(state, action) {

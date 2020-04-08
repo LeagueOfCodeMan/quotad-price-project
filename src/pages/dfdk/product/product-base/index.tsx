@@ -1,22 +1,35 @@
 import React, {FC, useEffect, useRef, useState} from 'react';
 import {DownOutlined, PlusOutlined} from '@ant-design/icons';
-import {Avatar, Button, Card, Col, Dropdown, Input, List, Menu, message, Modal, Radio, Row,} from 'antd';
+import {
+  Avatar,
+  Button,
+  Card,
+  Col,
+  Descriptions,
+  Dropdown,
+  Input,
+  List,
+  Menu,
+  message,
+  Modal,
+  Radio,
+  Row,
+  Typography,
+} from 'antd';
 
 import {findDOMNode} from 'react-dom';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import OperationModal from './components/OperationModal';
 import {ProductBaseStateType} from '../model';
-import styles from './style.less';
+import styles from '@/pages/dfdk/product/style.less';
 import {CurrentUser, UserModelState} from "@/models/user";
-import Tag from "antd/lib/tag";
 
-import {ResultType, ValidatePwdResult} from "@/utils/utils";
+import {productType, ResultType, ValidatePwdResult} from "@/utils/utils";
 import ValidatePassword from "@/components/ValidatePassword";
 import {testPassword} from "@/services/user";
 import {ExclamationCircleOutlined} from "@ant-design/icons/lib";
 import {PaginationConfig} from "antd/lib/pagination";
-import PublishModal from "@/pages/dfdk/product/product-config/components/PublishModal";
 import _ from 'lodash';
 import {ProductBaseListItem} from "@/pages/dfdk/product/data";
 import {
@@ -25,12 +38,13 @@ import {
   modifyProductMemberPrice, queryConfigListByProductId, updateConfigListByProductId,
   updateProduct
 } from "@/pages/dfdk/product/service";
-// import ProductCustomConfig from "@/pages/dfdk/product/product-base/components/ProductCustomConfig";
+import PublishModal from "@/pages/dfdk/product/product-base/components/PublishModal";
 
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
 const {Search} = Input;
 const {confirm} = Modal;
+const {Text} = Typography;
 
 interface BasicListProps {
   productBase: ProductBaseStateType;
@@ -59,48 +73,33 @@ const Info: FC<{
 const ListContent = ({
                        data: {
                          desc, leader_price, second_price, member_price,
-                         mem_state, label_name
+                         genre
                        }, currentUser: {identity}
                      }: {
   data: ProductBaseListItem; currentUser: CurrentUser;
-}) =>
-  (
-    <div className={styles.listContent}>
-      <div className={styles.listContentItem} style={{textAlign: 'center'}}>
-        <span>系列</span>
-        <p><Tag color="blue">{label_name || '未定义标签'}</Tag></p>
-      </div>
-      <div className={styles.listContentItem}>
-        <span>参数描述</span>
-        <p>{desc}</p>
-      </div>
-      <div className={styles.listContentItem}>
-        <span>是否发布</span>
-        <p>{mem_state === 1 ? <Tag color="red">未发布</Tag> : <Tag color="geekblue">已发布</Tag>}</p>
-      </div>
-      <div className={styles.listContentItem}>
-        <span>组长价格</span>
-        <p>{leader_price}</p>
-      </div>
-      /*
-        一级组员价格
-       */
-      {identity === (2 || 3) ?
-        <div className={styles.listContentItem}>
-          <span>{identity === 2 ? '一级组员价格' : '价格'}</span>
-          <p>{member_price || <Tag color="red">未定义</Tag>}</p>
-        </div> : null
-      }
-      /*
-        二级组员价格
-       */
-      {identity === (1 || 4) ?
-        <div className={styles.listContentItem}>
-          <span>{identity === 1 ? '二级组员价格' : '价格'}</span>
-          <p>{second_price}</p>
-        </div> : null}
-    </div>
-  );
+}) => (
+  <div className={styles.listContentWrapper}>
+    <Descriptions column={4} layout="vertical">
+      <Descriptions.Item label="类型">
+        <Text style={{color: '#181818'}}>{productType(genre)}</Text>
+      </Descriptions.Item>
+      <Descriptions.Item label="产品采购总价">
+        <>
+          <Text style={{color: '#1890FF'}}>组长：</Text>
+          <Text style={{color: '#FF6A00'}}>¥ {leader_price}</Text>
+        </>
+      </Descriptions.Item>
+      <Descriptions.Item label="描述" span={2}>
+        {desc?.split(" ")?.map((o, i) => {
+          return (
+            <Text style={{color: '#181818'}} key={i}>{o}</Text>
+          )
+        })}
+      </Descriptions.Item>
+
+    </Descriptions>
+  </div>
+);
 
 interface ListSearchParams {
   current?: number;
@@ -116,8 +115,8 @@ const ProductBaseList: FC<BasicListProps> = props => {
   const {
     loading,
     dispatch,
-    productBase: {productList, countStatistics},
-    currentUser, labelList
+    productBase: {products},
+    currentUser,
   } = props;
   const [done, setDone] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
@@ -131,10 +130,7 @@ const ProductBaseList: FC<BasicListProps> = props => {
     current: 1, pageSize: 5
   });
 
-  const {results = [], count = 0} = productList;
-  // TODO 分类label
-  const productLabel = _.head(labelList.results) && labelList.results.filter(i => i.label_type === 1);
-  const configLabel = _.head(labelList.results) && labelList.results.filter(i => i.label_type === 2);
+  const {results = [], count = 0} = products;
 
   useEffect(() => {
     reloadList();
@@ -142,13 +138,10 @@ const ProductBaseList: FC<BasicListProps> = props => {
 
   const reloadList = () => {
     dispatch({
-      type: 'productBase/fetch',
+      type: 'productBase/fetchStandardProduct',
       payload: {
         ...listParams
       },
-    });
-    dispatch({
-      type: 'productBase/countStatistics',
     });
   };
 
@@ -394,15 +387,17 @@ const ProductBaseList: FC<BasicListProps> = props => {
               <List.Item
                 actions={actions(item)}
               >
-                <List.Item.Meta
-                  avatar={
-                    <Avatar src={item.avatar} shape="square" size="large"/>
+                <div style={{flexDirection: 'column'}}>
+                  <List.Item.Meta
+                    avatar={
+                      <Avatar src={item.avatar} shape="square" size="large"/>
 
-                  }
-                  title={<div>{item.pro_type}</div>}
-                  description={item.mark}
-                />
-                <ListContent data={item} currentUser={currentUser}/>
+                    }
+                    title={<div>{item.pro_type}</div>}
+                    description={item.mark}
+                  />
+                  <ListContent data={item} currentUser={currentUser}/>
+                </div>
               </List.Item>
             )}
           />
@@ -431,19 +426,18 @@ const ProductBaseList: FC<BasicListProps> = props => {
         onDone={handleDone}
         onCancel={handleCancel}
         onSubmit={handleSubmit}
-        labelArr={productLabel || []}
       />
       {/*<ProductCustomConfig*/}
-        {/*confList={confList}*/}
-        {/*labelArr={configLabel || []}*/}
-        {/*visible={configVisible}*/}
-        {/*onCancel={() => {*/}
-          {/*setConfList({});*/}
-          {/*setCurrent({});*/}
-          {/*console.log(111)*/}
-          {/*setConfigVisible(false);*/}
-        {/*}}*/}
-        {/*onSubmit={handleSubmitCustomConfig}*/}
+      {/*confList={confList}*/}
+      {/*labelArr={configLabel || []}*/}
+      {/*visible={configVisible}*/}
+      {/*onCancel={() => {*/}
+      {/*setConfList({});*/}
+      {/*setCurrent({});*/}
+      {/*console.log(111)*/}
+      {/*setConfigVisible(false);*/}
+      {/*}}*/}
+      {/*onSubmit={handleSubmitCustomConfig}*/}
       {/*/>*/}
       <PublishModal
         onSubmit={async (value, callback) => {

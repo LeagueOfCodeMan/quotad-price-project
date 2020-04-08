@@ -20,7 +20,7 @@ import {findDOMNode} from 'react-dom';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import OperationModal from './components/OperationModal';
-import styles from './style.less';
+import styles from '@/pages/dfdk/product/style.less';
 import {CurrentUser, UserModelState} from "@/models/user";
 import {addProduct, deleteProduct, updateProduct} from "@/pages/dfdk/product/service";
 import {ProductType, productType, ResultType, ValidatePwdResult} from "@/utils/utils";
@@ -79,9 +79,9 @@ const ListContent = ({
         </>
       </Descriptions.Item>
       <Descriptions.Item label="描述" span={2}>
-        {desc?.split(" ")?.map(o => {
+        {desc?.split(" ")?.map((o, i) => {
           return (
-            <Text style={{color: '#181818'}}>{o}</Text>
+            <Text style={{color: '#181818'}} key={i}>{o}</Text>
           )
         })}
       </Descriptions.Item>

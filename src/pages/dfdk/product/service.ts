@@ -56,3 +56,12 @@ export async function updateConfigListByProductId(params: { id: number, data: Pa
     data: params.data,
   });
 }
+
+// 获取标准产品
+
+
+export async function queryStandardProduct(params: ParamsType) {
+  return request('/api/product/product_config', {
+    params,
+  });
+}
