@@ -39,8 +39,6 @@ import {
 } from "@/pages/dfdk/product/service";
 import PublishModal from "@/pages/dfdk/product/product-base/components/PublishModal";
 
-const RadioButton = Radio.Button;
-const RadioGroup = Radio.Group;
 const {Search} = Input;
 const {confirm} = Modal;
 const {Text} = Typography;
@@ -57,7 +55,6 @@ enum ValidateType {
 }
 
 const columns = [
-
   {
     title: '类型',
     dataIndex: 'genre',
@@ -172,10 +169,11 @@ const ListContent = ({
           closable
         />
       </div>
+
       <Table
         showHeader={false}
         bordered size="small"
-        rowKey={record => id + '-' + record?.id}
+        rowKey={record => record?.id}
         columns={columns}
         pagination={false}
         scroll={{y: 300}}
@@ -200,7 +198,7 @@ const ProductBaseList: FC<BasicListProps> = props => {
     loading,
     dispatch,
     productBase: {products},
-    currentUser,
+    currentUser, users,
   } = props;
   const [done, setDone] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
@@ -231,66 +229,19 @@ const ProductBaseList: FC<BasicListProps> = props => {
     showQuickJumper: true,
     pageSize: 1,
     total: count,
+    size: 'small',
     onChange: (page: number, pageSize: number) => {
       setListParams({...listParams, current: page, pageSize});
     }
   };
 
-  const showModal = () => {
-    setCurrent({});
-    setVisible(true);
-  };
-
-  const showConfigModal = async (item: ProductBaseListItem) => {
-    setCurrent(item);
-    setVisible(true);
-  };
-
-  const editAndDelete = (key: string, currentItem: ProductBaseListItem) => {
-    if (key === 'delete') {
-      setValidateType(ValidateType.DELETE_CONFIG);
-      setValidateVisible(true);
-    }
-    setCurrent(currentItem);
-  };
-
-  //        TODO 只要组长才需要发布
+  // TODO 只要组长才需要发布
   const extraContent = (
     <div className={styles.extraContent}>
-      {currentUser?.identity === 2 ?
-        <RadioGroup defaultValue="all" onChange={e => {
-          if (e.target.value !== 'all') {
-            setListParams({...listParams, mem_state: e.target.value - 0 as (1 | 2)});
-          } else {
-            setListParams({..._.omit(listParams, ['mem_state'])});
-          }
-
-        }}>
-          <RadioButton value="all">全部</RadioButton>
-          <RadioButton value="2">已发布</RadioButton>
-          <RadioButton value="1">未发布</RadioButton>
-        </RadioGroup>
-        : null}
       <Search
         className={styles.extraContentSearch} placeholder="请输入搜索内容"
         onSearch={(value) => setListParams({...listParams, search: value})}/>
     </div>
-  );
-
-  const MoreBtn: React.FC<{
-    item: ProductBaseListItem;
-  }> = ({item}) => (
-    <Dropdown
-      overlay={
-        <Menu onClick={({key}) => editAndDelete(key, item)}>
-          <Menu.Item key="delete">删除</Menu.Item>
-        </Menu>
-      }
-    >
-      <a>
-        更多 <DownOutlined/>
-      </a>
-    </Dropdown>
   );
 
   // =========== 对操作弹出处理后 ==============
@@ -382,7 +333,10 @@ const ProductBaseList: FC<BasicListProps> = props => {
     }
   }
 
-  // ================= 列表操作 ================
+  /* ================= 列表操作 ================
+    管理员的添加编辑和删除
+    组长的发布价格：包括一级组员和二级组员
+   */
   const actions = (item: ProductBaseListItem): any[] => {
     switch (currentUser?.identity) {
       case 1:
@@ -402,17 +356,59 @@ const ProductBaseList: FC<BasicListProps> = props => {
           <a
             onClick={e => {
               e.preventDefault();
-              setCurrent(item);
-              handleUpdateModalVisible(true);
+              publishMemPrice(item);
             }}
           >
-            {item?.mem_state === 1 ? '发布' : '编辑'}
+            发布组员价格
           </a>
         ];
 
     }
     return [];
-  }
+  };
+
+  const publishMemPrice = (item: ProductBaseListItem) => {
+    dispatch({
+      type: 'user/queryCurrentUsers'
+    });
+    setCurrent(item);
+    handleUpdateModalVisible(true);
+  };
+
+  const showModal = () => {
+    setCurrent({});
+    setVisible(true);
+  };
+
+  const showConfigModal = (item: ProductBaseListItem) => {
+    setCurrent(item);
+    setVisible(true);
+  };
+
+  const MoreBtn: React.FC<{
+    item: ProductBaseListItem;
+  }> = ({item}) => (
+    <Dropdown
+      overlay={
+        <Menu onClick={({key}) => editAndDelete(key, item)}>
+          <Menu.Item key="delete">删除</Menu.Item>
+        </Menu>
+      }
+    >
+      <a>
+        更多 <DownOutlined/>
+      </a>
+    </Dropdown>
+  );
+
+  const editAndDelete = (key: string, currentItem: ProductBaseListItem) => {
+    if (key === 'delete') {
+      setValidateType(ValidateType.DELETE_CONFIG);
+      setValidateVisible(true);
+    }
+    setCurrent(currentItem);
+  };
+  // ==========================================
 
   return (
     <div>
@@ -420,7 +416,6 @@ const ProductBaseList: FC<BasicListProps> = props => {
         <Card
           className={styles.listCard}
           bordered={false}
-          title="标准库"
           style={{marginTop: 24}}
           bodyStyle={{padding: '0 32px 40px 32px'}}
           extra={extraContent}
@@ -503,6 +498,8 @@ const ProductBaseList: FC<BasicListProps> = props => {
         }}
         updateModalVisible={updateModalVisible}
         current={current}
+        users={users}
+        reload={() => reloadList()}
       />
     </div>
   );
@@ -521,7 +518,7 @@ export default connect(
   }) => ({
     productBase,
     currentUser: user.currentUser,
-    labelList: user.labelList,
+    users: user.users,
     loading: loading.models.productBase,
   }),
 )(ProductBaseList);

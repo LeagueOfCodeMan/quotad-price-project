@@ -1,23 +1,30 @@
 import React, {useEffect, useState} from 'react';
-import {Form, InputNumber, Modal} from 'antd';
-import {SizeType} from "antd/es/config-provider/SizeContext";
+import {Form, Modal, Typography} from 'antd';
 import styles from '@/pages/yuntai.less';
 import {ProductBaseListItem} from "@/pages/dfdk/product/data";
+import {productType} from "@/utils/utils";
+import _ from "lodash";
+import {CurrentChildren} from "@/models/data";
+import EditableTable from "@/pages/dfdk/product/product-base/components/EditableTable";
 
-const FormItem = Form.Item;
+const {Text} = Typography;
 
 interface PublishModalProps {
   updateModalVisible: boolean;
   onSubmit: (fieldsValue: ProductBaseListItem, callback: Function) => void;
   onCancel: () => void;
   current?: NotRequired<ProductBaseListItem>;
+  users?: NotRequired<CurrentChildren>;
+  reload: () => void;
 }
 
 const PublishModal: React.FC<PublishModalProps> = props => {
   const [form] = Form.useForm();
   const [formRef, setFormRef] = useState<any>();
-  const {updateModalVisible: visible, onSubmit: handleAdd, onCancel, current} = props;
-
+  const {
+    updateModalVisible: visible, users,
+    onSubmit: handleAdd, onCancel, current, reload,
+  } = props;
 
   useEffect(() => {
     if (form && !visible && formRef) {
@@ -30,9 +37,9 @@ const PublishModal: React.FC<PublishModalProps> = props => {
   useEffect(() => {
     if (current && formRef) {
       setTimeout(() => {
-        form.setFieldsValue({
-          ...current
-        });
+        // form.setFieldsValue({
+        //   ...current
+        // });
       }, 0)
     }
   }, [current]);
@@ -48,50 +55,97 @@ const PublishModal: React.FC<PublishModalProps> = props => {
     });
   };
 
-  const commonProps = {
-    style: {width: '200px'}, size: 'middle' as SizeType,
-  };
+  const columns = [
+
+    {
+      title: '类型',
+      dataIndex: 'genre',
+      key: 'genre',
+      align: 'center',
+      width: 70,
+      render: (text: number) => {
+        return (
+          <div>
+            <Text style={{color: '#181818'}}>{productType(text)}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      title: '型号',
+      dataIndex: 'pro_type',
+      key: 'pro_type',
+      align: 'center',
+      width: 70,
+      render: (text: string) => {
+        return (
+          <div>
+            <Text style={{color: '#181818'}}>{text}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      title: '配置类型',
+      dataIndex: 'is_required',
+      key: 'is_required',
+      align: 'center',
+      width: 60,
+      render: (text: boolean | 0) => {
+        return (
+          <div style={{textAlign: 'center'}}>
+            {text === 0 ? <Text type="warning">标准</Text> : text ?
+              <Text style={{color: '#181818'}}>附加</Text> :
+              <Text type="danger">选配</Text>
+            }
+          </div>
+        )
+      },
+    },
+    {
+      title: '采购价格',
+      dataIndex: 'leader_price',
+      key: 'leader_price',
+      align: 'center',
+      width: 100,
+      render: (text: string) => (
+        <div>
+          <Text style={{color: '#1890FF'}}>组长：</Text>
+          <Text style={{color: '#FF6A00'}}>¥ {text}</Text>
+        </div>
+      ),
+    },
+    {
+      title: '一级组员定价',
+      dataIndex: 'member_price',
+      key: 'member_price',
+      width: 100,
+      align: 'center',
+      editable: true,
+      render: (text: string) => {
+        return text ? '¥ ' + text : '尚未定价';
+      },
+    },
+  ];
+
+  const dataSource = _.sortBy(current?.conf_list, o => !o.is_required) || [];
+  const data = _.concat({..._.omit(current, 'conf_list'), is_required: 0} as ProductBaseListItem, dataSource);
   return (
     <Modal
       title="编辑组员价格"
       visible={visible}
       onOk={okHandle}
       onCancel={() => onCancel()}
-      width={320}
+      width={720}
       maskClosable={false}
     >
-
-      <Form
-        form={form}
-        ref={(ref) => setFormRef(ref)}
-        layout="vertical"
-        className={styles.formStyleCommon}
-      >
-        <div className={styles.flexSpaceBetween}>
-          <FormItem
-            label="组员价格"
-            name="member_price"
-            rules={[{required: true, message: '请输入组员价格'},
-              {
-                validator: (rule, value) => {
-                  console.log(value);
-                  if (value < (parseFloat(current?.leader_price as string || '') || 0)) {
-                    return Promise.reject('组员价格不能低于组长价格')
-                  }
-                  return Promise.resolve();
-                }
-              }
-            ]}
-          >
-            <InputNumber
-              formatter={value => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={value => (value as string).replace(/¥\s?|(,*)/g, '')}
-              {...commonProps}
-              min={parseFloat(current?.leader_price as string || '') || 0}
-            />
-          </FormItem>
-        </div>
-      </Form>
+      <div className={styles.formStyleCommon}>
+        <EditableTable
+          columns={columns}
+          dataSource={data || []}
+          reload={() => reload()}
+        />
+      </div>
     </Modal>
   );
 };

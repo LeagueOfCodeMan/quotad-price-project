@@ -13,7 +13,7 @@ import {
   Tooltip,
   Typography
 } from 'antd';
-import {ProductDetailListItem} from "@/pages/dfdk/product-purchased/data";
+import {ProductDetailListItem} from "@/pages/dfdk/product/product-base/data";
 import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
 import {CurrentUser, UserModelState} from "@/models/user";
 import {LocalStorageShopType, ShoppingCartItem} from "@/models/data";

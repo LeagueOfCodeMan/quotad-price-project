@@ -3,10 +3,9 @@ import {Reducer} from 'redux';
 import {router} from 'umi';
 import {message} from 'antd';
 
-import {queryAddress, queryCurrent, queryLabels} from '@/services/user';
-import {UserListItem} from "@/models/data";
+import {queryAddress, queryCurrent, queryCurrentUsers} from '@/services/user';
+import {CurrentChildren, UserListItem} from "@/models/data";
 import {isNormalResponseBody} from "@/utils/utils";
-import {LabelList} from "@/pages/dfdk/label/data";
 import {AddressInfo} from "@/pages/usermanager/settings/data";
 import {ProjectDetailListItem, ProjectListItem} from "@/pages/project/data";
 import {queryProjectOneDetail} from "@/pages/project/service";
@@ -17,11 +16,10 @@ export type CurrentUser = NotRequired<UserListItem>;
 
 export interface UserModelState {
   currentUser: CurrentUser;
-  labelList: LabelList;
   addressList: AddressInfo;
   shopCount: number;
   projectDetailList: ProjectDetailListItem[];
-
+  users: NotRequired<CurrentChildren>;
 }
 
 export interface UserModelType {
@@ -29,17 +27,17 @@ export interface UserModelType {
   state: UserModelState;
   effects: {
     fetchCurrent: Effect;
-    fetchLabels: Effect;
     fetchAddress: Effect;
     queryProjectOneDetail: Effect;
+    queryCurrentUsers: Effect;
   };
   reducers: {
     saveCurrentUser: Reducer<CurrentUser>;
-    saveLabels: Reducer<NotRequired<LabelList>>;
     saveAddressList: Reducer<NotRequired<AddressInfo>>;
     saveShopCount: Reducer<{ shopCount: number }>;
     saveProjectInfo: Reducer<any>;
     deleteProjectItem: Reducer<any>;
+    saveUsers: Reducer<NotRequired<CurrentChildren>>;
   };
 }
 
@@ -48,16 +46,16 @@ const UserModel: UserModelType = {
 
   state: {
     currentUser: {},
-    labelList: {
-      results: [],
-      count: undefined
-    },
     addressList: {
       results: [],
       count: 0
     },
     shopCount: 0,
     projectDetailList: [],
+    users: {
+      results: [],
+      count: 0
+    },
   },
 
   effects: {
@@ -76,22 +74,20 @@ const UserModel: UserModelType = {
         callback(response)
       }
     },
-
-    * fetchLabels({payload}, {call, put}) {
-      const response = yield call(queryLabels, payload);
-      if (isNormalResponseBody(response)) {
-        yield put({
-          type: 'saveLabels',
-          payload: response,
-        });
-      }
-    },
-
     * fetchAddress({payload}, {call, put}) {
       const response = yield call(queryAddress, payload);
       if (isNormalResponseBody(response)) {
         yield put({
           type: 'saveAddressList',
+          payload: response,
+        });
+      }
+    },
+    * queryCurrentUsers({payload}, {call, put}) {
+      const response = yield call(queryCurrentUsers, payload);
+      if (isNormalResponseBody(response)) {
+        yield put({
+          type: 'saveUsers',
           payload: response,
         });
       }
@@ -122,12 +118,6 @@ const UserModel: UserModelType = {
         currentUser: action.payload || {},
       };
     },
-    saveLabels(state, action) {
-      return {
-        ...state,
-        labelList: action.payload || {},
-      };
-    },
     saveAddressList(state, action) {
       return {
         ...state,
@@ -139,6 +129,12 @@ const UserModel: UserModelType = {
         ...state,
         shopCount: action.payload || 0,
       }
+    },
+    saveUsers(state, action) {
+      return {
+        ...state,
+        users: action.payload || [],
+      };
     },
     saveProjectInfo(state, action) {
       return {

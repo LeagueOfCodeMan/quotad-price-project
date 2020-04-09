@@ -58,8 +58,6 @@ export async function updateConfigListByProductId(params: { id: number, data: { 
 }
 
 // 获取标准库
-
-
 export async function queryStandardProduct(params: ParamsType) {
   return request('/api/product/product_config', {
     params,
@@ -70,4 +68,10 @@ export async function deleteStandardProduct(params?: { id: number }) {
   return request('/api/product/product_config/' + params?.id, {
     method: 'DELETE',
   });
+}
+
+// 获取当前产品的二级组员价格
+export async function queryUsersByProduct(params: { id: number }) {
+  return request('/api/product/' + params.id + '/second_user_list'
+  );
 }

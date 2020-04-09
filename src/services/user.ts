@@ -59,3 +59,10 @@ export async function updateProject(params: { id: number; product_list: ProductL
     }
   });
 }
+
+/**
+ * 获取当前用户的组员信息
+ */
+export async function queryCurrentUsers() {
+  return request('/api/user/user_detail_list');
+}

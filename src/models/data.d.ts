@@ -107,3 +107,23 @@ export interface ShoppingCartItem {
 
 export type LocalStorageShopType = { user: string; shop: ShoppingCartItem[] }[];
 
+
+export interface CurrentChild {
+  id: number;
+  username: string;
+  project_list: { id: number; project_name: string; }[];
+}
+
+export interface CurrentChildren {
+  count: number;
+  results: {
+    area: string;
+    users: {
+      id: number;
+      username: string;
+      project_list: { id: number; project_name: string; }[];
+      one_level: CurrentChild[];
+      two_level: CurrentChild[];
+    }
+  }[];
+}
