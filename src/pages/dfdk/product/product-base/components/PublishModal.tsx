@@ -1,150 +1,218 @@
-import React, {useEffect, useState} from 'react';
-import {Form, Modal, Typography} from 'antd';
+import React, {ReactText, useEffect, useState} from 'react';
+import {Alert, Button, Form, Input, InputNumber, Modal, Table, Typography} from 'antd';
 import styles from '@/pages/yuntai.less';
-import {ProductBaseListItem} from "@/pages/dfdk/product/data";
-import {productType} from "@/utils/utils";
-import _ from "lodash";
-import {CurrentChildren} from "@/models/data";
-import EditableTable from "@/pages/dfdk/product/product-base/components/EditableTable";
+import {UsersByProductType} from "@/pages/dfdk/product/product-base/components/EditableTable";
+import _ from 'lodash';
+import Highlighter from 'react-highlight-words';
+import {SearchOutlined} from '@ant-design/icons';
 
 const {Text} = Typography;
 
 interface PublishModalProps {
   updateModalVisible: boolean;
-  onSubmit: (fieldsValue: ProductBaseListItem, callback: Function) => void;
+  onSubmit: (fieldsValue: PublishType, callback: Function) => void;
   onCancel: () => void;
-  current?: NotRequired<ProductBaseListItem>;
-  users?: NotRequired<CurrentChildren>;
-  reload: () => void;
+  list?: UsersByProductType[];
 }
+
+export type PublishType = { second_price: string | number, user_list?: number[]; };
+
+const formLayout = {
+  labelCol: {span: 7},
+  wrapperCol: {span: 13},
+};
 
 const PublishModal: React.FC<PublishModalProps> = props => {
   const [form] = Form.useForm();
   const [formRef, setFormRef] = useState<any>();
+  const [searchInput, setSearchInput] = useState<any>();
+  const [selectedRowKeys, setSelectedRowKeys] = useState<ReactText[]>([]);
+  const [searchText, setSearchText] = useState<string>('');
+  const [searchedColumn, setSearchedColumn] = useState<string>('');
+
   const {
-    updateModalVisible: visible, users,
-    onSubmit: handleAdd, onCancel, current, reload,
+    updateModalVisible: visible,
+    onSubmit: handleAdd, onCancel, list,
   } = props;
+  const leader_price = _.head(list)?.leader_price;
 
   useEffect(() => {
     if (form && !visible && formRef) {
-      setTimeout(() => form.resetFields(), 0)
-
+      setTimeout(() => form.resetFields(), 0);
+      setSelectedRowKeys([]);
+      setSearchText('');
+      setSearchedColumn('');
     }
   }, [visible]);
 
-
-  useEffect(() => {
-    if (current && formRef) {
-      setTimeout(() => {
-        // form.setFieldsValue({
-        //   ...current
-        // });
-      }, 0)
-    }
-  }, [current]);
-
-
   const okHandle = async () => {
     const fieldsValue = await form.validateFields();
-
-    handleAdd(fieldsValue as ProductBaseListItem, (callback: boolean) => {
+    const payload = {
+      second_price: fieldsValue?.second_price,
+      user_list: selectedRowKeys,
+    };
+    handleAdd(payload as PublishType, (callback: boolean) => {
       if (callback) {
         form.resetFields();
       }
     });
   };
 
-  const columns = [
 
+  const onSelectChange = (selectedRowKeys: ReactText[]) => {
+    setSelectedRowKeys(selectedRowKeys);
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: onSelectChange,
+  };
+
+  const getColumnSearchProps = (dataIndex: string) => ({
+    // @ts-ignore
+    filterDropdown: ({setSelectedKeys, selectedKeys, confirm, clearFilters}) => (
+      <div style={{padding: 8}}>
+        <Input
+          ref={(ref) => setSearchInput(ref)}
+          placeholder={`搜索`}
+          value={selectedKeys[0]}
+          onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+          onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          style={{width: 150, marginBottom: 8, display: 'block'}}
+        />
+        <Button
+          type="primary"
+          onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+          icon={<SearchOutlined/>}
+          size="small"
+          style={{width: 90, marginRight: 8}}
+        >
+          搜索
+        </Button>
+        <Button onClick={() => handleReset(clearFilters)} size="small" style={{width: 90}}>
+          重置
+        </Button>
+      </div>
+    ),
+    filterIcon: (filtered: any) => <SearchOutlined style={{color: filtered ? '#1890ff' : undefined}}/>,
+    onFilter: (value: string, record: UsersByProductType) =>
+      // @ts-ignore
+      record[dataIndex]
+        .toString()
+        .toLowerCase()
+        .includes(value.toLowerCase()),
+    onFilterDropdownVisibleChange: (visible: boolean) => {
+      if (visible) {
+        // @ts-ignore
+        setTimeout(() => searchInput?.select());
+      }
+    },
+    render: (text: string) =>
+      searchedColumn === dataIndex ? (
+        <Highlighter
+          highlightStyle={{backgroundColor: '#ffc069', padding: 0}}
+          searchWords={[searchText]}
+          autoEscape
+          textToHighlight={text.toString()}
+        />
+      ) : (
+        text
+      ),
+  });
+
+  const columnsUser = [
     {
-      title: '类型',
-      dataIndex: 'genre',
-      key: 'genre',
-      align: 'center',
-      width: 70,
-      render: (text: number) => {
-        return (
-          <div>
-            <Text style={{color: '#181818'}}>{productType(text)}</Text>
-          </div>
-        )
-      },
+      title: '二级组员',
+      dataIndex: 'username',
+      width: 120,
+      ...getColumnSearchProps('username'),
     },
     {
-      title: '型号',
-      dataIndex: 'pro_type',
-      key: 'pro_type',
-      align: 'center',
-      width: 70,
-      render: (text: string) => {
-        return (
-          <div>
-            <Text style={{color: '#181818'}}>{text}</Text>
-          </div>
-        )
-      },
-    },
-    {
-      title: '配置类型',
-      dataIndex: 'is_required',
-      key: 'is_required',
-      align: 'center',
-      width: 60,
-      render: (text: boolean | 0) => {
-        return (
-          <div style={{textAlign: 'center'}}>
-            {text === 0 ? <Text type="warning">标准</Text> : text ?
-              <Text style={{color: '#181818'}}>附加</Text> :
-              <Text type="danger">选配</Text>
-            }
-          </div>
-        )
-      },
-    },
-    {
-      title: '采购价格',
+      title: '组长采购价',
       dataIndex: 'leader_price',
-      key: 'leader_price',
-      align: 'center',
-      width: 100,
+      width: 120,
       render: (text: string) => (
         <div>
-          <Text style={{color: '#1890FF'}}>组长：</Text>
           <Text style={{color: '#FF6A00'}}>¥ {text}</Text>
         </div>
       ),
     },
     {
-      title: '一级组员定价',
-      dataIndex: 'member_price',
-      key: 'member_price',
-      width: 100,
-      align: 'center',
+      title: '二级组员定价',
+      dataIndex: 'second_price',
       editable: true,
+      width: 120,
       render: (text: string) => {
         return text ? '¥ ' + text : '尚未定价';
       },
     },
   ];
 
-  const dataSource = _.sortBy(current?.conf_list, o => !o.is_required) || [];
-  const data = _.concat({..._.omit(current, 'conf_list'), is_required: 0} as ProductBaseListItem, dataSource);
+
+  const handleSearch = (selectedKeys: React.SetStateAction<string>[], confirm: () => void, dataIndex: React.SetStateAction<string>) => {
+    confirm();
+    setSearchText(selectedKeys[0]);
+    setSearchedColumn(dataIndex);
+  };
+
+  const handleReset = (clearFilters: () => void) => {
+    clearFilters();
+    setSearchText('');
+  };
+
   return (
     <Modal
-      title="编辑组员价格"
+      title="编辑二级组员价格"
       visible={visible}
       onOk={okHandle}
       onCancel={() => onCancel()}
-      width={720}
+      width={480}
       maskClosable={false}
+      destroyOnClose={true}
     >
       <div className={styles.formStyleCommon}>
-        <EditableTable
-          columns={columns}
-          dataSource={data || []}
-          reload={() => reload()}
+        <div style={{margin: '0 0 10px 0'}}>
+          <Alert
+            message="可以多选统一编辑"
+            type="success"
+            closable
+          />
+        </div>
+        <Table
+          rowSelection={rowSelection}
+          rowKey={record => record?.id}
+          dataSource={list}
+          columns={columnsUser}
+          pagination={false}
+          scroll={{y: 300}}
         />
+        <Form ref={(ref) => setFormRef(ref)} form={form} {...formLayout} style={{marginTop: '10px'}}>
+          <Form.Item
+            name="second_price"
+            label="发布价格"
+            rules={[{required: true, message: '请输入二级组员价格'},
+              {
+                validator: (rule, value) => {
+                  if (!value) {
+                    return Promise.resolve();
+                  }
+                  if (value < (parseFloat(leader_price as string || '') || 0)) {
+                    return Promise.reject('组员价格不能低于组长价格')
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
+          >
+            <InputNumber
+              formatter={value => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={value => (value as string).replace(/¥\s?|(,*)/g, '')}
+              min={parseFloat(leader_price as string || '') || 0}
+              style={{width: '100%'}}
+              disabled={!_.head(selectedRowKeys)}
+            />
+          </Form.Item>
+        </Form>
       </div>
     </Modal>
   );

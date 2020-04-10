@@ -20,7 +20,7 @@ interface BasicListProps {
 
 export const ProjectDetail: FC<BasicListProps> = props => {
   const [validateVisible, setValidateVisible] = useState(false);
-  const [validateType, setValidateType] = useState<string>("");
+  // const [validateType, setValidateType] = useState<string>("");
 
   const {projectDetailList = [], dispatch} = props;
 

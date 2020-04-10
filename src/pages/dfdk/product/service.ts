@@ -5,6 +5,7 @@ import {ProductBaseListItem} from './data';
 interface ParamsType extends Partial<ProductBaseListItem> {
   pageSize?: number;
   current?: number;
+
 }
 
 export async function queryProduct(params: ParamsType) {
@@ -36,6 +37,14 @@ export async function updateProduct(params: { id: number, data: ParamsType }) {
 
 export async function modifyProductMemberPrice(params: { id: number, data: ParamsType }) {
   return request('/api/product/' + params.id + '/mod_mem_price', {
+    method: 'POST',
+    data: params.data,
+  });
+}
+
+export async function modifyProductSecondPrice(params: { id: number,
+  data: { second_price: string | number, user_list?: number[]; } }) {
+  return request('/api/product/' + params.id + '/mod_second_price', {
     method: 'POST',
     data: params.data,
   });

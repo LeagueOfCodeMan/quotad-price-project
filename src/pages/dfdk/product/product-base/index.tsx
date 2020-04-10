@@ -12,7 +12,6 @@ import {
   Menu,
   message,
   Modal,
-  Radio,
   Table,
   Typography,
 } from 'antd';
@@ -28,16 +27,13 @@ import {CurrentUser, UserModelState} from "@/models/user";
 import {productType, ResultType, ValidatePwdResult} from "@/utils/utils";
 import ValidatePassword from "@/components/ValidatePassword";
 import {testPassword} from "@/services/user";
-import {ExclamationCircleOutlined} from "@ant-design/icons/lib";
+import {ExclamationCircleOutlined, MinusSquareTwoTone, PlusSquareTwoTone} from "@ant-design/icons/lib";
 import {PaginationConfig} from "antd/lib/pagination";
 import _ from 'lodash';
 import {ProductBaseListItem} from "@/pages/dfdk/product/data";
-import {
-  deleteStandardProduct,
-  modifyProductMemberPrice,
-  updateConfigListByProductId
-} from "@/pages/dfdk/product/service";
-import PublishModal from "@/pages/dfdk/product/product-base/components/PublishModal";
+import {deleteStandardProduct, updateConfigListByProductId} from "@/pages/dfdk/product/service";
+import EditableTable from "@/pages/dfdk/product/product-base/components/EditableTable";
+import {useToggle} from "react-use";
 
 const {Search} = Input;
 const {confirm} = Modal;
@@ -54,89 +50,125 @@ enum ValidateType {
   DELETE_CONFIG = 'DELETE_CONFIG',
 }
 
-const columns = [
-  {
-    title: '类型',
-    dataIndex: 'genre',
-    key: 'genre',
-    width: 100,
-    render: (text: number) => {
-      return (
-        <div>
-          <Text style={{color: '#181818'}}>{productType(text)}</Text>
-        </div>
-      )
-    },
-  },
-  {
-    title: '型号',
-    dataIndex: 'pro_type',
-    key: 'pro_type',
-    width: 100,
-    render: (text: string) => {
-      return (
-        <div>
-          <Text style={{color: '#181818'}}>{text}</Text>
-        </div>
-      )
-    },
-  },
-  {
-    title: '采购价格',
-    dataIndex: 'price',
-    key: 'price',
-    width: 100,
-    render: (_, record: ProductBaseListItem) => (
-      <div>
-        <Text style={{color: '#1890FF'}}>组长：</Text>
-        <Text style={{color: '#FF6A00'}}>¥ {record?.leader_price}</Text>
-      </div>
-    ),
-  },
-  {
-    title: '描述',
-    key: 'desc',
-    dataIndex: 'desc',
-    render: (text: string) => (
-      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
-        {text?.split("\n")?.map((o, i) => {
-          return (
-            <div><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
-          )
-        })}
-      </div>
-    ),
-  },
-  {
-    title: '配置类型',
-    dataIndex: 'is_required',
-    key: 'is_required',
-    width: 50,
-    render: (text: boolean) => {
-      return (
-        <div>
-          {text ?
-            <Text style={{color: '#181818'}}>附加</Text> :
-            <Text type="danger">选配</Text>
-          }
-        </div>
-      )
-    },
-  },
-];
 
-
-const ListContent = ({
-                       data: {
-                         desc, leader_price, second_price, member_price,
-                         genre, conf_list, id
-                       }, currentUser: {identity}
-                     }: {
+const ListContent = ({data, currentUser: {identity}, reload, on}: {
   data: ProductBaseListItem; currentUser: CurrentUser;
+  reload: () => void; on: boolean;
 }) => {
-  const dataSource = _.sortBy(conf_list, o => !o.is_required);
+  const {
+    desc, leader_price, second_price, member_price,
+    genre, conf_list,
+  } = data;
+  let price;
+  if (identity === (1 || 2)) {
+    price = leader_price;
+  } else if (identity === 3) {
+    price = member_price;
+  } else if (identity === 4) {
+    price = second_price;
+  }
+  const dataSource = _.sortBy(conf_list, o => !o.is_required) || [];
+  const dataFinal = _.concat({..._.omit(data, 'conf_list'), is_required: 0} as ProductBaseListItem, dataSource);
+
+  const columns = [
+    {
+      title: '类型',
+      dataIndex: 'genre',
+      key: 'genre',
+      width: 100,
+      render: (text: number) => {
+        return (
+          <div>
+            <Text style={{color: '#181818'}}>{productType(text)}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      title: '型号',
+      dataIndex: 'pro_type',
+      key: 'pro_type',
+      width: 100,
+      render: (text: string) => {
+        return (
+          <div>
+            <Text style={{color: '#181818'}}>{text}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      title: '采购价格',
+      dataIndex: 'price',
+      key: 'price',
+      width: 120,
+      render: (text: string, record: ProductBaseListItem) => {
+        let price;
+        if (identity === (1 || 2)) {
+          price = record?.leader_price;
+        } else if (identity === 3) {
+          price = record?.member_price;
+        } else {
+          price = record?.second_price;
+        }
+        return (
+          <div>
+            <Text style={{color: '#1890FF'}}>单价：</Text>
+            <Text style={{color: '#FF6A00'}}>{price ? '¥ ' + price : '尚未定价'}</Text>
+          </div>
+        );
+      },
+    },
+    {
+      title: '描述',
+      key: 'desc',
+      dataIndex: 'desc',
+      render: (text: string) => (
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
+          {text?.split("\n")?.map((o, i) => {
+            return (
+              <div><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+            )
+          })}
+        </div>
+      ),
+    },
+    {
+      title: '配置类型',
+      dataIndex: 'is_required',
+      key: 'is_required',
+      width: 50,
+      render: (text: boolean) => {
+        return (
+          <div>
+            {text ?
+              <Text style={{color: '#181818'}}>附加</Text> :
+              <Text type="danger">选配</Text>
+            }
+          </div>
+        )
+      },
+    },
+  ];
+
   return (
     <div className={styles.listContentWrapper}>
+      {
+        on ? null :
+          <>
+            <div style={{margin: '10px 0'}}>
+              <Alert
+                message="组员价格发布"
+                type="error"
+                closable
+              />
+            </div>
+            <EditableTable
+              dataSource={dataFinal || []}
+              reload={() => reload()}
+            />
+          </>
+      }
       <div style={{margin: '10px 0'}}>
         <Alert
           message="基本信息"
@@ -148,10 +180,10 @@ const ListContent = ({
         <Descriptions.Item label="类型" span={2}>
           <Text style={{color: '#181818'}}>{productType(genre)}</Text>
         </Descriptions.Item>
-        <Descriptions.Item label="产品采购总价" span={2}>
+        <Descriptions.Item label="产品采购价" span={2}>
           <>
-            <Text style={{color: '#1890FF'}}>组长：</Text>
-            <Text style={{color: '#FF6A00'}}>¥ {leader_price}</Text>
+            <Text style={{color: '#1890FF'}}>单价：</Text>
+            <Text style={{color: '#FF6A00'}}>{price ? '¥ ' + price : '尚未定价'}</Text>
           </>
         </Descriptions.Item>
         <Descriptions.Item label="描述" span={4}>
@@ -198,11 +230,11 @@ const ProductBaseList: FC<BasicListProps> = props => {
     loading,
     dispatch,
     productBase: {products},
-    currentUser, users,
+    currentUser,
   } = props;
   const [done, setDone] = useState<boolean>(false);
   const [visible, setVisible] = useState<boolean>(false);
-  const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
+  const [on, toggle] = useToggle(true);
   const [current, setCurrent] = useState<NotRequired<ProductBaseListItem>>({});
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>("");
@@ -326,7 +358,6 @@ const ProductBaseList: FC<BasicListProps> = props => {
           }
         },
         onCancel() {
-          console.log('Cancel');
           setCurrent({});
         },
       });
@@ -353,13 +384,20 @@ const ProductBaseList: FC<BasicListProps> = props => {
         ];
       case 2:
         return [
-          <a
-            onClick={e => {
-              e.preventDefault();
-              publishMemPrice(item);
-            }}
-          >
-            发布组员价格
+          <a onClick={e => {
+            e.preventDefault();
+            toggle();
+          }}>
+            {on ?
+              <>
+                <PlusSquareTwoTone className={styles.elementAnimation}/>
+                <span style={{marginLeft: '5px'}}>查看组员价格</span>
+              </> :
+              <>
+                <MinusSquareTwoTone className={styles.elementAnimation2}/>
+                <span style={{marginLeft: '5px'}}>查看组员价格</span>
+              </>
+            }
           </a>
         ];
 
@@ -367,13 +405,6 @@ const ProductBaseList: FC<BasicListProps> = props => {
     return [];
   };
 
-  const publishMemPrice = (item: ProductBaseListItem) => {
-    dispatch({
-      type: 'user/queryCurrentUsers'
-    });
-    setCurrent(item);
-    handleUpdateModalVisible(true);
-  };
 
   const showModal = () => {
     setCurrent({});
@@ -451,7 +482,11 @@ const ProductBaseList: FC<BasicListProps> = props => {
                     title={<div>{item.pro_type}</div>}
                     description={item.mark}
                   />
-                  <ListContent data={item} currentUser={currentUser}/>
+                  <ListContent
+                    data={item} currentUser={currentUser}
+                    reload={() => reloadList()}
+                    on={on}
+                  />
                 </div>
               </List.Item>
             )}
@@ -462,7 +497,6 @@ const ProductBaseList: FC<BasicListProps> = props => {
         visible={validateVisible}
         onCreate={async (values) => {
           const success = await onCreate(values)
-          console.log(success);
           if (success) {
             setValidateVisible(false);
             // TODO something
@@ -482,25 +516,7 @@ const ProductBaseList: FC<BasicListProps> = props => {
         onCancel={handleCancel}
         onSubmit={handleSubmit}
       />
-      <PublishModal
-        onSubmit={async (value, callback) => {
-          const response = await modifyProductMemberPrice({id: current?.id as number, data: value});
-          const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
-          if (success) {
-            callback();
-            handleUpdateModalVisible(false);
-            setCurrent({});
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalVisible(false);
-          setCurrent({});
-        }}
-        updateModalVisible={updateModalVisible}
-        current={current}
-        users={users}
-        reload={() => reloadList()}
-      />
+
     </div>
   );
 };

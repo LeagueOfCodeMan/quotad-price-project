@@ -143,7 +143,7 @@ export default {
                   path: '/dfdk/product',
                   name: 'product',
                   component: './dfdk/product',
-                  authority: ['user_lv1', 'user_lv2'],
+                  authority: needUserAuthority,
                   routes: [
                     {
                       path: '/dfdk/product',

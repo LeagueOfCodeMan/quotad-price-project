@@ -44,7 +44,6 @@ const OperationModal: FC<OperationModalProps> = props => {
       setTimeout(() => {
         form.setFieldsValue({
           ..._.omit(current, ['avatar'])
-          // createdAt: current.createdAt ? moment(current.createdAt) : null,
         });
       }, 0);
     }
@@ -152,6 +151,7 @@ const OperationModal: FC<OperationModalProps> = props => {
         });
       }
     };
+
     return (
       <Form form={form} {...formLayout} onFinish={onFinish}>
         <Form.Item

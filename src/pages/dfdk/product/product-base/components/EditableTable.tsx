@@ -1,9 +1,12 @@
 import React, {useContext, useEffect, useRef, useState} from 'react';
-import {Form, InputNumber, Table} from 'antd';
+import {Form, InputNumber, Table, Typography} from 'antd';
 import {ProductBaseListItem} from "@/pages/dfdk/product/data";
 import {Dispatch} from "redux";
-import {modifyProductMemberPrice, queryUsersByProduct} from "@/pages/dfdk/product/service";
-import {isNormalResponseBody, ValidatePwdResult} from "@/utils/utils";
+import {modifyProductMemberPrice, modifyProductSecondPrice, queryUsersByProduct} from "@/pages/dfdk/product/service";
+import {isNormalResponseBody, productType, ValidatePwdResult} from "@/utils/utils";
+import PublishModal, {PublishType} from "@/pages/dfdk/product/product-base/components/PublishModal";
+import _ from 'lodash';
+const {Text} = Typography;
 
 // @ts-ignore
 const EditableContext = React.createContext<any>();
@@ -85,6 +88,9 @@ const EditableCell: React.FC<EditableCellProps> = ({
           },
           {
             validator: (rule, value) => {
+              if (!value) {
+                return Promise.resolve();
+              }
               if (value < (parseFloat(record?.leader_price as string || '') || 0)) {
                 return Promise.reject('组员价格不能低于组长价格')
               }
@@ -114,22 +120,23 @@ const EditableCell: React.FC<EditableCellProps> = ({
 
 interface EditableTableProps {
   dataSource: ProductBaseListItem[];
-  columns: any;
   reload: () => void;
 }
 
-type UsersByProductType = {
+export type UsersByProductType = {
   id: number;
-  key: number;
+  product_id: number;
   username: string;
   second_price: string | null;
   leader_price: string | null;
 }
 
-const EditableTable: React.FC<EditableTableProps> = ({dataSource, columns, reload}) => {
+const EditableTable: React.FC<EditableTableProps> = ({dataSource, reload}) => {
 
   const [data, setData] = useState<ProductBaseListItem[]>(dataSource);
-  const [list, setList] = useState<{ id: number; users: UsersByProductType[]; }[]>([]);
+  const [list, setList] = useState<UsersByProductType[]>([]);
+  const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
+  const [current, setCurrent] = useState<NotRequired<ProductBaseListItem>>({});
 
   const handleSave = async (row: { id: number; member_price: string; }) => {
     const newData = [...dataSource];
@@ -154,7 +161,98 @@ const EditableTable: React.FC<EditableTableProps> = ({dataSource, columns, reloa
     },
   };
 
-  const columnsFinal = columns.map((col: { editable: boolean; dataIndex: any; title: any; }) => {
+  const columns = [
+    {
+      title: '类型',
+      dataIndex: 'genre',
+      key: 'genre',
+      align: 'center',
+      width: 70,
+      render: (text: number) => {
+        return (
+          <div>
+            <Text style={{color: '#181818'}}>{productType(text)}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      title: '型号',
+      dataIndex: 'pro_type',
+      key: 'pro_type',
+      align: 'center',
+      width: 70,
+      render: (text: string) => {
+        return (
+          <div>
+            <Text style={{color: '#181818'}}>{text}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      title: '配置类型',
+      dataIndex: 'is_required',
+      key: 'is_required',
+      align: 'center',
+      width: 60,
+      render: (text: boolean | 0) => {
+        return (
+          <div style={{textAlign: 'center'}}>
+            {text === 0 ? <Text type="warning">标准</Text> : text ?
+              <Text style={{color: '#181818'}}>附加</Text> :
+              <Text type="danger">选配</Text>
+            }
+          </div>
+        )
+      },
+    },
+    {
+      title: '采购价格',
+      dataIndex: 'leader_price',
+      key: 'leader_price',
+      align: 'center',
+      width: 100,
+      render: (text: string) => (
+        <div>
+          <Text style={{color: '#1890FF'}}>组长：</Text>
+          <Text style={{color: '#FF6A00'}}>¥ {text}</Text>
+        </div>
+      ),
+    },
+    {
+      title: '一级组员定价',
+      dataIndex: 'member_price',
+      key: 'member_price',
+      width: 100,
+      align: 'center',
+      editable: true,
+      render: (text: string) => {
+        return text ? '¥ ' + text : '尚未定价';
+      },
+    },
+    {
+      title: '二级组员定价',
+      dataIndex: 'price',
+      key: 'price',
+      width: 100,
+      align: 'center',
+      render: (text: string, record: ProductBaseListItem) => {
+        return (
+          <a
+            onClick={e => {
+              e.preventDefault();
+              handleSecondPrice(record);
+            }}
+          >
+            编辑
+          </a>
+        );
+      },
+    },
+  ];
+
+  const columnsFinal = columns.map((col: any) => {
     if (!col.editable) {
       return col;
     }
@@ -170,94 +268,36 @@ const EditableTable: React.FC<EditableTableProps> = ({dataSource, columns, reloa
     };
   });
 
-  const columnsUser = [
-    {
-      title: '二级组员',
-      dataIndex: 'username',
-      width: 100,
-    },
-    {
-      title: '二级组员定价',
-      dataIndex: 'second_price',
-      editable: true,
-      render: (text: string | number, record) => {
-        console.log(text, record);
-        return text ? '¥ ' + text : '尚未定价';
-      },
-    },
-  ];
-
-  const columnsUserFinal = columnsUser.map((col) => {
-    if (!col.editable) {
-      return col;
+  const handleSecondPrice = async (record: ProductBaseListItem) => {
+    const {id, leader_price} = record;
+    const response = await queryUsersByProduct({id});
+    if (isNormalResponseBody(response)) {
+      setList(_.map(response?.results, o => ({...o, leader_price})) || []);
     }
-    return {
-      ...col,
-      onCell: (record: any) =>{
-        console.log(record);
-        return  ({
-          record,
-          editable: col.editable,
-          dataIndex: col.dataIndex,
-          title: col.title,
-          handleSave: handleSave2,
-        })
-      },
-    };
-  });
-
-  const handleSave2 = (row: { id: number; key: number; }) => {
-    const newData = _.head(_.filter(list, d => d.id === row?.key))?.users || [];
-    const index = newData.findIndex(item => row.id === item.id);
-    const item = newData[index];
-    newData.splice(index, 1, {
-      ...item,
-      ...row,
-    });
-    const newList = _.filter(list, d => d.id !== row?.key);
-    setList([...newList, {
-      id: row?.key, users: newData
-    }]);
-  };
-
-  const expandedRowRender = (record: ProductBaseListItem) => {
-    const expandedList = _.head(_.filter(list, o => o?.id === record?.id))?.users;
-    console.log(list);
-    return (
-      <Table
-        components={components}
-        rowClassName={() => 'editable-row2'}
-        rowKey={record => record?.id}
-        dataSource={expandedList}
-        columns={columnsUserFinal}
-        pagination={false}
-      />
-    )
-  };
-
-  const onExpand = async (expanded: boolean, record: ProductBaseListItem) => {
-    if(expanded){
-      const {id, leader_price} = record;
-      console.log(1111)
-      const response = await queryUsersByProduct({id});
-      if (isNormalResponseBody(response)) {
-        const newList = _.filter(list, d => d.id !== id);
-        setList([...newList, {
-          id, users:
-            _.map(response?.results, o => ({...o, key: id, leader_price})) || []
-        }]);
-      }
-    }
+    setCurrent(record);
+    handleUpdateModalVisible(true);
   };
 
   return (
     <div>
-      <Table
-        expandable={{
-          expandedRowRender,
-          onExpand,
-          // rowExpandable: record => record.name !== 'Not Expandable',
+      <PublishModal
+        onSubmit={async (value, callback) => {
+          const response = await modifyProductSecondPrice({id: current?.id as number, data: value as PublishType});
+          const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
+          if (success) {
+            callback();
+            handleUpdateModalVisible(false);
+            setCurrent({});
+          }
         }}
+        onCancel={() => {
+          handleUpdateModalVisible(false);
+          setCurrent({});
+        }}
+        updateModalVisible={updateModalVisible}
+        list={list}
+      />
+      <Table
         components={components}
         rowClassName={() => 'editable-row'}
         bordered size="small"
