@@ -62,7 +62,7 @@ const Info: FC<{
 const ListContent = ({
                        data: {
                          desc, leader_price, second_price, member_price,
-                         genre
+                         genre, id
                        }, currentUser: {identity}
                      }: {
   data: ProductBaseListItem; currentUser: CurrentUser;
@@ -82,7 +82,7 @@ const ListContent = ({
         <Descriptions.Item label="描述" span={4}>
           {desc?.split("\n")?.map((o, i) => {
             return (
-              <div><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+              <div key={id + '-x-' + i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
             )
           })}
         </Descriptions.Item>
@@ -151,7 +151,6 @@ export const ProductConfigList: FC<BasicListProps> = props => {
   };
 
   const showEditModal = (item: ProductBaseListItem) => {
-    console.log(item, '编辑');
     setCurrent(item);
     setVisible(true);
   };
@@ -264,7 +263,6 @@ export const ProductConfigList: FC<BasicListProps> = props => {
           }
         },
         onCancel() {
-          console.log('Cancel');
           setCurrent({});
         },
       });
@@ -285,7 +283,6 @@ export const ProductConfigList: FC<BasicListProps> = props => {
       <MoreBtn key="more" item={item}/>,
     ];
   }
-  console.log(countStatistics);
   return (
     <div>
       <div className={styles.standardList}>
@@ -307,7 +304,6 @@ export const ProductConfigList: FC<BasicListProps> = props => {
         <Card
           className={styles.listCard}
           bordered={false}
-          title="产品库"
           style={{marginTop: 24}}
           bodyStyle={{padding: '0 32px 40px 32px'}}
           extra={extraContent}
@@ -354,7 +350,6 @@ export const ProductConfigList: FC<BasicListProps> = props => {
         visible={validateVisible}
         onCreate={async (values) => {
           const success = await onCreate(values)
-          console.log(success);
           if (success) {
             setValidateVisible(false);
             // TODO something

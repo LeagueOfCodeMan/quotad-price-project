@@ -23,7 +23,7 @@ import {CurrentUser, UserModelState} from "@/models/user";
 import Tag from "antd/lib/tag";
 import router from 'umi/router';
 
-import {ResultType, ValidatePwdResult} from "@/utils/utils";
+import {addKeyToEachArray, ResultType, ValidatePwdResult} from "@/utils/utils";
 import ValidatePassword from "@/components/ValidatePassword";
 import {testPassword} from "@/services/user";
 import {ExclamationCircleOutlined} from "@ant-design/icons/lib";
@@ -32,6 +32,7 @@ import {deleteProduct} from "@/pages/dfdk/product/service";
 import {ProjectListItem} from "@/pages/project/data";
 import {PaginationConfig} from "antd/lib/pagination";
 import {useEffectOnce} from "react-use";
+import {CurrentChildren, CurrentChildrenResults} from "@/models/data";
 
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
@@ -45,10 +46,98 @@ interface BasicListProps {
   fetch: boolean;
   queryProjectOneDetail: boolean;
   currentUser: CurrentUser;
+  users: NotRequired<CurrentChildren>;
 }
 
 enum ValidateType {
   DELETE_CONFIG = 'DELETE_CONFIG',
+}
+
+type TreeDataItem = { title: JSX.Element; value: string; children?: TreeDataItem }[];
+
+export const handleUsersProjectToTreeData = (array:CurrentChildrenResults) => {
+  const template = _.map(array, (v) => {
+    const child = _.map(v?.users, (v2) => {
+      // 组长项目
+      const children2: TreeDataItem = [];
+      v2?.project_list?.forEach((d: { project_name: React.ReactNode; id: any; }) => {
+        children2.push({
+          title: <span><b style={{color: '#FF6A00'}}>{d?.project_name}</b></span>,
+          value: d?.project_name + d?.id,
+        })
+      });
+      // 一级组员
+      const children3: TreeDataItem = [];
+      v2?.one_level?.forEach((d) => {
+        const project: TreeDataItem = [];
+        d?.project_list?.forEach((d2) => {
+          project.push({
+            title: <span><b style={{color: '#FF6A00'}}>{d2?.project_name}</b></span>,
+            value: d2?.project_name + '-' + d2?.id,
+          })
+        });
+        children3.push({
+          title: <span><b style={{color: '#FF6A00'}}>{d?.username}</b></span>,
+          value: d?.username,
+          children: project,
+        })
+      });
+      // 二级组员
+      const children4: TreeDataItem = [];
+      v2?.two_level?.forEach((d) => {
+        const project: TreeDataItem = [];
+        d?.project_list?.forEach((d2) => {
+          project.push({
+            title: <span><b style={{color: '#FF6A00'}}>{d2?.project_name}</b></span>,
+            value: d2?.project_name + '-' + d2?.id,
+          })
+        });
+        children4.push({
+          title: <span><b style={{color: '#FF6A00'}}>{d?.username}</b></span>,
+          value: d?.username,
+          children: project,
+        })
+      });
+      const children = [];
+      if (children2?.length > 0) {
+        children.push({
+          title: <span>组长项目</span>,
+          value: v2?.username + '-' + v2?.key,
+          children: children2,
+          disabled:true,
+        });
+      }
+      if (children3?.length > 0) {
+        children.push({
+          title: <span>一级组员</span>,
+          value: v2?.username + '-' + v2?.key + 1,
+          children: children3,
+          disabled:true,
+        });
+      }
+      if (children4?.length > 0) {
+        children.push({
+          title: <span>二级组员</span>,
+          value: v2?.username + '-' + v2?.key + 2,
+          children: children4,
+          disabled:true,
+        });
+      }
+
+      return {
+        title: <span>组长：<b style={{color: '#08c'}}>{v2?.username}</b></span>,
+        value: v2?.username, children
+      }
+    });
+    return {
+      title: <b style={{color: '#FF6A00'}}>{v?.area}</b>,
+      value: v?.area,
+      disabled:true,
+      children: child
+    }
+  })
+  console.log(template);
+  return template;
 }
 
 
@@ -120,7 +209,7 @@ const ProjectList: FC<BasicListProps> = props => {
   const {
     fetch,
     dispatch,
-    project: {projectList, userlist},
+    project: {projectList}, users,
     currentUser, queryProjectOneDetail,
   } = props;
   const [current, setCurrent] = useState<NotRequired<ProjectListItem>>({});
@@ -129,21 +218,17 @@ const ProjectList: FC<BasicListProps> = props => {
   const [listParams, setListParams] = useState<ListSearchParams>({
     current: 1, pageSize: 3
   });
-
+  console.log(users);
   const {results = [], count = 0} = projectList;
 
   useEffectOnce(() => {
     dispatch({
-      type: 'project/fetchUsers',
-      payload: {
-        pageSize: 99999
-      },
+      type: 'user/queryCurrentUsers',
     });
   });
 
   useEffect(() => {
     reloadList();
-    console.log(111)
   }, [listParams]);
 
   const reloadList = () => {
@@ -174,35 +259,28 @@ const ProjectList: FC<BasicListProps> = props => {
     setCurrent(currentItem);
   };
 
+
   const treeData = () => {
-    const children = userlist?.results?.map((d: { username: string }) => {
-      return {
-        title: <b style={{color: '#08c'}}>{d?.username}</b>,
-        value: d?.username
-      }
-    });
-    return [{title: '一级组员', value: 'all', children}];
+    const initArr: CurrentChildrenResults = addKeyToEachArray(users?.results as any[]);
+    return handleUsersProjectToTreeData(initArr);
   };
+
   //        TODO 只要组长才需要发布
   const extraContent = (
     <div style={{display: 'flex', justifyContent: 'space-between'}}>
       {
-        currentUser?.identity === 2 ?
+        currentUser?.identity === (1 || 2) ?
           <TreeSelect
             showSearch
             style={{width: 150, marginRight: '25px'}}
-            value={listParams?.username}
             dropdownStyle={{maxHeight: 400, overflow: 'auto'}}
             placeholder="请选择用户"
             allowClear
             treeData={treeData()}
+            dropdownMatchSelectWidth={500}
             treeDefaultExpandAll
             onChange={(value) => {
-              if (value !== 'all') {
-                setListParams({...listParams, username: value});
-              } else {
-                setListParams({..._.omit(listParams, ['username'])});
-              }
+              console.log(value)
             }}
           /> : null
       }
@@ -378,7 +456,6 @@ const ProjectList: FC<BasicListProps> = props => {
             validatePasswordSuccessToDo();
           }
         }}
-
         onCancel={() => {
           setValidateVisible(false);
         }}
@@ -403,6 +480,7 @@ export default connect(
   }) => ({
     project,
     currentUser: user.currentUser,
+    users: user.users,
     fetch: loading.effects['project/fetch'],
     queryProjectOneDetail: loading.effects['user/queryProjectOneDetail'],
   }),

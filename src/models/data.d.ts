@@ -111,19 +111,35 @@ export type LocalStorageShopType = { user: string; shop: ShoppingCartItem[] }[];
 export interface CurrentChild {
   id: number;
   username: string;
-  project_list: { id: number; project_name: string; }[];
+  key?: number;
+  project_list: { key?: number; id: number; project_name: string; }[];
 }
 
 export interface CurrentChildren {
   count: number;
   results: {
     area: string;
+    key?: number;
     users: {
       id: number;
+      key?: number;
       username: string;
-      project_list: { id: number; project_name: string; }[];
+      project_list: { key?: number; id: number; project_name: string; }[];
       one_level: CurrentChild[];
       two_level: CurrentChild[];
-    }
+    }[]
   }[];
 }
+
+export type CurrentChildrenResults = {
+  area: string;
+  key?: number;
+  users: {
+    id: number;
+    key?: number;
+    username: string;
+    project_list: { key?: number; id: number; project_name: string; }[];
+    one_level: CurrentChild[];
+    two_level: CurrentChild[];
+  }[]
+}[];

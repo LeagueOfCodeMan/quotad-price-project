@@ -57,7 +57,7 @@ const ListContent = ({data, currentUser: {identity}, reload, on}: {
 }) => {
   const {
     desc, leader_price, second_price, member_price,
-    genre, conf_list,
+    genre, conf_list, id,
   } = data;
   let price;
   if (identity === (1 || 2)) {
@@ -152,7 +152,7 @@ const ListContent = ({data, currentUser: {identity}, reload, on}: {
   ];
 
   return (
-    <div className={styles.listContentWrapper}>
+    <div className={styles.listContentWrapper} key={id}>
       {
         on ? null :
           <>
@@ -189,7 +189,7 @@ const ListContent = ({data, currentUser: {identity}, reload, on}: {
         <Descriptions.Item label="描述" span={4}>
           {desc?.split("\n")?.map((o, i) => {
             return (
-              <div key={i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+              <div key={id + '-pre' + i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
             )
           })}
         </Descriptions.Item>
@@ -205,7 +205,7 @@ const ListContent = ({data, currentUser: {identity}, reload, on}: {
       <Table
         showHeader={false}
         bordered size="small"
-        rowKey={record => record?.id}
+        rowKey={record => record?.id + '-x-' + record?.genre}
         columns={columns}
         pagination={false}
         scroll={{y: 300}}
@@ -483,6 +483,7 @@ const ProductBaseList: FC<BasicListProps> = props => {
                     description={item.mark}
                   />
                   <ListContent
+                    key={item?.id}
                     data={item} currentUser={currentUser}
                     reload={() => reloadList()}
                     on={on}

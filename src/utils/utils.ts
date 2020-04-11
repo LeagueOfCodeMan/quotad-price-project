@@ -249,3 +249,28 @@ export function productType(genre: number) {
   }
 }
 
+export function addKeyToArray(array: any[], i: number) {
+  let j = i;
+  const a: any[] = [];
+  // array {a:string;b:any[];}[]
+  _.forEach(array, (d: { [propName: string]: any; }) => {
+    const obj = {};
+    _.forIn(d, (v, k) => {
+      if (Array.isArray(v)) {
+        const c = addKeyToArray(v, j + 1);
+        obj[k] = c;
+      } else {
+        obj[k] = v;
+      }
+      obj['key'] = j;
+      j++;
+    });
+    a.push(obj)
+  });
+  return a;
+}
+
+export function addKeyToEachArray(array: any[]) {
+  let i = 0;
+  return addKeyToArray(array, i);
+}
