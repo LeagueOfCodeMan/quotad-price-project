@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Form, Button, DatePicker, Input, Modal, Radio, Select, Steps } from 'antd';
+import {Form, Button, DatePicker, Input, Modal, Radio, Select, Steps, Alert, Divider} from 'antd';
 
-import { TableListItem } from '../data.d';
+import {AddressInfo, AddressListItem} from "@/pages/usermanager/settings/data";
+import moment from "moment";
+import {ProjectListItem} from "@/pages/project/data";
 
-export interface FormValueType extends Partial<TableListItem> {
+export interface FormValueType extends Partial<ProjectListItem> {
   target?: string;
   template?: string;
   type?: string;
@@ -15,7 +17,8 @@ export interface UpdateFormProps {
   onCancel: (flag?: boolean, formVals?: FormValueType) => void;
   onSubmit: (values: FormValueType) => void;
   updateModalVisible: boolean;
-  values: Partial<TableListItem>;
+  values: Partial<ProjectListItem>;
+  addressList: AddressInfo;
 }
 const FormItem = Form.Item;
 const { Step } = Steps;
@@ -33,7 +36,7 @@ const formLayout = {
   wrapperCol: { span: 13 },
 };
 
-const UpdateForm: React.FC<UpdateFormProps> = props => {
+const CreateForm: React.FC<UpdateFormProps> = props => {
   const [formVals, setFormVals] = useState<FormValueType>({
     name: props.values.name,
     desc: props.values.desc,
@@ -53,7 +56,7 @@ const UpdateForm: React.FC<UpdateFormProps> = props => {
     onSubmit: handleUpdate,
     onCancel: handleUpdateModalVisible,
     updateModalVisible,
-    values,
+    values,addressList,
   } = props;
 
   const forward = () => setCurrentStep(currentStep + 1);
@@ -123,20 +126,62 @@ const UpdateForm: React.FC<UpdateFormProps> = props => {
     }
     return (
       <>
-        <FormItem
-          name="name"
-          label="规则名称"
-          rules={[{ required: true, message: '请输入规则名称！' }]}
-        >
-          <Input placeholder="请输入" />
-        </FormItem>
-        <FormItem
-          name="desc"
-          label="规则描述"
-          rules={[{ required: true, message: '请输入至少五个字符的规则描述！', min: 5 }]}
-        >
-          <TextArea rows={4} placeholder="请输入至少五个字符" />
-        </FormItem>
+          <Alert
+            message="购买须知"
+            description="生成项目后，可在项目管理查看项目跟进状态"
+            type="error"
+            closable
+          />
+          <Form.Item
+            name="project_name"
+            rules={[{required: true, message: '项目名称'}]}
+            style={{marginTop: '20px'}}
+          >
+            <Input placeholder="项目名称"/>
+          </Form.Item>
+          <Form.Item
+            name="project_company"
+            rules={[{required: true, message: '项目单位'}]}
+          >
+            <Input placeholder="项目单位"/>
+          </Form.Item>
+          <Form.Item
+            name="project_addr"
+            rules={[{required: true, message: '交货地址'}]}
+          >
+            <Select
+              showSearch
+              placeholder={!addressList?.results?.[0] ? '请前往个人设置填写地址' : '请选择地址'}
+              optionFilterProp="children"
+              filterOption={(input, option) => {
+                return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+              }}
+            >
+              {addressList?.results?.map((d: AddressListItem, ii: number) => (
+                <Option key={d.id + '-' + ii} value={d.id}
+                        label={d.recipients + '-' + d.tel + '-' + d.addr}>
+                  <div>
+                    <span>{d.recipients}</span>
+                    <Divider type="vertical"/>
+                    <span>{d.tel}</span>
+                    <Divider type="vertical"/>
+                    <span>{d.addr}</span>
+                  </div>
+                </Option>))
+              }
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="delivery_time"
+            rules={[{required: true, message: '交货日期'}]}
+          >
+            <DatePicker
+              disabledDate={current => {
+                return current && current < moment().subtract(1, "days");
+              }}
+              style={{width: '100%'}}
+            />
+          </Form.Item>
       </>
     );
   };
@@ -183,14 +228,14 @@ const UpdateForm: React.FC<UpdateFormProps> = props => {
       width={640}
       bodyStyle={{ padding: '32px 40px 48px' }}
       destroyOnClose
-      title="规则配置"
+      title="创建项目"
       visible={updateModalVisible}
       footer={renderFooter()}
       onCancel={() => handleUpdateModalVisible(false, values)}
       afterClose={() => handleUpdateModalVisible()}
     >
       <Steps style={{ marginBottom: 28 }} size="small" current={currentStep}>
-        <Step title="基本信息" />
+        <Step title="填写项目信息" />
         <Step title="配置规则属性" />
         <Step title="设定调度周期" />
       </Steps>
@@ -212,4 +257,4 @@ const UpdateForm: React.FC<UpdateFormProps> = props => {
   );
 };
 
-export default UpdateForm;
+export default CreateForm;

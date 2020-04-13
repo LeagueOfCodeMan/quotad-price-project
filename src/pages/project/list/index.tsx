@@ -1,5 +1,5 @@
-import React, { FC, useEffect, useRef, useState } from 'react';
-import { DownOutlined } from '@ant-design/icons';
+import React, {FC, useEffect, useRef, useState} from 'react';
+import {DownOutlined} from '@ant-design/icons';
 import {
   Button,
   Card,
@@ -16,32 +16,33 @@ import {
   TreeSelect,
   Typography,
 } from 'antd';
-import { Dispatch } from 'redux';
-import { connect } from 'dva';
-import { ProjectStateType } from '../model';
+import {Dispatch} from 'redux';
+import {connect} from 'dva';
+import {ProjectStateType} from '../model';
 import styles from './style.less';
-import { CurrentUser, UserModelState } from '@/models/user';
+import {CurrentUser, UserModelState} from '@/models/user';
 import Tag from 'antd/lib/tag';
 import router from 'umi/router';
 
-import { addKeyToEachArray, ResultType, ValidatePwdResult } from '@/utils/utils';
+import {addKeyToEachArray, ResultType, ValidatePwdResult} from '@/utils/utils';
 import ValidatePassword from '@/components/ValidatePassword';
-import { testPassword } from '@/services/user';
-import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons/lib';
+import {testPassword} from '@/services/user';
+import {ExclamationCircleOutlined, PlusOutlined} from '@ant-design/icons/lib';
 import _ from 'lodash';
-import { deleteProduct } from '@/pages/dfdk/product/service';
-import { ProjectListItem } from '@/pages/project/data';
-import { PaginationConfig } from 'antd/lib/pagination';
-import { useEffectOnce } from 'react-use';
-import { CurrentChildren, CurrentChildrenResults } from '@/models/data';
-import { findDOMNode } from 'react-dom';
-import UpdateForm from '@/pages/project/list/components/UpdateForm';
+import {deleteProduct} from '@/pages/dfdk/product/service';
+import {ProjectListItem} from '@/pages/project/data';
+import {PaginationConfig} from 'antd/lib/pagination';
+import {useEffectOnce} from 'react-use';
+import {CurrentChildren, CurrentChildrenResults} from '@/models/data';
+import {findDOMNode} from 'react-dom';
+import CreateForm from '@/pages/project/list/components/CreateForm';
+import {AddressInfo} from "@/pages/usermanager/settings/data";
 
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
-const { Search } = Input;
-const { confirm } = Modal;
-const { Text } = Typography;
+const {Search} = Input;
+const {confirm} = Modal;
+const {Text} = Typography;
 
 interface BasicListProps {
   project: ProjectStateType;
@@ -50,6 +51,7 @@ interface BasicListProps {
   queryProjectOneDetail: boolean;
   currentUser: CurrentUser;
   users: NotRequired<CurrentChildren>;
+  addressList: AddressInfo;
 }
 
 enum ValidateType {
@@ -67,7 +69,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
         children2.push({
           title: (
             <span>
-              <b style={{ color: '#FF6A00' }}>{d?.project_name}</b>
+              <b style={{color: '#FF6A00'}}>{d?.project_name}</b>
             </span>
           ),
           value: 'project_name' + '-' + d?.project_name + d?.id,
@@ -81,7 +83,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
           project.push({
             title: (
               <span>
-                <b style={{ color: '#FF6A00' }}>{d2?.project_name}</b>
+                <b style={{color: '#FF6A00'}}>{d2?.project_name}</b>
               </span>
             ),
             value: 'project_name' + '-' + d2?.project_name + '-' + d2?.id,
@@ -90,7 +92,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
         children3.push({
           title: (
             <span>
-              <b style={{ color: '#FF6A00' }}>{d?.username}</b>
+              <b style={{color: '#FF6A00'}}>{d?.username}</b>
             </span>
           ),
           value: 'username' + '-' + d?.username,
@@ -105,7 +107,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
           project.push({
             title: (
               <span>
-                <b style={{ color: '#FF6A00' }}>{d2?.project_name}</b>
+                <b style={{color: '#FF6A00'}}>{d2?.project_name}</b>
               </span>
             ),
             value: 'project_name' + '-' + d2?.project_name + '-' + d2?.id,
@@ -114,7 +116,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
         children4.push({
           title: (
             <span>
-              <b style={{ color: '#FF6A00' }}>{d?.username}</b>
+              <b style={{color: '#FF6A00'}}>{d?.username}</b>
             </span>
           ),
           value: 'username' + '-' + d?.username,
@@ -150,7 +152,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       return {
         title: (
           <span>
-            组长：<b style={{ color: '#08c' }}>{v2?.username}</b>
+            组长：<b style={{color: '#08c'}}>{v2?.username}</b>
           </span>
         ),
         value: 'username' + '-' + v2?.username,
@@ -158,7 +160,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       };
     });
     return {
-      title: <b style={{ color: '#FF6A00' }}>{v?.area}</b>,
+      title: <b style={{color: '#FF6A00'}}>{v?.area}</b>,
       value: v?.area,
       disabled: true,
       children: child,
@@ -168,36 +170,36 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
 };
 
 const ListContent = ({
-  data: {
-    project_name,
-    project_company,
-    create_time,
-    delivery_time,
-    pro_status,
-    username,
-    leader_total_quota,
-    second_total_quota,
-    member_total_quota,
-    leader_total_price,
-    second_total_price,
-    member_total_price,
-    project_addr: { recipients, addr, tel },
-  },
-  currentUser: { identity },
-}: {
+                       data: {
+                         project_name,
+                         project_company,
+                         create_time,
+                         delivery_time,
+                         pro_status,
+                         username,
+                         leader_total_quota,
+                         second_total_quota,
+                         member_total_quota,
+                         leader_total_price,
+                         second_total_price,
+                         member_total_price,
+                         project_addr: {recipients, addr, tel},
+                       },
+                       currentUser: {identity},
+                     }: {
   data: ProjectListItem;
   currentUser: CurrentUser;
 }) => (
   <div className={styles.listContentWrapper}>
     <Descriptions column={4} title={project_name} layout="vertical">
       <Descriptions.Item label="公司名称">
-        <Text style={{ color: '#181818' }}>{project_company}</Text>
+        <Text style={{color: '#181818'}}>{project_company}</Text>
       </Descriptions.Item>
       <Descriptions.Item label="所属用户">
-        <Text style={{ color: '#181818' }}>{username}</Text>
+        <Text style={{color: '#181818'}}>{username}</Text>
       </Descriptions.Item>
       <Descriptions.Item label="创建时间">
-        <Text style={{ color: '#181818' }}>{create_time}</Text>
+        <Text style={{color: '#181818'}}>{create_time}</Text>
       </Descriptions.Item>
       <Descriptions.Item label="状态">
         {
@@ -215,32 +217,32 @@ const ListContent = ({
       <Descriptions.Item label="项目采购总价" span={2}>
         {identity === 2 ? (
           <>
-            <Text style={{ color: '#1890FF' }}>组长：</Text>
-            <Text style={{ color: '#FF6A00' }}>¥ {leader_total_quota}</Text>
-            <Divider type="vertical" />
+            <Text style={{color: '#1890FF'}}>组长：</Text>
+            <Text style={{color: '#FF6A00'}}>¥ {leader_total_quota}</Text>
+            <Divider type="vertical"/>
           </>
         ) : null}
         {identity === (2 || 3) && !member_total_quota ? (
           <>
-            <Text style={{ color: '#61C37A' }}>{identity === 2 ? '组员：' : ''}</Text>
-            <Text style={{ color: '#FF6A00' }}>¥ {member_total_quota}</Text>
+            <Text style={{color: '#61C37A'}}>{identity === 2 ? '组员：' : ''}</Text>
+            <Text style={{color: '#FF6A00'}}>¥ {member_total_quota}</Text>
           </>
         ) : null}
         {identity === 4 ? (
           <>
-            <Text style={{ color: '#FF6A00' }}> ¥ {second_total_quota}</Text>
+            <Text style={{color: '#FF6A00'}}> ¥ {second_total_quota}</Text>
           </>
         ) : null}
       </Descriptions.Item>
       <Descriptions.Item label="交货时间" span={2}>
-        <Text style={{ color: '#181818' }}>{delivery_time}</Text>
+        <Text style={{color: '#181818'}}>{delivery_time}</Text>
       </Descriptions.Item>
       <Descriptions.Item label="发货信息" span={4}>
-        收件人： <Text style={{ color: '#181818' }}>{recipients}</Text>
-        <Divider type="vertical" />
-        手机号码：<Text style={{ color: '#181818' }}>{tel}</Text>
-        <br />
-        收货地址：<Text style={{ color: '#181818' }}>{addr}</Text>
+        收件人： <Text style={{color: '#181818'}}>{recipients}</Text>
+        <Divider type="vertical"/>
+        手机号码：<Text style={{color: '#181818'}}>{tel}</Text>
+        <br/>
+        收货地址：<Text style={{color: '#181818'}}>{addr}</Text>
       </Descriptions.Item>
     </Descriptions>
   </div>
@@ -260,10 +262,11 @@ const ProjectList: FC<BasicListProps> = props => {
   const {
     fetch,
     dispatch,
-    project: { projectList },
+    project: {projectList},
     users,
     currentUser,
     queryProjectOneDetail,
+    addressList,
   } = props;
   const addBtn = useRef(null);
   const [visible, setVisible] = useState<boolean>(false);
@@ -275,14 +278,14 @@ const ProjectList: FC<BasicListProps> = props => {
     pageSize: 3,
   });
 
-  const [stepFormValues, setStepFormValues] = useState({});
-  const [createModalVisible, handleModalVisible] = useState<boolean>(false);
-  const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
-  const { results = [], count = 0 } = projectList;
+  const {results = [], count = 0} = projectList;
 
   useEffectOnce(() => {
     dispatch({
       type: 'user/queryCurrentUsers',
+    });
+    dispatch({
+      type: 'user/fetchAddress',
     });
   });
 
@@ -316,7 +319,7 @@ const ProjectList: FC<BasicListProps> = props => {
     pageSize: 3,
     total: count,
     onChange: (page: number, pageSize: number) => {
-      setListParams({ ...listParams, current: page, pageSize });
+      setListParams({...listParams, current: page, pageSize});
     },
   };
 
@@ -336,12 +339,12 @@ const ProjectList: FC<BasicListProps> = props => {
 
   //        TODO 只要组长才需要发布
   const extraContent = (
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+    <div style={{display: 'flex', justifyContent: 'space-between'}}>
       {currentUser?.identity === (1 || 2) ? (
         <TreeSelect
           showSearch
-          style={{ width: 150, marginRight: '25px' }}
-          dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
+          style={{width: 150, marginRight: '25px'}}
+          dropdownStyle={{maxHeight: 400, overflow: 'auto'}}
           placeholder="请选择用户或项目"
           allowClear
           treeData={treeData()}
@@ -351,7 +354,7 @@ const ProjectList: FC<BasicListProps> = props => {
             const splitSearch = value?.split('-');
             const searchKey = splitSearch?.[0];
             const searchValue = splitSearch?.[1];
-            setListParams({ ...listParams, [searchKey]: searchValue });
+            setListParams({...listParams, [searchKey]: searchValue});
           }}
         />
       ) : null}
@@ -360,9 +363,9 @@ const ProjectList: FC<BasicListProps> = props => {
           defaultValue="all"
           onChange={e => {
             if (e.target.value !== 'all') {
-              setListParams({ ...listParams, pro_status: (e.target.value - 0) as 1 | 2 | 3 });
+              setListParams({...listParams, pro_status: (e.target.value - 0) as 1 | 2 | 3});
             } else {
-              setListParams({ ..._.omit(listParams, ['pro_status']) });
+              setListParams({..._.omit(listParams, ['pro_status'])});
             }
           }}
         >
@@ -374,7 +377,7 @@ const ProjectList: FC<BasicListProps> = props => {
         <Search
           className={styles.extraContentSearch}
           placeholder="请输入搜索内容"
-          onSearch={value => setListParams({ ...listParams, search: value })}
+          onSearch={value => setListParams({...listParams, search: value})}
         />
       </div>
     </div>
@@ -388,16 +391,16 @@ const ProjectList: FC<BasicListProps> = props => {
   };
 
   const validatePasswordSuccessToDo = () => {
-    const { id, pro_type, desc, mark } = current as ProjectListItem;
+    const {id, pro_type, desc, mark} = current as ProjectListItem;
     if (validateType === ValidateType.DELETE_CONFIG) {
       const hide = () => {
         message.loading('正在删除');
       };
       confirm({
         title: '删除产品',
-        icon: <ExclamationCircleOutlined />,
+        icon: <ExclamationCircleOutlined/>,
         content: (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{display: 'flex', flexDirection: 'column'}}>
             <span>
               产品名：<span>{pro_type}</span>
             </span>
@@ -413,11 +416,11 @@ const ProjectList: FC<BasicListProps> = props => {
         okType: 'danger',
         cancelText: '取消',
         onOk: async () => {
-          const result: ResultType | string = await deleteProduct({ id });
+          const result: ResultType | string = await deleteProduct({id});
           const success: boolean = new ValidatePwdResult(result).validate('删除成功', null, hide);
           // 刷新数据
           if (success) {
-            setListParams({ ...listParams, current: 1 });
+            setListParams({...listParams, current: 1});
             setCurrent({});
           }
         },
@@ -432,23 +435,23 @@ const ProjectList: FC<BasicListProps> = props => {
   // ================= 列表操作 ================
   const MoreBtn: React.FC<{
     item: ProjectListItem;
-  }> = ({ item }) => (
+  }> = ({item}) => (
     <Dropdown
       overlay={
-        <Menu onClick={({ key }) => editAndDelete(key, item)}>
+        <Menu onClick={({key}) => editAndDelete(key, item)}>
           <Menu.Item key="edit">编辑</Menu.Item>
           <Menu.Item key="delete">撤销</Menu.Item>
         </Menu>
       }
     >
       <a>
-        更多 <DownOutlined />
+        更多 <DownOutlined/>
       </a>
     </Dropdown>
   );
 
   const actions = (item: ProjectListItem): any[] => {
-    const { id } = item;
+    const {id} = item;
     const template = [
       <a
         key="detail"
@@ -456,7 +459,7 @@ const ProjectList: FC<BasicListProps> = props => {
           e.preventDefault();
           dispatch({
             type: 'user/queryProjectOneDetail',
-            payload: { project: item, id },
+            payload: {project: item, id},
             callback: (res: any) => {
               if (Array.isArray(res)) {
                 router.push('/project/detail');
@@ -479,7 +482,7 @@ const ProjectList: FC<BasicListProps> = props => {
           >
             下单
           </a>,
-          <MoreBtn key="more" item={item} />,
+          <MoreBtn key="more" item={item}/>,
         ]);
     }
     return template;
@@ -491,18 +494,18 @@ const ProjectList: FC<BasicListProps> = props => {
         <Card
           className={styles.listCard}
           bordered={false}
-          style={{ marginTop: 24 }}
-          bodyStyle={{ padding: '0 32px 40px 32px' }}
+          style={{marginTop: 24}}
+          bodyStyle={{padding: '0 32px 40px 32px'}}
           extra={extraContent}
           loading={queryProjectOneDetail}
         >
           <Button
             type="dashed"
-            style={{ width: '100%', marginBottom: 8 }}
+            style={{width: '100%', marginBottom: 8}}
             onClick={showModal}
             ref={addBtn}
           >
-            <PlusOutlined />
+            <PlusOutlined/>
             添加
           </Button>
           <List
@@ -515,7 +518,7 @@ const ProjectList: FC<BasicListProps> = props => {
             renderItem={item => (
               <List.Item key={item?.id} actions={actions(item)}>
                 <Skeleton avatar title={false} loading={fetch} active>
-                  <ListContent data={item} currentUser={currentUser} />
+                  <ListContent data={item} currentUser={currentUser}/>
                 </Skeleton>
               </List.Item>
             )}
@@ -537,33 +540,29 @@ const ProjectList: FC<BasicListProps> = props => {
           setValidateVisible(false);
         }}
       />
-      {stepFormValues && Object.keys(stepFormValues).length ? (
-        <UpdateForm
-          onSubmit={async value => {
-            // const success = await handleUpdate(value);
-            if (success) {
-              handleModalVisible(false);
-              setStepFormValues({});
-            }
-          }}
-          onCancel={() => {
-            handleUpdateModalVisible(false);
-            setStepFormValues({});
-          }}
-          updateModalVisible={updateModalVisible}
-          values={stepFormValues}
-        />
-      ) : null}
+      <CreateForm
+        onSubmit={async value => {
+          // const success = await handleUpdate(value);
+          setCurrent({});
+        }}
+        onCancel={() => {
+          setVisible(false);
+          setCurrent({});
+        }}
+        updateModalVisible={visible}
+        values={current}
+        addressList={addressList}
+      />
     </div>
   );
 };
 
 export default connect(
   ({
-    project,
-    loading,
-    user,
-  }: {
+     project,
+     loading,
+     user,
+   }: {
     project: ProjectStateType;
     loading: {
       models: { [key: string]: boolean };
@@ -576,6 +575,7 @@ export default connect(
     project,
     currentUser: user.currentUser,
     users: user.users,
+    addressList: user.addressList,
     fetch: loading.effects['project/fetch'],
     queryProjectOneDetail: loading.effects['user/queryProjectOneDetail'],
   }),
