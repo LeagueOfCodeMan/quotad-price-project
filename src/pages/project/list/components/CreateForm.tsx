@@ -1,9 +1,26 @@
 import React, { useState } from 'react';
-import {Form, Button, DatePicker, Input, Modal, Radio, Select, Steps, Alert, Divider} from 'antd';
+import {
+  Form,
+  Button,
+  DatePicker,
+  Input,
+  Modal,
+  Radio,
+  Select,
+  Steps,
+  Alert,
+  Divider,
+  Col,
+  Row,
+} from 'antd';
 
-import {AddressInfo, AddressListItem} from "@/pages/usermanager/settings/data";
-import moment from "moment";
-import {ProjectListItem} from "@/pages/project/data";
+import { AddressInfo, AddressListItem } from '@/pages/usermanager/settings/data';
+import moment from 'moment';
+import { ProjectListItem } from '@/pages/project/data';
+import { isNormalResponseBody, ProductType, productType } from '@/utils/utils';
+import _ from 'lodash';
+import { queryProduct, queryStandardProduct } from '@/pages/dfdk/product/service';
+import { ProductBaseListItem } from '@/pages/dfdk/product/data';
 
 export interface FormValueType extends Partial<ProjectListItem> {
   target?: string;
@@ -20,6 +37,7 @@ export interface UpdateFormProps {
   values: Partial<ProjectListItem>;
   addressList: AddressInfo;
 }
+
 const FormItem = Form.Item;
 const { Step } = Steps;
 const { TextArea } = Input;
@@ -47,8 +65,9 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     time: '',
     frequency: 'month',
   });
-
-  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [data, setData] = useState<ProductBaseListItem[]>([]);
+  const [current, setCurrent] = useState<ProductBaseListItem>();
+  const [currentStep, setCurrentStep] = useState<number>(1);
 
   const [form] = Form.useForm();
 
@@ -56,7 +75,8 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     onSubmit: handleUpdate,
     onCancel: handleUpdateModalVisible,
     updateModalVisible,
-    values,addressList,
+    values,
+    addressList,
   } = props;
 
   const forward = () => setCurrentStep(currentStep + 1);
@@ -75,28 +95,115 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     }
   };
 
+  const fetchProduct = _.debounce(async () => {
+    const response = await queryStandardProduct({
+      genre: form.getFieldValue('genre'),
+      pageSize: 9999,
+    });
+    if (isNormalResponseBody(response)) {
+      setData(response?.results || []);
+    }
+  }, 800);
+
+  const handleChange = (value: number) => {
+    setCurrent(_.head(_.filter(data, o => o?.id === value)));
+  };
+
   const renderContent = () => {
     if (currentStep === 1) {
       return (
         <>
-          <FormItem name="target" label="监控对象">
-            <Select style={{ width: '100%' }}>
-              <Option value="0">表一</Option>
-              <Option value="1">表二</Option>
+          <Alert message="配置基础产品信息" type="error" closable />
+          <Form.Item
+            label="产品类型"
+            name="genre"
+            rules={[{ required: true, message: '产品类型' }]}
+          >
+            <Select
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) => {
+                return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+              }}
+              onChange={() => {
+                fetchProduct();
+              }}
+            >
+              {(productType(-1) as ProductType[]).map(v => {
+                return (
+                  <Option key={v.key} value={v.key} label={v.label}>
+                    {v.label}
+                  </Option>
+                );
+              })}
             </Select>
-          </FormItem>
-          <FormItem name="template" label="规则模板">
-            <Select style={{ width: '100%' }}>
-              <Option value="0">规则模板一</Option>
-              <Option value="1">规则模板二</Option>
+          </Form.Item>
+          <Form.Item
+            name="production"
+            label="产品选择"
+            rules={[{ required: true, message: '产品选择' }]}
+            hasFeedback
+          >
+            <Select
+              showSearch
+              placeholder="基础选配"
+              notFoundContent="请先选择类别"
+              optionFilterProp="children"
+              filterOption={(input, option) => {
+                return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+              }}
+              onChange={handleChange}
+              style={{ width: '100%' }}
+            >
+              {data?.map(d => (
+                <Option
+                  key={d.id}
+                  value={d.id}
+                  label={d.pro_type + '-' + productType(d.genre) + '-' + d.leader_price}
+                >
+                  <div>
+                    <span>{d.pro_type}</span>
+                    <Divider type="vertical" />
+                    <span>{productType(d.genre)}</span>
+                    <Divider type="vertical" />
+                    <span style={{ color: '#FF6A00' }}>价格：¥{d.leader_price}</span>
+                  </div>
+                </Option>
+              ))}
             </Select>
-          </FormItem>
-          <FormItem name="type" label="规则类型">
-            <RadioGroup>
-              <Radio value="0">强</Radio>
-              <Radio value="1">弱</Radio>
-            </RadioGroup>
-          </FormItem>
+          </Form.Item>
+          <Alert message="服务与配件" type="info" closable />
+          <Form.List name="conf_par">
+            {fields => {
+              console.log(fields);
+              return (
+                <div>
+                  {fields.map((field, index) => (
+                    <Row key={field.key}>
+                      <Col>
+                        <Form.Item
+                          name={[field.name, 'lastName']}
+                          fieldKey={[field.fieldKey, 'lastName']}
+                          rules={[{ required: true, message: '产品选择' }]}
+                        >
+                          <Input placeholder="last name" />
+                        </Form.Item>
+                      </Col>
+                      <Col>
+                        <Form.Item
+                          name={[field.name, 'firstName']}
+                          fieldKey={[field.fieldKey, 'firstName']}
+                          rules={[{ required: true, message: '产品选择' }]}
+                        >
+                          <Input placeholder="first name" />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  ))}
+                </div>
+              );
+            }}
+          </Form.List>
         </>
       );
     }
@@ -126,62 +233,56 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     }
     return (
       <>
-          <Alert
-            message="购买须知"
-            description="生成项目后，可在项目管理查看项目跟进状态"
-            type="error"
-            closable
+        <Alert
+          message="购买须知"
+          description="生成项目后，可在项目管理查看项目跟进状态"
+          type="error"
+          closable
+        />
+        <Form.Item
+          name="project_name"
+          rules={[{ required: true, message: '项目名称' }]}
+          style={{ marginTop: '20px' }}
+        >
+          <Input placeholder="项目名称" />
+        </Form.Item>
+        <Form.Item name="project_company" rules={[{ required: true, message: '项目单位' }]}>
+          <Input placeholder="项目单位" />
+        </Form.Item>
+        <Form.Item name="project_addr" rules={[{ required: true, message: '交货地址' }]}>
+          <Select
+            showSearch
+            placeholder={!addressList?.results?.[0] ? '请前往个人设置填写地址' : '请选择地址'}
+            optionFilterProp="children"
+            filterOption={(input, option) => {
+              return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+            }}
+          >
+            {addressList?.results?.map((d: AddressListItem, ii: number) => (
+              <Option
+                key={d.id + '-' + ii}
+                value={d.id}
+                label={d.recipients + '-' + d.tel + '-' + d.addr}
+              >
+                <div>
+                  <span>{d.recipients}</span>
+                  <Divider type="vertical" />
+                  <span>{d.tel}</span>
+                  <Divider type="vertical" />
+                  <span>{d.addr}</span>
+                </div>
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+        <Form.Item name="delivery_time" rules={[{ required: true, message: '交货日期' }]}>
+          <DatePicker
+            disabledDate={current => {
+              return current && current < moment().subtract(1, 'days');
+            }}
+            style={{ width: '100%' }}
           />
-          <Form.Item
-            name="project_name"
-            rules={[{required: true, message: '项目名称'}]}
-            style={{marginTop: '20px'}}
-          >
-            <Input placeholder="项目名称"/>
-          </Form.Item>
-          <Form.Item
-            name="project_company"
-            rules={[{required: true, message: '项目单位'}]}
-          >
-            <Input placeholder="项目单位"/>
-          </Form.Item>
-          <Form.Item
-            name="project_addr"
-            rules={[{required: true, message: '交货地址'}]}
-          >
-            <Select
-              showSearch
-              placeholder={!addressList?.results?.[0] ? '请前往个人设置填写地址' : '请选择地址'}
-              optionFilterProp="children"
-              filterOption={(input, option) => {
-                return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
-              }}
-            >
-              {addressList?.results?.map((d: AddressListItem, ii: number) => (
-                <Option key={d.id + '-' + ii} value={d.id}
-                        label={d.recipients + '-' + d.tel + '-' + d.addr}>
-                  <div>
-                    <span>{d.recipients}</span>
-                    <Divider type="vertical"/>
-                    <span>{d.tel}</span>
-                    <Divider type="vertical"/>
-                    <span>{d.addr}</span>
-                  </div>
-                </Option>))
-              }
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="delivery_time"
-            rules={[{required: true, message: '交货日期'}]}
-          >
-            <DatePicker
-              disabledDate={current => {
-                return current && current < moment().subtract(1, "days");
-              }}
-              style={{width: '100%'}}
-            />
-          </Form.Item>
+        </Form.Item>
       </>
     );
   };

@@ -1,8 +1,9 @@
-import {parse} from 'querystring';
+import { parse } from 'querystring';
 import pathRegexp from 'path-to-regexp';
-import {Route} from '@/models/connect';
-import {message} from "antd";
+import { Route } from '@/models/connect';
+import { message } from 'antd';
 import _ from 'lodash';
+import { ProductBaseListItem } from '@/pages/dfdk/product/data';
 
 /* eslint no-useless-escape:0 import/prefer-default-export:0 */
 const reg = /(((^https?:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(?::\d+)?|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)$/;
@@ -18,7 +19,7 @@ export const isAntDesignPro = (): boolean => {
 
 // 给官方演示站点用，用于关闭真实开发环境不需要使用的特性
 export const isAntDesignProOrDev = (): boolean => {
-  const {NODE_ENV} = process.env;
+  const { NODE_ENV } = process.env;
   if (NODE_ENV === 'development') {
     return true;
   }
@@ -37,7 +38,7 @@ export const getAuthorityFromRouter = <T extends Route>(
   pathname: string,
 ): T | undefined => {
   const authority = router.find(
-    ({routes, path = '/'}) =>
+    ({ routes, path = '/' }) =>
       (path && pathRegexp(path).exec(pathname)) ||
       (routes && getAuthorityFromRouter(routes, pathname)),
   );
@@ -148,10 +149,10 @@ type SearchParamsType = {
 
 // ProTable向python查询添加
 export function addIcontains(params?: SearchParamsType): SearchParamsType {
-  let returnParams = {pageSize: params?.pageSize, current: params?.current};
+  let returnParams = { pageSize: params?.pageSize, current: params?.current };
   _.forIn(_.omit(params, ['pageSize', 'current', '_timestamp']), (v, k) => {
     returnParams[k + '__icontains'] = v;
-  })
+  });
   return returnParams;
 }
 
@@ -173,33 +174,43 @@ export function identifyUser(type: IdentityType): string {
 // 用户修改项
 export type ModifyType = null | 'tel' | 'email';
 
-type ModifyUserInfoType = {
-  title: string;
-  formData: {
-    label: string;
-    name: string;
-    placeholder: string;
-    rule: any;
-  }[];
-} | undefined;
+type ModifyUserInfoType =
+  | {
+      title: string;
+      formData: {
+        label: string;
+        name: string;
+        placeholder: string;
+        rule: any;
+      }[];
+    }
+  | undefined;
 
 export function getModifyUserComponentProps(type: ModifyType): ModifyUserInfoType {
   switch (type) {
     case 'tel':
       return {
         title: '修改手机号',
-        formData: [{
-          label: '手机号', name: type, placeholder: '请输入手机号',
-          rule: {pattern: /^[1]([3-9])[0-9]{9}$/, message: '格式错误'}
-        }],
-
+        formData: [
+          {
+            label: '手机号',
+            name: type,
+            placeholder: '请输入手机号',
+            rule: { pattern: /^[1]([3-9])[0-9]{9}$/, message: '格式错误' },
+          },
+        ],
       };
     case 'email':
       return {
-        title: '修改邮箱', formData: [{
-          label: '邮箱', name: type, placeholder: '请输入邮箱',
-          rule: {type: 'email', message: '格式错误'}
-        }]
+        title: '修改邮箱',
+        formData: [
+          {
+            label: '邮箱',
+            name: type,
+            placeholder: '请输入邮箱',
+            rule: { type: 'email', message: '格式错误' },
+          },
+        ],
       };
     default:
       return undefined;
@@ -212,7 +223,7 @@ type CommonResponseBody = {
   next?: null | string;
   previous?: null | string;
   [propName: string]: any;
-}
+};
 
 export function isNormalResponseBody(response: CommonResponseBody): boolean {
   if (Array.isArray(response?.results)) {
@@ -226,18 +237,18 @@ export function isNormalResponseBody(response: CommonResponseBody): boolean {
 export type ProductType = {
   label: string;
   key: number;
-}
+};
 
 export function productType(genre: number) {
   const product = [
-    {label: '一体机', key: 1},
-    {label: '云桶', key: 2},
-    {label: '公有云部署', key: 3},
-    {label: '私有云部署', key: 4},
-    {label: '传统环境部署', key: 5},
-    {label: '一体机配件', key: 6},
-    {label: '服务', key: 7},
-    {label: '其他', key: 8},
+    { label: '一体机', key: 1 },
+    { label: '云桶', key: 2 },
+    { label: '公有云部署', key: 3 },
+    { label: '私有云部署', key: 4 },
+    { label: '传统环境部署', key: 5 },
+    { label: '一体机配件', key: 6 },
+    { label: '服务', key: 7 },
+    { label: '其他', key: 8 },
   ];
   switch (genre) {
     case -1:
@@ -253,7 +264,7 @@ export function addKeyToArray(array: any[], i: number) {
   let j = i;
   const a: any[] = [];
   // array {a:string;b:any[];}[]
-  _.forEach(array, (d: { [propName: string]: any; }) => {
+  _.forEach(array, (d: { [propName: string]: any }) => {
     const obj = {};
     _.forIn(d, (v, k) => {
       if (Array.isArray(v)) {
@@ -265,7 +276,7 @@ export function addKeyToArray(array: any[], i: number) {
       obj['key'] = j;
       j++;
     });
-    a.push(obj)
+    a.push(obj);
   });
   return a;
 }
@@ -274,3 +285,28 @@ export function addKeyToEachArray(array: any[]) {
   let i = 0;
   return addKeyToArray(array, i);
 }
+
+/**
+ * 根据权限对输入item，进行价格string
+ * @param item
+ */
+export const actPrice = (item: any, identity: number): string => {
+  const val = item as ProductBaseListItem;
+  let result = '0.00';
+  switch (identity) {
+    case 1:
+    case 2:
+      result = (val?.leader_price || '0.00').toString();
+      break;
+    case 3:
+      result = (val?.member_price || '0.00').toString();
+      break;
+    case 4:
+      result = (val?.second_price || '0.00').toString();
+      break;
+    default:
+      result = '0.00';
+      break;
+  }
+  return result;
+};
