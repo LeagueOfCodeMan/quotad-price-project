@@ -552,6 +552,7 @@ const ProjectList: FC<BasicListProps> = props => {
         updateModalVisible={visible}
         values={current}
         addressList={addressList}
+        currentUser={currentUser}
       />
     </div>
   );

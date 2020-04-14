@@ -4,6 +4,7 @@ import { Route } from '@/models/connect';
 import { message } from 'antd';
 import _ from 'lodash';
 import { ProductBaseListItem } from '@/pages/dfdk/product/data';
+import {CurrentUser} from "@/models/user";
 
 /* eslint no-useless-escape:0 import/prefer-default-export:0 */
 const reg = /(((^https?:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(?::\d+)?|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)$/;
@@ -290,7 +291,7 @@ export function addKeyToEachArray(array: any[]) {
  * 根据权限对输入item，进行价格string
  * @param item
  */
-export const actPrice = (item: any, identity: number): string => {
+export const actPrice = (item: any, identity: CurrentUser['ide']): string => {
   const val = item as ProductBaseListItem;
   let result = '0.00';
   switch (identity) {
