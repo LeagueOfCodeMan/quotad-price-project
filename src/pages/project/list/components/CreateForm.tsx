@@ -4,27 +4,29 @@ import {
   Button,
   Col,
   DatePicker,
+  Descriptions,
   Divider,
   Form,
   Input,
   InputNumber,
   Modal,
-  Radio,
   Row,
   Select,
   Steps,
-  Typography,
+  Table,
+  Typography
 } from 'antd';
-
+import {v4 as uuidv4} from 'uuid';
 import {AddressInfo, AddressListItem} from '@/pages/usermanager/settings/data';
-import moment from 'moment';
-import {ProjectListItem} from '@/pages/project/data';
-import {actPrice, isNormalResponseBody, ProductType, productType} from '@/utils/utils';
+import moment, {Moment} from 'moment';
+import {actPrice, currentPrice, isNormalResponseBody, ProductType, productType} from '@/utils/utils';
 import _ from 'lodash';
 import {queryStandardProduct} from '@/pages/dfdk/product/service';
 import {ProductBaseListItem} from '@/pages/dfdk/product/data';
 import {CurrentUser} from "@/models/user";
 import styles from '../style.less';
+import {ColumnsType} from "antd/lib/table";
+import {CreateProjectParams} from "@/pages/project/service";
 
 const {Text} = Typography;
 
@@ -33,27 +35,22 @@ export interface FormValueType {
   production?: number;
   count?: number;
   conf_par?: { id: number; count: number; }[];
+  project_name?: string;
+  project_company?: string;
+  delivery_time?: Moment;
+  project_addr?: number;
 }
 
 export interface UpdateFormProps {
   onCancel: (flag?: boolean, formVals?: FormValueType) => void;
-  onSubmit: (values: FormValueType) => void;
+  onSubmit: (values: CreateProjectParams, callback: Function) => void;
   updateModalVisible: boolean;
-  values: Partial<ProjectListItem>;
   addressList: AddressInfo;
   currentUser: CurrentUser;
 }
 
-const FormItem = Form.Item;
 const {Step} = Steps;
-const {TextArea} = Input;
 const {Option} = Select;
-const RadioGroup = Radio.Group;
-
-export interface UpdateFormState {
-  formVals: FormValueType;
-  currentStep: number;
-}
 
 const formLayout = {
   labelCol: {span: 7},
@@ -63,6 +60,7 @@ const formLayout = {
 const CreateForm: React.FC<UpdateFormProps> = props => {
   const [formVals, setFormVals] = useState<FormValueType>({});
   const [data, setData] = useState<ProductBaseListItem[]>([]);
+  const [dataSource, setDataSource] = useState<ProductBaseListItem[]>([]);
   const [current, setCurrent] = useState<ProductBaseListItem>();
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [totalPrice, setPrice] = useState<string>("0.00");
@@ -73,7 +71,6 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     onSubmit: handleUpdate,
     onCancel: handleUpdateModalVisible,
     updateModalVisible,
-    values,
     addressList, currentUser: {identity}
   } = props;
 
@@ -89,7 +86,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
         });
       }, 0)
     }
-  }, [current])
+  }, [current]);
 
   const forward = () => setCurrentStep(currentStep + 1);
 
@@ -101,9 +98,37 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     setFormVals({...formVals, ...fieldsValue});
 
     if (currentStep < 2) {
+      if (currentStep === 1) {
+        console.log(fieldsValue);
+        const checkPar = fieldsValue?.conf_par?.filter((i: { count: number; }) => i?.count > 0);
+        const conf_list: ProductBaseListItem[] = [];
+        _.forEach(current?.conf_list, o => {
+          const target = _.head(_.filter(checkPar, d => d?.id === o?.id));
+          if (target) {
+            conf_list.push({...o, count: target?.count, uuid: uuidv4(),});
+          }
+        });
+        setDataSource([...dataSource, {
+          ...current, count: fieldsValue?.count, conf_list, conf_par: checkPar, uuid: uuidv4(), is_required: 0,
+        } as ProductBaseListItem]);
+      }
       forward();
     } else {
-      handleUpdate(formVals);
+      console.log(formVals);
+      const {delivery_time: time, project_name, project_company, project_addr} = formVals;
+      const delivery_time = (time as Moment).format('YYYY-MM-DD');
+      const product_list = _.map(dataSource, o => {
+        return (
+          {production: o?.id, count: o?.count, conf_par: o?.conf_par}
+        )
+      });
+      console.log(product_list);
+      const payload = {
+        project_name, project_company, delivery_time, project_addr, product_list
+      };
+      handleUpdate(payload as CreateProjectParams, () => {
+        setFormVals({});
+      });
     }
   };
 
@@ -128,24 +153,148 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
    * @param selectedRows
    */
   const calculate = () => {
-    const values = form.getFieldsValue();
-    console.log(values, current);
-    const {production, count, conf_par} = form.getFieldsValue();
-    const price = parseFloat(actPrice(current, identity) || '0');
-    const checkPar = conf_par?.filter((i: { count: number; }) => i?.count > 0);
-    console.log(checkPar);
-    const tPrice = _.reduce(checkPar, (sum, n) => {
-      const item = _.head(_.filter(current?.conf_list, o => o?.id === n?.id));
-      const priceItem = parseFloat(actPrice(item, identity) || '0') * n?.count;
-      console.log(item, priceItem);
-      return sum + priceItem;
-    }, count * price) || 0;
-    const fPrice: string = tPrice % 1 !== 0 ? tPrice.toString() : tPrice + '.00';
-    console.log(fPrice);
-    setPrice(fPrice);
+    const {count, conf_par} = form.getFieldsValue();
+    if (count) {
+      const price = parseFloat(actPrice(current, identity) || '0');
+      const checkPar = conf_par?.filter((i: { count: number; }) => i?.count > 0);
+      console.log(checkPar);
+      const tPrice = _.reduce(checkPar, (sum, n) => {
+        const item = _.head(_.filter(current?.conf_list, o => o?.id === n?.id));
+        const priceItem = parseFloat(actPrice(item, identity) || '0') * n?.count;
+        console.log(item, priceItem);
+        return sum + priceItem;
+      }, 0) || 0;
+      const hPrice = (price + tPrice) * count;
+      const fPrice: string = hPrice % 1 !== 0 ? hPrice.toString() : hPrice + '.00';
+      const price2 = _.isNaN(fPrice) ? '部分未定价' : '¥ ' + fPrice;
+      setPrice(price2);
+    }
+  };
+
+  const columns: ColumnsType<ProductBaseListItem> = [
+    {
+      title: '类型',
+      dataIndex: 'genre',
+      key: 'genre',
+      align: 'center',
+      width: 70,
+      render: (text: number) => {
+        return (
+          <div>
+            <Text style={{color: '#181818'}}>{productType(text)}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      title: '型号',
+      dataIndex: 'pro_type',
+      key: 'pro_type',
+      align: 'center',
+      width: 100,
+      render: (text: string) => {
+        return (
+          <div>
+            <Text style={{color: '#181818'}}>{text}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      title: '配置类型',
+      dataIndex: 'is_required',
+      key: 'is_required',
+      align: 'center',
+      width: 80,
+      render: (text: boolean | 0) => {
+        return (
+          <div style={{textAlign: 'center'}}>
+            {text === 0 ? <Text type="warning">标准</Text> : text ?
+              <Text style={{color: '#181818'}}>附加</Text> :
+              <Text type="danger">选配</Text>
+            }
+          </div>
+        )
+      },
+    },
+    {
+      title: '采购价格',
+      dataIndex: 'price',
+      key: 'price',
+      align: 'center',
+      width: 100,
+      render: (text: string, record: ProductBaseListItem) => {
+        return (
+          <div>
+            <Text style={{color: '#FF6A00'}}>{currentPrice(record, identity)}</Text>
+          </div>
+        )
+      },
+    },
+    {
+      title: '数量',
+      dataIndex: 'count',
+      key: 'count',
+      align: 'center',
+      width: 70,
+      render: (text: number) => {
+        return (
+          <div>
+            <Text style={{color: '#181818'}}>{text}</Text>
+          </div>
+        )
+      },
+    },
+  ];
+
+  const operation: ColumnsType<ProductBaseListItem> = [
+    {
+      title: '操作',
+      dataIndex: 'operation',
+      key: 'operation',
+      align: 'center',
+      width: 60,
+      render: (text: undefined, record: ProductBaseListItem) => {
+        return (
+          <div style={{textAlign: 'center'}}>
+            <a
+              onClick={e => {
+                e.preventDefault();
+                remove(record);
+              }}
+              style={{color: '#FF4D4F'}}
+            >
+              删除
+            </a>
+          </div>
+        )
+      },
+    },
+  ];
+
+  const remove = (record: ProductBaseListItem) => {
+    const nDataSource = [...dataSource];
+    _.remove(nDataSource, d => d?.uuid === record?.uuid);
+    setDataSource(nDataSource);
+  };
+
+  const expandedRowRender = (record: ProductBaseListItem) => {
+    return (
+      <Table
+        showHeader={false}
+        size="small" rowKey={record => record?.uuid as string}
+        columns={columns}
+        dataSource={record?.conf_list || []}
+        pagination={false}
+        scroll={{y: 78}}
+      />
+    );
   };
 
   const renderContent = () => {
+    const {project_name, project_company, delivery_time, project_addr} = formVals;
+    const address = _.head(_.filter(addressList?.results, o => o?.id === project_addr));
+    console.log(address, formVals);
     if (currentStep === 1) {
       return (
         <>
@@ -303,8 +452,10 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
                 <InputNumber onChange={() => calculate()} style={{width: 120}} placeholder="采购数量" min={1}/>
               </Form.Item>
             </Col>
-            <Col span={23}>
-              <span style={{color: '#FF6A00'}}>总价：¥{totalPrice}</span>
+            <Col span={13}>
+              <span style={{color: '#FF6A00', fontSize: '18px'}}>
+                <span style={{fontSize: '14px', color: 'grey'}}>总价：</span>
+                {totalPrice || '0.00'}</span>
             </Col>
           </Row>
         </>
@@ -313,79 +464,132 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     if (currentStep === 2) {
       return (
         <>
-          <FormItem
-            name="time"
-            label="开始时间"
-            rules={[{required: true, message: '请选择开始时间！'}]}
-          >
-            <DatePicker
-              style={{width: '100%'}}
-              showTime
-              format="YYYY-MM-DD HH:mm:ss"
-              placeholder="选择开始时间"
-            />
-          </FormItem>
-          <FormItem name="frequency" label="调度周期">
-            <Select style={{width: '100%'}}>
-              <Option value="month">月</Option>
-              <Option value="week">周</Option>
-            </Select>
-          </FormItem>
+          <Alert message="项目信息" type="info" closable style={{marginBottom: '10px'}}/>
+          <div className={styles.listContentWrapper}>
+            <Descriptions column={4} layout="vertical">
+              <Descriptions.Item label="公司名称">
+                <Text style={{color: '#181818'}}>{project_name}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="公司名称">
+                <Text style={{color: '#181818'}}>{project_company}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="交货时间" span={2}>
+                <Text style={{color: '#181818'}}>{(delivery_time as Moment).format('YYYY-MM-DD')}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="发货信息" span={4}>
+                收件人： <Text style={{color: '#181818'}}>{address?.recipients}</Text>
+                <Divider type="vertical"/>
+                手机号码：<Text style={{color: '#181818'}}>{address?.tel}</Text>
+                <br/>
+                收货地址：<Text style={{color: '#181818'}}>{address?.addr}</Text>
+              </Descriptions.Item>
+            </Descriptions>
+          </div>
+          <Alert
+            message="产品清单"
+            type="info"
+            closable
+          />
+          <Table
+            rowKey={record => record?.uuid as string}
+            columns={columns.concat(operation)}
+            expandable={{expandedRowRender}}
+            dataSource={dataSource}
+            pagination={false}
+            scroll={{y: 195}}
+            summary={pageData => {
+              const tPrice = _.reduce(pageData, (sum, n) => {
+                const price = parseFloat(actPrice(n, identity) || '0');
+                const priceItem = _.reduce(n?.conf_list, (sum2, n2) => {
+                  const price2 = parseFloat(actPrice(n2, identity) || '0');
+                  return sum2 + price2 * (n2?.count || 0);
+                }, 0) || 0;
+                return sum + (price + priceItem) * (n?.count || 0);
+              }, 0) || 0;
+
+              const fPrice: string = tPrice % 1 !== 0 ? tPrice.toString() : tPrice + '.00';
+              const mes = _.isNaN(fPrice) ? '部分未定价' : '¥ ' + fPrice;
+              return (
+                <>
+                  <tr>
+                    <th>
+                      <div style={{width: '40px'}}>总计</div>
+                    </th>
+                    <td colSpan={6}>
+                      <Text type="danger">{mes}</Text>
+                    </td>
+                  </tr>
+                </>
+              );
+            }}
+
+          />
         </>
       );
     }
     return (
       <>
         <Alert
-          message="购买须知"
-          description="生成项目后，可在项目管理查看项目跟进状态"
-          type="error"
+          message="创建项目基础信息"
+          type="info"
           closable
         />
-        <Form.Item
-          name="project_name"
-          rules={[{required: true, message: '项目名称'}]}
-          style={{marginTop: '20px'}}
-        >
-          <Input placeholder="项目名称"/>
-        </Form.Item>
-        <Form.Item name="project_company" rules={[{required: true, message: '项目单位'}]}>
-          <Input placeholder="项目单位"/>
-        </Form.Item>
-        <Form.Item name="project_addr" rules={[{required: true, message: '交货地址'}]}>
-          <Select
-            showSearch
-            placeholder={!addressList?.results?.[0] ? '请前往个人设置填写地址' : '请选择地址'}
-            optionFilterProp="children"
-            filterOption={(input, option) => {
-              return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
-            }}
-          >
-            {addressList?.results?.map((d: AddressListItem, ii: number) => (
-              <Option
-                key={d.id + '-' + ii}
-                value={d.id}
-                label={d.recipients + '-' + d.tel + '-' + d.addr}
+        <Row gutter={[16, 8]} style={{marginTop: '10px'}}>
+          <Col span={12}>
+            <Form.Item
+              name="project_name"
+              rules={[{required: true, message: '项目名称'}]}
+            >
+              <Input placeholder="项目名称" style={{width: 270}}/>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="project_company" rules={[{required: true, message: '项目单位'}]}>
+              <Input placeholder="项目单位" style={{width: 270}}/>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={[16, 8]}>
+          <Col span={12}>
+            <Form.Item name="project_addr" rules={[{required: true, message: '交货地址'}]}>
+              <Select
+                showSearch
+                placeholder={!addressList?.results?.[0] ? '请前往个人设置填写地址' : '请选择地址'}
+                optionFilterProp="children"
+                filterOption={(input, option) => {
+                  return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                }}
+                style={{width: 270}}
               >
-                <div>
-                  <span>{d.recipients}</span>
-                  <Divider type="vertical"/>
-                  <span>{d.tel}</span>
-                  <Divider type="vertical"/>
-                  <span>{d.addr}</span>
-                </div>
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-        <Form.Item name="delivery_time" rules={[{required: true, message: '交货日期'}]}>
-          <DatePicker
-            disabledDate={current => {
-              return current && current < moment().subtract(1, 'days');
-            }}
-            style={{width: '100%'}}
-          />
-        </Form.Item>
+                {addressList?.results?.map((d: AddressListItem, ii: number) => (
+                  <Option
+                    key={d.id + '-' + ii}
+                    value={d.id}
+                    label={d.recipients + '-' + d.tel + '-' + d.addr}
+                  >
+                    <div>
+                      <span>{d.recipients}</span>
+                      <Divider type="vertical"/>
+                      <span>{d.tel}</span>
+                      <Divider type="vertical"/>
+                      <span>{d.addr}</span>
+                    </div>
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="delivery_time" rules={[{required: true, message: '交货日期'}]}>
+              <DatePicker
+                disabledDate={current => {
+                  return current && current < moment().subtract(1, 'days');
+                }}
+                style={{width: 270}}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
       </>
     );
   };
@@ -397,7 +601,10 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
           <Button style={{float: 'left'}} onClick={backward}>
             上一步
           </Button>
-          <Button onClick={() => handleUpdateModalVisible(false, values)}>取消</Button>
+          <Button onClick={() => {
+            setFormVals({});
+            handleUpdateModalVisible();
+          }}>取消</Button>
           <Button type="primary" onClick={() => handleNext()}>
             下一步
           </Button>
@@ -410,8 +617,11 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
           <Button style={{float: 'left'}} onClick={backward}>
             继续添加
           </Button>
-          <Button onClick={() => handleUpdateModalVisible(false, values)}>取消</Button>
-          <Button type="primary" onClick={() => handleNext()}>
+          <Button onClick={() => {
+            setFormVals({});
+            handleUpdateModalVisible();
+          }}>取消</Button>
+          <Button type="primary" onClick={() => handleNext()} disabled={!_.head(dataSource)}>
             完成
           </Button>
         </>
@@ -419,7 +629,10 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     }
     return (
       <>
-        <Button onClick={() => handleUpdateModalVisible(false, values)}>取消</Button>
+        <Button onClick={() => {
+          setFormVals({});
+          handleUpdateModalVisible();
+        }}>取消</Button>
         <Button type="primary" onClick={() => handleNext()}>
           下一步
         </Button>
@@ -435,8 +648,15 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
       title="创建项目"
       visible={updateModalVisible}
       footer={renderFooter()}
-      onCancel={() => handleUpdateModalVisible(false, values)}
-      afterClose={() => handleUpdateModalVisible()}
+      onCancel={() => {
+        setFormVals({});
+        handleUpdateModalVisible();
+      }}
+      afterClose={() => {
+        setFormVals({});
+        handleUpdateModalVisible();
+      }}
+      className={styles.createFormStyle}
     >
       <Steps style={{marginBottom: 28}} size="small" current={currentStep}>
         <Step title="填写项目信息"/>

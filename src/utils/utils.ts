@@ -1,9 +1,9 @@
-import { parse } from 'querystring';
+import {parse} from 'querystring';
 import pathRegexp from 'path-to-regexp';
-import { Route } from '@/models/connect';
-import { message } from 'antd';
+import {Route} from '@/models/connect';
+import {message} from 'antd';
 import _ from 'lodash';
-import { ProductBaseListItem } from '@/pages/dfdk/product/data';
+import {ProductBaseListItem} from '@/pages/dfdk/product/data';
 import {CurrentUser} from "@/models/user";
 
 /* eslint no-useless-escape:0 import/prefer-default-export:0 */
@@ -20,7 +20,7 @@ export const isAntDesignPro = (): boolean => {
 
 // 给官方演示站点用，用于关闭真实开发环境不需要使用的特性
 export const isAntDesignProOrDev = (): boolean => {
-  const { NODE_ENV } = process.env;
+  const {NODE_ENV} = process.env;
   if (NODE_ENV === 'development') {
     return true;
   }
@@ -39,7 +39,7 @@ export const getAuthorityFromRouter = <T extends Route>(
   pathname: string,
 ): T | undefined => {
   const authority = router.find(
-    ({ routes, path = '/' }) =>
+    ({routes, path = '/'}) =>
       (path && pathRegexp(path).exec(pathname)) ||
       (routes && getAuthorityFromRouter(routes, pathname)),
   );
@@ -150,7 +150,7 @@ type SearchParamsType = {
 
 // ProTable向python查询添加
 export function addIcontains(params?: SearchParamsType): SearchParamsType {
-  let returnParams = { pageSize: params?.pageSize, current: params?.current };
+  let returnParams = {pageSize: params?.pageSize, current: params?.current};
   _.forIn(_.omit(params, ['pageSize', 'current', '_timestamp']), (v, k) => {
     returnParams[k + '__icontains'] = v;
   });
@@ -177,14 +177,14 @@ export type ModifyType = null | 'tel' | 'email';
 
 type ModifyUserInfoType =
   | {
-      title: string;
-      formData: {
-        label: string;
-        name: string;
-        placeholder: string;
-        rule: any;
-      }[];
-    }
+  title: string;
+  formData: {
+    label: string;
+    name: string;
+    placeholder: string;
+    rule: any;
+  }[];
+}
   | undefined;
 
 export function getModifyUserComponentProps(type: ModifyType): ModifyUserInfoType {
@@ -197,7 +197,7 @@ export function getModifyUserComponentProps(type: ModifyType): ModifyUserInfoTyp
             label: '手机号',
             name: type,
             placeholder: '请输入手机号',
-            rule: { pattern: /^[1]([3-9])[0-9]{9}$/, message: '格式错误' },
+            rule: {pattern: /^[1]([3-9])[0-9]{9}$/, message: '格式错误'},
           },
         ],
       };
@@ -209,7 +209,7 @@ export function getModifyUserComponentProps(type: ModifyType): ModifyUserInfoTyp
             label: '邮箱',
             name: type,
             placeholder: '请输入邮箱',
-            rule: { type: 'email', message: '格式错误' },
+            rule: {type: 'email', message: '格式错误'},
           },
         ],
       };
@@ -242,14 +242,14 @@ export type ProductType = {
 
 export function productType(genre: number) {
   const product = [
-    { label: '一体机', key: 1 },
-    { label: '云桶', key: 2 },
-    { label: '公有云部署', key: 3 },
-    { label: '私有云部署', key: 4 },
-    { label: '传统环境部署', key: 5 },
-    { label: '一体机配件', key: 6 },
-    { label: '服务', key: 7 },
-    { label: '其他', key: 8 },
+    {label: '一体机', key: 1},
+    {label: '云桶', key: 2},
+    {label: '公有云部署', key: 3},
+    {label: '私有云部署', key: 4},
+    {label: '传统环境部署', key: 5},
+    {label: '一体机配件', key: 6},
+    {label: '服务', key: 7},
+    {label: '其他', key: 8},
   ];
   switch (genre) {
     case -1:
@@ -291,7 +291,7 @@ export function addKeyToEachArray(array: any[]) {
  * 根据权限对输入item，进行价格string
  * @param item
  */
-export const actPrice = (item: any, identity: CurrentUser['ide']): string => {
+export const actPrice = (item: any, identity: CurrentUser['identity']): string => {
   const val = item as ProductBaseListItem;
   let result = '0.00';
   switch (identity) {
@@ -311,3 +311,16 @@ export const actPrice = (item: any, identity: CurrentUser['ide']): string => {
   }
   return result;
 };
+
+export const currentPrice = (item: ProductBaseListItem, identity: CurrentUser['identity']): string => {
+  let price = '尚未定价';
+  console.log(item,identity,identity === (1 || 2) );
+  if ((identity === 2 || identity === 1) && item?.leader_price) {
+    price = '¥ ' + item?.leader_price;
+  } else if (identity === 3 && item?.member_price) {
+    price = '¥ ' + item?.member_price;
+  } else if (identity === 4 && item?.second_price) {
+    price = '¥ ' + item?.second_price;
+  }
+  return price;
+}

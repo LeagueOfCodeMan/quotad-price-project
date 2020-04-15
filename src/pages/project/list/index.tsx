@@ -37,6 +37,7 @@ import {CurrentChildren, CurrentChildrenResults} from '@/models/data';
 import {findDOMNode} from 'react-dom';
 import CreateForm from '@/pages/project/list/components/CreateForm';
 import {AddressInfo} from "@/pages/usermanager/settings/data";
+import {createProject} from "@/pages/project/service";
 
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
@@ -222,7 +223,7 @@ const ListContent = ({
             <Divider type="vertical"/>
           </>
         ) : null}
-        {identity === (2 || 3) && !member_total_quota ? (
+        {(identity === 2 || identity === 3) && !member_total_quota ? (
           <>
             <Text style={{color: '#61C37A'}}>{identity === 2 ? '组员：' : ''}</Text>
             <Text style={{color: '#FF6A00'}}>¥ {member_total_quota}</Text>
@@ -499,15 +500,17 @@ const ProjectList: FC<BasicListProps> = props => {
           extra={extraContent}
           loading={queryProjectOneDetail}
         >
-          <Button
-            type="dashed"
-            style={{width: '100%', marginBottom: 8}}
-            onClick={showModal}
-            ref={addBtn}
-          >
-            <PlusOutlined/>
-            添加
-          </Button>
+          {currentUser?.identity !== 1 ?
+            <Button
+              type="dashed"
+              style={{width: '100%', marginBottom: 8}}
+              onClick={showModal}
+              ref={addBtn}
+            >
+              <PlusOutlined/>
+              添加
+            </Button> : null
+          }
           <List
             itemLayout="vertical"
             size="large"
@@ -540,20 +543,29 @@ const ProjectList: FC<BasicListProps> = props => {
           setValidateVisible(false);
         }}
       />
-      <CreateForm
-        onSubmit={async value => {
-          // const success = await handleUpdate(value);
-          setCurrent({});
-        }}
-        onCancel={() => {
-          setVisible(false);
-          setCurrent({});
-        }}
-        updateModalVisible={visible}
-        values={current}
-        addressList={addressList}
-        currentUser={currentUser}
-      />
+      {
+        visible ?
+          <CreateForm
+            onSubmit={async (value, callback) => {
+              console.log(value);
+              const response = await createProject(value);
+              const success = new ValidatePwdResult(response).validate('创建成功', null, undefined);
+              if (success) {
+                setVisible(false);
+                callback();
+                setCurrent({});
+              }
+            }}
+            onCancel={() => {
+              setVisible(false);
+              setCurrent({});
+            }}
+            updateModalVisible={visible}
+            addressList={addressList}
+            currentUser={currentUser}
+          />
+          : null
+      }
     </div>
   );
 };
