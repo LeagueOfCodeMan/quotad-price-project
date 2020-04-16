@@ -304,7 +304,7 @@ class CustomTabs extends Component<CustomTabsProps, CustomTabsState> {
           key: v?.id + '',
         })
       });
-      this.setState({activeKey: _.result(_.head(projectDetailList), 'id') + ''})
+      this.setState({activeKey: _.result(_.nth(projectDetailList, -1), 'id') + ''})
       this.setState({panes: paneArr})
     }
   }

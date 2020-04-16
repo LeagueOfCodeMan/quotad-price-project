@@ -8,8 +8,6 @@ import ValidatePassword from "@/components/ValidatePassword";
 import {testPassword} from "@/services/user";
 import {ProjectDetailListItem} from "@/pages/project/data";
 import CustomTabs from "@/pages/project/detail/components/CustomTabs";
-import {createProject} from "@/pages/project/service";
-import CreateForm from "@/pages/project/detail/components/CreateForm";
 
 
 interface BasicListProps {
@@ -25,7 +23,6 @@ export const ProjectDetail: FC<BasicListProps> = props => {
   // const [validateType, setValidateType] = useState<string>("");
 
   const {projectDetailList = [], dispatch, currentUser} = props;
-  const {identity} = currentUser;
 
   // 密码校验
   const onCreate = async (values: { password: string; }) => {

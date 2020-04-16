@@ -1,5 +1,5 @@
 import request from '../../utils/request';
-import {ProjectListItem, ProjectProductionInfoItem} from "@/pages/project/data";
+import {ProjectListItem} from "@/pages/project/data";
 import {ProductBaseListItem} from "@/pages/dfdk/product/data";
 
 

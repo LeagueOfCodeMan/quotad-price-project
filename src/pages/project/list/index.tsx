@@ -459,7 +459,7 @@ const ProjectList: FC<BasicListProps> = props => {
           router.push('/project/detail');
         }}
       >
-        商品详情
+        产品详情
       </a>,
     ];
     switch (currentUser?.identity) {
