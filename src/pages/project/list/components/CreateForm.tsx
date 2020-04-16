@@ -43,7 +43,7 @@ export interface FormValueType {
 
 export interface UpdateFormProps {
   onCancel: (flag?: boolean, formVals?: FormValueType) => void;
-  onSubmit: (values: CreateProjectParams, callback: Function) => void;
+  onSubmit: (values: CreateProjectParams) => void;
   updateModalVisible: boolean;
   addressList: AddressInfo;
   currentUser: CurrentUser;
@@ -99,7 +99,6 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
 
     if (currentStep < 2) {
       if (currentStep === 1) {
-        console.log(fieldsValue);
         const checkPar = fieldsValue?.conf_par?.filter((i: { count: number; }) => i?.count > 0);
         const conf_list: ProductBaseListItem[] = [];
         _.forEach(current?.conf_list, o => {
@@ -114,7 +113,6 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
       }
       forward();
     } else {
-      console.log(formVals);
       const {delivery_time: time, project_name, project_company, project_addr} = formVals;
       const delivery_time = (time as Moment).format('YYYY-MM-DD');
       const product_list = _.map(dataSource, o => {
@@ -122,13 +120,10 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
           {production: o?.id, count: o?.count, conf_par: o?.conf_par}
         )
       });
-      console.log(product_list);
       const payload = {
         project_name, project_company, delivery_time, project_addr, product_list
       };
-      handleUpdate(payload as CreateProjectParams, () => {
-        setFormVals({});
-      });
+      handleUpdate(payload as CreateProjectParams);
     }
   };
 
@@ -157,11 +152,9 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     if (count) {
       const price = parseFloat(actPrice(current, identity) || '0');
       const checkPar = conf_par?.filter((i: { count: number; }) => i?.count > 0);
-      console.log(checkPar);
       const tPrice = _.reduce(checkPar, (sum, n) => {
         const item = _.head(_.filter(current?.conf_list, o => o?.id === n?.id));
         const priceItem = parseFloat(actPrice(item, identity) || '0') * n?.count;
-        console.log(item, priceItem);
         return sum + priceItem;
       }, 0) || 0;
       const hPrice = (price + tPrice) * count;
@@ -294,7 +287,6 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
   const renderContent = () => {
     const {project_name, project_company, delivery_time, project_addr} = formVals;
     const address = _.head(_.filter(addressList?.results, o => o?.id === project_addr));
-    console.log(address, formVals);
     if (currentStep === 1) {
       return (
         <>
@@ -466,7 +458,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
         <>
           <Alert message="项目信息" type="info" closable style={{marginBottom: '10px'}}/>
           <div className={styles.listContentWrapper}>
-            <Descriptions column={4} layout="vertical">
+            <Descriptions column={4} >
               <Descriptions.Item label="公司名称">
                 <Text style={{color: '#181818'}}>{project_name}</Text>
               </Descriptions.Item>

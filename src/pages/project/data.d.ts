@@ -33,19 +33,22 @@ export interface ProjectListInfo {
   results: ProjectListItem[] | [];
 }
 
-export type ProjectProductionInfo = {
+export type ProjectProductionInfoItem = {
+  id:number;
   create_time: string;
   production: ProductBaseListItem;
   count: number;
-  leader_quota: string;
-  member_quota: string;
-  second_quota: string;
-  leader_price: string;
-  member_price: string;
-  second_price: string;
+  leader_quota?: string;
+  member_quota?: string;
+  second_quota?: string;
+  leader_price?: string;
+  member_price?: string;
+  second_price?: string;
   user: number;
-  conf_par: ProductBaseListItem;
-}[];
+  conf_par: ProductBaseListItem[];
+};
+
+export type ProjectProductionInfo = ProjectProductionInfoItem[];
 
 export interface ProjectDetailListItem extends ProjectListItem {
   product: ProjectProductionInfo;

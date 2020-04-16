@@ -8,6 +8,8 @@ import ValidatePassword from "@/components/ValidatePassword";
 import {testPassword} from "@/services/user";
 import {ProjectDetailListItem} from "@/pages/project/data";
 import CustomTabs from "@/pages/project/detail/components/CustomTabs";
+import {createProject} from "@/pages/project/service";
+import CreateForm from "@/pages/project/detail/components/CreateForm";
 
 
 interface BasicListProps {
@@ -22,7 +24,8 @@ export const ProjectDetail: FC<BasicListProps> = props => {
   const [validateVisible, setValidateVisible] = useState(false);
   // const [validateType, setValidateType] = useState<string>("");
 
-  const {projectDetailList = [], dispatch} = props;
+  const {projectDetailList = [], dispatch, currentUser} = props;
+  const {identity} = currentUser;
 
   // 密码校验
   const onCreate = async (values: { password: string; }) => {
@@ -40,7 +43,10 @@ export const ProjectDetail: FC<BasicListProps> = props => {
 
   return (
     <div>
-      <CustomTabs projectDetailList={projectDetailList} removeItem={removeItem}/>
+      <CustomTabs
+        projectDetailList={projectDetailList} currentUser={currentUser}
+        removeItem={removeItem}
+      />
       <ValidatePassword
         visible={validateVisible}
         onCreate={async (values) => {
@@ -55,6 +61,7 @@ export const ProjectDetail: FC<BasicListProps> = props => {
           setValidateVisible(false);
         }}
       />
+
     </div>
   );
 };

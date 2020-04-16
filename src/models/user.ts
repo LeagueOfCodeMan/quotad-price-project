@@ -8,7 +8,6 @@ import {CurrentChildren, UserListItem} from "@/models/data";
 import {isNormalResponseBody} from "@/utils/utils";
 import {AddressInfo} from "@/pages/usermanager/settings/data";
 import {ProjectDetailListItem, ProjectListItem} from "@/pages/project/data";
-import {queryProjectOneDetail} from "@/pages/project/service";
 import {ConnectState} from "@/models/connect";
 import ld from 'lodash';
 
@@ -28,7 +27,7 @@ export interface UserModelType {
   effects: {
     fetchCurrent: Effect;
     fetchAddress: Effect;
-    queryProjectOneDetail: Effect;
+    saveProjectListItem: Effect;
     queryCurrentUsers: Effect;
   };
   reducers: {
@@ -92,22 +91,16 @@ const UserModel: UserModelType = {
         });
       }
     },
-    * queryProjectOneDetail({payload, callback}, {call, put, select}) {
+    * saveProjectListItem({payload}, {put, select}) {
       const projectInfo = payload?.project as ProjectListItem;
-      const projectDetailList: ProjectDetailListItem[] = yield select((state: ConnectState) => state.user.projectDetailList);
-      const response = yield call(queryProjectOneDetail, payload);
-      if (Array.isArray(response)) {
-        const current: ProjectDetailListItem = {...projectInfo, product: response};
-        ld.remove(projectDetailList, d => d?.id === current?.id);
-        projectDetailList.push(current)
-        yield put({
-          type: 'saveProjectInfo',
-          payload: projectDetailList
-        });
-      }
-      if (callback && typeof callback === 'function') {
-        callback(response)
-      }
+      const projectDetailList: ProjectListItem[] = yield select((state: ConnectState) => state.user.projectDetailList);
+      const current: ProjectListItem = {...projectInfo};
+      ld.remove(projectDetailList, d => d?.id === current?.id);
+      projectDetailList.push(current)
+      yield put({
+        type: 'saveProjectInfo',
+        payload: projectDetailList
+      });
     },
   },
 

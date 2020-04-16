@@ -251,7 +251,13 @@ export function productType(genre: number) {
     {label: '服务', key: 7},
     {label: '其他', key: 8},
   ];
+  const valueEnumGenre = {};
   switch (genre) {
+    case -2:
+      product.slice(0, 5)?.forEach((i: { key: number; label: any; }) => {
+        valueEnumGenre[i.key] = {text: i.label}
+      });
+      return valueEnumGenre;
     case -1:
       return product.slice(0, 5);
     case 0:
@@ -314,7 +320,6 @@ export const actPrice = (item: any, identity: CurrentUser['identity']): string =
 
 export const currentPrice = (item: ProductBaseListItem, identity: CurrentUser['identity']): string => {
   let price = '尚未定价';
-  console.log(item,identity,identity === (1 || 2) );
   if ((identity === 2 || identity === 1) && item?.leader_price) {
     price = '¥ ' + item?.leader_price;
   } else if (identity === 3 && item?.member_price) {

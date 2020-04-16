@@ -34,7 +34,6 @@ import {ProjectListItem} from '@/pages/project/data';
 import {PaginationConfig} from 'antd/lib/pagination';
 import {useEffectOnce} from 'react-use';
 import {CurrentChildren, CurrentChildrenResults} from '@/models/data';
-import {findDOMNode} from 'react-dom';
 import CreateForm from '@/pages/project/list/components/CreateForm';
 import {AddressInfo} from "@/pages/usermanager/settings/data";
 import {createProject} from "@/pages/project/service";
@@ -216,22 +215,26 @@ const ListContent = ({
         }
       </Descriptions.Item>
       <Descriptions.Item label="项目采购总价" span={2}>
-        {identity === 2 ? (
+        {identity === 1 || identity === 2 ? (
           <>
             <Text style={{color: '#1890FF'}}>组长：</Text>
-            <Text style={{color: '#FF6A00'}}>¥ {leader_total_quota}</Text>
+            <Text style={{color: '#FF6A00'}}>¥ {leader_total_price || leader_total_quota}</Text>
             <Divider type="vertical"/>
           </>
         ) : null}
-        {(identity === 2 || identity === 3) && !member_total_quota ? (
+        {(identity === 2 || identity === 3) ? (
           <>
-            <Text style={{color: '#61C37A'}}>{identity === 2 ? '组员：' : ''}</Text>
-            <Text style={{color: '#FF6A00'}}>¥ {member_total_quota}</Text>
+            <Text style={{color: '#61C37A'}}>{identity === 2 ? '一级组员：' : ''}</Text>
+            <Text
+              style={{color: '#FF6A00'}}>{member_total_price || member_total_quota ? '¥ ' + (member_total_price || member_total_quota) : '尚未定价'}</Text>
+            <Divider type="vertical"/>
           </>
         ) : null}
-        {identity === 4 ? (
+        {(identity === 2 || identity === 4) ? (
           <>
-            <Text style={{color: '#FF6A00'}}> ¥ {second_total_quota}</Text>
+            <Text style={{color: '#61C37A'}}>{identity === 2 ? '二级组员：' : ''}</Text>
+            <Text
+              style={{color: '#FF6A00'}}>{second_total_price || second_total_quota ? '¥ ' + (second_total_price || second_total_quota) : '尚未定价'}</Text>
           </>
         ) : null}
       </Descriptions.Item>
@@ -303,13 +306,6 @@ const ProjectList: FC<BasicListProps> = props => {
     });
   };
 
-  const setAddBtnblur = () => {
-    if (addBtn.current) {
-      // eslint-disable-next-line react/no-find-dom-node
-      const addBtnDom = findDOMNode(addBtn.current) as HTMLButtonElement;
-      setTimeout(() => addBtnDom.blur(), 0);
-    }
-  };
   const showModal = () => {
     setVisible(true);
     setCurrent({});
@@ -341,7 +337,7 @@ const ProjectList: FC<BasicListProps> = props => {
   //        TODO 只要组长才需要发布
   const extraContent = (
     <div style={{display: 'flex', justifyContent: 'space-between'}}>
-      {currentUser?.identity === (1 || 2) ? (
+      {currentUser?.identity === 1 || currentUser?.identity === 2 ? (
         <TreeSelect
           showSearch
           style={{width: 150, marginRight: '25px'}}
@@ -355,7 +351,7 @@ const ProjectList: FC<BasicListProps> = props => {
             const splitSearch = value?.split('-');
             const searchKey = splitSearch?.[0];
             const searchValue = splitSearch?.[1];
-            setListParams({...listParams, [searchKey]: searchValue});
+            setListParams({..._.omit(listParams, ['project_name', 'username']), [searchKey]: searchValue});
           }}
         />
       ) : null}
@@ -426,7 +422,6 @@ const ProjectList: FC<BasicListProps> = props => {
           }
         },
         onCancel() {
-          console.log('Cancel');
           setCurrent({});
         },
       });
@@ -452,21 +447,16 @@ const ProjectList: FC<BasicListProps> = props => {
   );
 
   const actions = (item: ProjectListItem): any[] => {
-    const {id} = item;
     const template = [
       <a
         key="detail"
         onClick={e => {
           e.preventDefault();
           dispatch({
-            type: 'user/queryProjectOneDetail',
-            payload: {project: item, id},
-            callback: (res: any) => {
-              if (Array.isArray(res)) {
-                router.push('/project/detail');
-              }
-            },
+            type: 'user/saveProjectListItem',
+            payload: {project: item},
           });
+          router.push('/project/detail');
         }}
       >
         商品详情
@@ -532,7 +522,6 @@ const ProjectList: FC<BasicListProps> = props => {
         visible={validateVisible}
         onCreate={async values => {
           const success = await onCreate(values);
-          console.log(success);
           if (success) {
             setValidateVisible(false);
             // TODO something
@@ -546,19 +535,15 @@ const ProjectList: FC<BasicListProps> = props => {
       {
         visible ?
           <CreateForm
-            onSubmit={async (value, callback) => {
-              console.log(value);
+            onSubmit={async (value) => {
               const response = await createProject(value);
               const success = new ValidatePwdResult(response).validate('创建成功', null, undefined);
               if (success) {
                 setVisible(false);
-                callback();
-                setCurrent({});
               }
             }}
             onCancel={() => {
               setVisible(false);
-              setCurrent({});
             }}
             updateModalVisible={visible}
             addressList={addressList}
