@@ -36,7 +36,8 @@ import {useEffectOnce} from 'react-use';
 import {CurrentChildren, CurrentChildrenResults} from '@/models/data';
 import CreateForm from '@/pages/project/list/components/CreateForm';
 import {AddressInfo} from "@/pages/usermanager/settings/data";
-import {createProject} from "@/pages/project/service";
+import {createProject, modifyProject} from "@/pages/project/service";
+import EditProject from "@/pages/project/list/components/EditProject";
 
 const RadioButton = Radio.Button;
 const RadioGroup = Radio.Group;
@@ -274,6 +275,7 @@ const ProjectList: FC<BasicListProps> = props => {
   } = props;
   const addBtn = useRef(null);
   const [visible, setVisible] = useState<boolean>(false);
+  const [editVisible, setEditVisible] = useState<boolean>(false);
   const [current, setCurrent] = useState<NotRequired<ProjectListItem>>({});
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>('');
@@ -321,12 +323,13 @@ const ProjectList: FC<BasicListProps> = props => {
   };
 
   const editAndDelete = (key: string, currentItem: ProjectListItem) => {
+    setCurrent(currentItem);
     if (key === 'delete') {
       setValidateType(ValidateType.DELETE_CONFIG);
       setValidateVisible(true);
     } else if (key === 'edit') {
+      setEditVisible(true);
     }
-    setCurrent(currentItem);
   };
 
   const treeData = () => {
@@ -365,11 +368,12 @@ const ProjectList: FC<BasicListProps> = props => {
               setListParams({..._.omit(listParams, ['pro_status'])});
             }
           }}
+          className={styles.radioStyleGroup}
         >
-          <RadioButton value="all">全部</RadioButton>
-          <RadioButton value="1">未下单</RadioButton>
-          <RadioButton value="2">已下单</RadioButton>
-          <RadioButton value="3">已完成</RadioButton>
+          <RadioButton className={styles.radioButtonStyle} value="all">全部</RadioButton>
+          <RadioButton className={styles.radioButtonStyle} value="1">未下单</RadioButton>
+          <RadioButton className={styles.radioButtonStyle} value="2">已下单</RadioButton>
+          <RadioButton className={styles.radioButtonStyle} value="3">已完成</RadioButton>
         </RadioGroup>
         <Search
           className={styles.extraContentSearch}
@@ -436,7 +440,7 @@ const ProjectList: FC<BasicListProps> = props => {
       overlay={
         <Menu onClick={({key}) => editAndDelete(key, item)}>
           <Menu.Item key="edit">编辑</Menu.Item>
-          <Menu.Item key="delete">撤销</Menu.Item>
+          <Menu.Item key="delete">删除</Menu.Item>
         </Menu>
       }
     >
@@ -551,6 +555,22 @@ const ProjectList: FC<BasicListProps> = props => {
           />
           : null
       }
+      <EditProject
+        onSubmit={async (value) => {
+          console.log(value);
+          const response = await modifyProject({id: (current?.id) as number, data: value});
+          const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
+          if (success) {
+            setEditVisible(false);
+          }
+        }}
+        onCancel={() => {
+          setEditVisible(false);
+        }}
+        updateModalVisible={editVisible}
+        addressList={addressList}
+        current={current}
+      />
     </div>
   );
 };

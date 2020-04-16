@@ -18,7 +18,7 @@ export interface CreateProjectParams {
   project_company: string;
   project_addr: number;
   delivery_time: string;
-  product_list: ProductList;
+  product_list?: ProductList;
 }
 
 export type ProductList = {
@@ -52,5 +52,12 @@ export async function modifyProductList(params: { id: number; data: { product_li
   return request('/api/project/' + params.id + '/mod_porduct_list', {
     method: 'POST',
     data: params.data,
+  });
+}
+
+export async function modifyProject(params: { id: number; data: CreateProjectParams }) {
+  return request('/api/project/' + params.id, {
+    method: 'PUT',
+    data: params,
   });
 }
