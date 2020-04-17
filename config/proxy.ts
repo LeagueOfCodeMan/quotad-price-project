@@ -27,4 +27,11 @@ export default {
       pathRewrite: { '^': '' },
     },
   },
+  net: {
+    '/api/': {
+      target: 'http://192.168.1.245:9099/',
+      changeOrigin: true,
+      pathRewrite: { '^': '' },
+    },
+  },
 };
