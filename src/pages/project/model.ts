@@ -2,9 +2,9 @@ import {AnyAction, Reducer} from 'redux';
 import {EffectsCommandMap} from 'dva';
 import {message} from "antd";
 import {UserListModalState} from "../usermanager/userlist/model";
-import {ProjectListInfo} from "@/pages/project/data";
+import {ProjectListInfo} from "./data";
+import {queryProject} from "./service";
 import {UsersInfo} from "@/models/data";
-import {queryProject} from "@/pages/project/service";
 import {isNormalResponseBody} from "@/utils/utils";
 import {queryUsers} from "@/services/user";
 

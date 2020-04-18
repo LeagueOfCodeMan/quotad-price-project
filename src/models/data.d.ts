@@ -1,6 +1,6 @@
 import {NotRequired} from "@/models/user";
 import {AreaListItem, UserListItem} from "@/pages/usermanager/userlist/data";
-import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductBaseListItem} from "@/pages/product/product-config/data";
 import {IdentityType} from "@/utils/utils";
 
 export interface TableListPagination {

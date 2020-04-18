@@ -3,7 +3,6 @@ import {
   Alert,
   Button,
   Col,
-  DatePicker,
   Descriptions,
   Divider,
   Form,
@@ -17,18 +16,16 @@ import {
   Typography
 } from 'antd';
 import {v4 as uuidv4} from 'uuid';
-import {AddressInfo, AddressListItem} from '@/pages/usermanager/settings/data';
-import moment, {Moment} from 'moment';
-import {actPrice, currentPrice, isNormalResponseBody, ProductType, productType} from '@/utils/utils';
+import {AddressInfo} from '../../usermanager/settings/data';
 import _ from 'lodash';
-import {queryStandardProduct} from '@/pages/dfdk/product/service';
-import {ProductBaseListItem} from '@/pages/dfdk/product/data';
-import {CurrentUser} from "@/models/user";
+import {queryProduct} from '../../product/service';
+import {ProductBaseListItem} from '../../product/data';
 import styles from '../style.less';
 import {ColumnsType} from "antd/lib/table";
-import {CreateProjectParams} from "@/pages/project/service";
+import {CreateProjectParams} from "../service";
+import {CurrentUser} from "@/models/user";
+import {actPrice, currentPrice, isNormalResponseBody, productType} from "@/utils/utils";
 
-const {Text} = Typography;
 
 export interface FormValueType {
   genre?: number;
@@ -37,8 +34,10 @@ export interface FormValueType {
   conf_par?: { id: number; count: number; }[];
   project_name?: string;
   project_company?: string;
-  delivery_time?: Moment;
-  project_addr?: number;
+  user_name?: string;
+  user_iphone?: string;
+  user_contact?: string;
+  user_addr?: string;
 }
 
 export interface UpdateFormProps {
@@ -50,8 +49,10 @@ export interface UpdateFormProps {
 }
 
 const {Step} = Steps;
-const {Option} = Select;
 
+const {Text} = Typography;
+const {TextArea} = Input;
+const {Option, OptGroup} = Select;
 const formLayout = {
   labelCol: {span: 7},
   wrapperCol: {span: 13},
@@ -62,7 +63,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
   const [data, setData] = useState<ProductBaseListItem[]>([]);
   const [dataSource, setDataSource] = useState<ProductBaseListItem[]>([]);
   const [current, setCurrent] = useState<ProductBaseListItem>();
-  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [currentStep, setCurrentStep] = useState<number>(1);
   const [totalPrice, setPrice] = useState<string>("0.00");
 
   const [form] = Form.useForm();
@@ -71,7 +72,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     onSubmit: handleUpdate,
     onCancel: handleUpdateModalVisible,
     updateModalVisible,
-    addressList, currentUser: {identity}
+    currentUser: {identity}
   } = props;
 
   useEffect(() => {
@@ -113,22 +114,22 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
       }
       forward();
     } else {
-      const {delivery_time: time, project_name, project_company, project_addr} = formVals;
-      const delivery_time = (time as Moment).format('YYYY-MM-DD');
+      const {project_name, project_company, user_name, user_addr, user_iphone, user_contact} = formVals;
       const product_list = _.map(dataSource, o => {
         return (
           {production: o?.id, count: o?.count, conf_par: o?.conf_par}
         )
       });
       const payload = {
-        project_name, project_company, delivery_time, project_addr, product_list
+        project_name, project_company, product_list
+        , user_name, user_addr, user_iphone, user_contact
       };
       handleUpdate(payload as CreateProjectParams);
     }
   };
 
   const fetchProduct = _.debounce(async () => {
-    const response = await queryStandardProduct({
+    const response = await queryProduct({
       genre: form.getFieldValue('genre'),
       pageSize: 9999,
     });
@@ -285,8 +286,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
   };
 
   const renderContent = () => {
-    const {project_name, project_company, delivery_time, project_addr} = formVals;
-    const address = _.head(_.filter(addressList?.results, o => o?.id === project_addr));
+    const {project_name, project_company, user_name, user_addr, user_iphone, user_contact} = formVals;
     if (currentStep === 1) {
       return (
         <>
@@ -299,23 +299,13 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
               >
                 <Select
                   placeholder="产品类别"
-                  showSearch
-                  optionFilterProp="children"
-                  filterOption={(input, option) => {
-                    return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
-                  }}
                   onChange={() => {
                     fetchProduct();
                   }}
                   style={{width: '120px'}}
                 >
-                  {(productType(-1) as ProductType[]).map(v => {
-                    return (
-                      <Option key={v.key} value={v.key} label={v.label}>
-                        {v.label}
-                      </Option>
-                    );
-                  })}
+                  <Option value={1}>硬件</Option>
+                  <Option value={2}>软件</Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -338,31 +328,35 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
               >
                 <Select
                   showSearch
-                  placeholder="基础选配"
+                  labelInValue
+                  placeholder="必选配置"
                   notFoundContent="请先选择类别"
-                  optionFilterProp="children"
-                  filterOption={(input, option) => {
-                    return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
-                  }}
+                  filterOption={false}
+                  style={{width: '100%'}}
                   onChange={handleChange}
-                  style={{width: 256}}
                   dropdownMatchSelectWidth={300}
                 >
-                  {data?.map(d => (
-                    <Option
-                      key={d.id}
-                      value={d.id}
-                      label={d.pro_type + '-' + productType(d.genre) + '-' + d.leader_price}
-                    >
-                      <div>
-                        <span>{d.pro_type}</span>
-                        <Divider type="vertical"/>
-                        <span>{productType(d.genre)}</span>
-                        <Divider type="vertical"/>
-                        <span style={{color: '#FF6A00'}}>价格：¥{actPrice(d, identity)}</span>
-                      </div>
-                    </Option>
-                  ))}
+                  {
+                    (productType(form.getFieldValue("genre") === 1 ? -3 : -4) as { label: string; key: number; }[])?.map(d => {
+                      return (
+                        <OptGroup label={<span style={{color: '#FF6A00'}}>{d?.label}</span>} key={d?.key}>
+                          {
+                            _.filter(data, o => o?.genre === d?.key)?.map(d2 => {
+                              return (
+                                <Option key={d2?.id} value={d2?.id}>
+                                  <>
+                                    <span>{d2?.pro_type}</span>
+                                    <Divider type="vertical"/>
+                                    <span style={{color: '#FF6A00'}}>价格：¥{actPrice(d2, identity)}</span>
+                                  </>
+                                </Option>
+                              )
+                            })
+                          }
+                        </OptGroup>
+                      )
+                    })
+                  }
                 </Select>
               </Form.Item>
             </Col>
@@ -458,22 +452,21 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
         <>
           <Alert message="项目信息" type="info" closable style={{marginBottom: '10px'}}/>
           <div className={styles.listContentWrapper}>
-            <Descriptions column={4} >
-              <Descriptions.Item label="公司名称">
+            <Descriptions column={4}>
+              <Descriptions.Item label="项目名称">
                 <Text style={{color: '#181818'}}>{project_name}</Text>
               </Descriptions.Item>
-              <Descriptions.Item label="公司名称">
+              <Descriptions.Item label="项目描述">
                 <Text style={{color: '#181818'}}>{project_company}</Text>
               </Descriptions.Item>
-              <Descriptions.Item label="交货时间" span={2}>
-                <Text style={{color: '#181818'}}>{(delivery_time as Moment).format('YYYY-MM-DD')}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="发货信息" span={4}>
-                收件人： <Text style={{color: '#181818'}}>{address?.recipients}</Text>
+              <Descriptions.Item label="用户信息" span={4}>
+                用户名称： <Text style={{color: '#181818'}}>{user_name}</Text>
                 <Divider type="vertical"/>
-                手机号码：<Text style={{color: '#181818'}}>{address?.tel}</Text>
+                地址：<Text style={{color: '#181818'}}>{user_addr}</Text>
                 <br/>
-                收货地址：<Text style={{color: '#181818'}}>{address?.addr}</Text>
+                电话：<Text style={{color: '#181818'}}>{user_iphone}</Text>
+                <br/>
+                电话：<Text style={{color: '#181818'}}>{user_contact}</Text>
               </Descriptions.Item>
             </Descriptions>
           </div>
@@ -521,67 +514,45 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     }
     return (
       <>
-        <Alert
-          message="创建项目基础信息"
-          type="info"
-          closable
-        />
-        <Row gutter={[16, 8]} style={{marginTop: '10px'}}>
-          <Col span={12}>
-            <Form.Item
-              name="project_name"
-              rules={[{required: true, message: '项目名称'}]}
-            >
-              <Input placeholder="项目名称" style={{width: 270}}/>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item name="project_company" rules={[{required: true, message: '项目单位'}]}>
-              <Input placeholder="项目单位" style={{width: 270}}/>
-            </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={[16, 8]}>
-          <Col span={12}>
-            <Form.Item name="project_addr" rules={[{required: true, message: '交货地址'}]}>
-              <Select
-                showSearch
-                placeholder={!addressList?.results?.[0] ? '请前往个人设置填写地址' : '请选择地址'}
-                optionFilterProp="children"
-                filterOption={(input, option) => {
-                  return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
-                }}
-                style={{width: 270}}
-              >
-                {addressList?.results?.map((d: AddressListItem, ii: number) => (
-                  <Option
-                    key={d.id + '-' + ii}
-                    value={d.id}
-                    label={d.recipients + '-' + d.tel + '-' + d.addr}
-                  >
-                    <div>
-                      <span>{d.recipients}</span>
-                      <Divider type="vertical"/>
-                      <span>{d.tel}</span>
-                      <Divider type="vertical"/>
-                      <span>{d.addr}</span>
-                    </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item name="delivery_time" rules={[{required: true, message: '交货日期'}]}>
-              <DatePicker
-                disabledDate={current => {
-                  return current && current < moment().subtract(1, 'days');
-                }}
-                style={{width: 270}}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+        <div>
+          <Form.Item
+            label="项目名称"
+            name="project_name"
+            rules={[{required: true, message: '项目名称'}]}
+          >
+            <Input placeholder="项目名称" style={{width: 270}}/>
+          </Form.Item>
+          <Form.Item label="项目描述" name="project_desc" rules={[{required: false, message: '项目描述'}]}>
+            <TextArea rows={2} placeholder="请输入至少五个字符" style={{width: 270}}/>
+          </Form.Item>
+        </div>
+        <div style={{border: '1px dashed #dddddd'}}>
+          <div style={{textAlign: "center", color: '#1890FF', fontWeight: 'bold', margin: '10px 0'}}>用户信息选填</div>
+          <Form.Item
+            label="用户名称"
+            name="user_name"
+          >
+            <Input placeholder="用户名称" style={{width: 270}}/>
+          </Form.Item>
+          <Form.Item
+            label="地址"
+            name="user_addr"
+          >
+            <Input placeholder="地址" style={{width: 270}}/>
+          </Form.Item>
+          <Form.Item
+            label="电话"
+            name="user_iphone"
+          >
+            <Input placeholder="电话" style={{width: 270}}/>
+          </Form.Item>
+          <Form.Item
+            label="联系人"
+            name="user_contact"
+          >
+            <Input placeholder="联系人" style={{width: 270}}/>
+          </Form.Item>
+        </div>
       </>
     );
   };

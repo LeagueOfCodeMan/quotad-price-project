@@ -13,8 +13,8 @@ import {
   Tooltip,
   Typography
 } from 'antd';
-import {ProductDetailListItem} from "@/pages/dfdk/product/product-base/data";
-import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductDetailListItem} from "@/pages/product/product-base/data";
+import {ProductBaseListItem} from "@/pages/product/product-config/data";
 import {CurrentUser, UserModelState} from "@/models/user";
 import {LocalStorageShopType, ShoppingCartItem} from "@/models/data";
 import {connect} from "react-redux";

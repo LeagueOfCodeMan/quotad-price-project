@@ -1,6 +1,6 @@
 import request from '../../utils/request';
-import {ProjectListItem} from "@/pages/project/data";
-import {ProductBaseListItem} from "@/pages/dfdk/product/data";
+import {ProjectListItem} from "./data";
+import {ProductBaseListItem} from "../product/data";
 
 
 interface ParamsType extends Partial<ProjectListItem> {
@@ -16,9 +16,11 @@ interface ProjectDetailParams extends Partial<ProductBaseListItem> {
 export interface CreateProjectParams {
   project_name: string;
   project_company: string;
-  project_addr: number;
-  delivery_time: string;
   product_list?: ProductList;
+  user_name?: string;
+  user_iphone?: string;
+  user_contact?: string;
+  user_desc?: string;
 }
 
 export type ProductList = {

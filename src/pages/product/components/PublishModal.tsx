@@ -1,10 +1,10 @@
 import React, {ReactText, useEffect, useState} from 'react';
 import {Alert, Button, Form, Input, InputNumber, Modal, Table, Typography} from 'antd';
-import styles from '@/pages/yuntai.less';
-import {UsersByProductType} from "@/pages/dfdk/product/product-base/components/EditableTable";
+import styles from '../../yuntai.less';
 import _ from 'lodash';
 import Highlighter from 'react-highlight-words';
 import {SearchOutlined} from '@ant-design/icons';
+import {UsersByProductType} from "@/pages/product";
 
 const {Text} = Typography;
 
@@ -162,7 +162,7 @@ const PublishModal: React.FC<PublishModalProps> = props => {
 
   return (
     <Modal
-      title="编辑二级组员价格"
+      title="编辑组员价格"
       visible={visible}
       onOk={okHandle}
       onCancel={() => onCancel()}
@@ -171,26 +171,57 @@ const PublishModal: React.FC<PublishModalProps> = props => {
       destroyOnClose={true}
     >
       <div className={styles.formStyleCommon}>
-        <div style={{margin: '0 0 10px 0'}}>
-          <Alert
-            message="可以多选统一编辑"
-            type="success"
-            closable
-          />
-        </div>
-        <Table
-          rowSelection={rowSelection}
-          rowKey={record => record?.id}
-          dataSource={list}
-          columns={columnsUser}
-          pagination={false}
-          scroll={{y: 300}}
-        />
         <Form ref={(ref) => setFormRef(ref)} form={form} {...formLayout} style={{marginTop: '10px'}}>
+          <div style={{margin: '0 0 10px 0'}}>
+            <Alert
+              message="一级组员统一价格"
+              type="success"
+              closable
+            />
+          </div>
+          <Form.Item
+            name="member_price"
+            label="一级组员价格"
+            rules={[{required: true, message: '请输入二级组员价格'},
+              {
+                validator: (rule, value) => {
+                  if (!value) {
+                    return Promise.resolve();
+                  }
+                  if (value < (parseFloat(leader_price as string || '') || 0)) {
+                    return Promise.reject('组员价格不能低于组长价格')
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
+          >
+            <InputNumber
+              formatter={value => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={value => (value as string).replace(/¥\s?|(,*)/g, '')}
+              min={parseFloat(leader_price as string || '') || 0}
+              style={{width: '100%'}}
+            />
+          </Form.Item>
+          <div style={{margin: '0 0 10px 0'}}>
+            <Alert
+              message="可以多选统一编辑"
+              type="success"
+              closable
+            />
+          </div>
+          <Table
+            rowSelection={rowSelection}
+            rowKey={record => record?.id}
+            dataSource={list}
+            columns={columnsUser}
+            pagination={false}
+            scroll={{y: 300}}
+          />
           <Form.Item
             name="second_price"
-            label="发布价格"
-            rules={[{required: true, message: '请输入二级组员价格'},
+            label="二级组员价格"
+            rules={[{required: !!_.head(selectedRowKeys), message: '请输入二级组员价格'},
               {
                 validator: (rule, value) => {
                   if (!value) {

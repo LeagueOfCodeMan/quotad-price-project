@@ -135,62 +135,18 @@ export default {
           authority: needUserAuthority,
           routes: [
             {
-              path: '/dfdk',
-              icon: 'table',
-              name: 'dfdk',
-              routes: [
-                {
-                  path: '/dfdk/product',
-                  name: 'product',
-                  component: './dfdk/product',
-                  authority: needUserAuthority,
-                  routes: [
-                    {
-                      path: '/dfdk/product',
-                      redirect: '/dfdk/product/product-base',
-                    },
-                    {
-                      name: 'product-config',
-                      icon: 'smile',
-                      path: '/dfdk/product/product-config',
-                      component: './dfdk/product/product-config',
-                      authority: ['user_lv1'],
-                    },
-                    {
-                      name: 'product-base',
-                      icon: 'smile',
-                      path: '/dfdk/product/product-base',
-                      component: './dfdk/product/product-base',
-                      authority: needUserAuthority,
-                    },
-                  ],
-                },
-              ],
-            },
-            {
               path: '/project',
               icon: 'smile',
               name: 'project',
               component: './project',
               authority: needUserAuthority,
-              routes: [
-                {
-                  path: '/project',
-                  redirect: '/project/list',
-                },
-                {
-                  name: 'list',
-                  icon: 'smile',
-                  path: '/project/list',
-                  component: './project/list',
-                },
-                {
-                  name: 'detail',
-                  icon: 'smile',
-                  path: '/project/detail',
-                  component: './project/detail',
-                },
-              ],
+            },
+            {
+              path: '/product',
+              icon: 'table',
+              name: 'product',
+              component: './product',
+              authority: needUserAuthority,
             },
             {
               path: '/usermanager',
@@ -246,7 +202,7 @@ export default {
                 },
               ],
             },
-            {path: '/', redirect: '/dfdk/product/product-base', authority: needUserAuthority},
+            {path: '/', redirect: '/project', authority: needUserAuthority},
 
             {
               component: '404',

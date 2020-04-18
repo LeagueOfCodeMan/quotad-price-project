@@ -20,20 +20,36 @@ import {findDOMNode} from 'react-dom';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import OperationModal from './components/OperationModal';
-import styles from '@/pages/dfdk/product/style.less';
-import {CurrentUser, UserModelState} from "@/models/user";
-import {addProduct, deleteProduct, updateProduct} from "@/pages/dfdk/product/service";
-import {ProductType, productType, ResultType, ValidatePwdResult} from "@/utils/utils";
-import ValidatePassword from "@/components/ValidatePassword";
-import {testPassword} from "@/services/user";
+import styles from './style.less';
+import {
+  addProduct,
+  deleteProduct,
+  modifyProductSecondPrice,
+  queryUsersByProduct,
+  updateProduct
+} from "./service";
+import ValidatePassword from "../../components/ValidatePassword/index";
 import {ExclamationCircleOutlined} from "@ant-design/icons/lib";
 import {PaginationConfig} from "antd/lib/pagination";
-import {ProductBaseListItem} from "@/pages/dfdk/product/data";
-import {ProductBaseStateType} from "@/pages/dfdk/product/model";
+import {ProductBaseListItem} from "src/pages/product/data";
+import {ProductBaseStateType} from "src/pages/product/model";
+import _ from "lodash";
+import {CurrentUser, UserModelState} from "@/models/user";
+import {isNormalResponseBody, ProductType, productType, ResultType, ValidatePwdResult} from "@/utils/utils";
+import {testPassword} from "@/services/user";
+import PublishModal, {PublishType} from "@/pages/product/components/PublishModal";
 
 const {Search} = Input;
 const {confirm} = Modal;
 const {Text} = Typography;
+
+export type UsersByProductType = {
+  id: number;
+  product_id: number;
+  username: string;
+  second_price: string | null;
+  leader_price: string | null;
+}
 
 interface BasicListProps {
   dispatch: Dispatch<any>;
@@ -101,7 +117,7 @@ interface ListSearchParams {
   [propName: string]: any;
 }
 
-export const ProductConfigList: FC<BasicListProps> = props => {
+export const Product: FC<BasicListProps> = props => {
   const addBtn = useRef(null);
   const {
     loading,
@@ -117,8 +133,11 @@ export const ProductConfigList: FC<BasicListProps> = props => {
   const [listParams, setListParams] = useState<ListSearchParams>({
     current: 1, pageSize: 5
   });
+  const [list, setList] = useState<UsersByProductType[]>([]);
+  const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
 
   const {results = [], count = 0} = productList;
+  const {identity} = currentUser;
 
   useEffect(() => {
     reloadList();
@@ -267,27 +286,54 @@ export const ProductConfigList: FC<BasicListProps> = props => {
         },
       });
     }
-  }
+  };
+
+  const handleSecondPrice = async (record: ProductBaseListItem) => {
+    const {id, leader_price} = record;
+    const response = await queryUsersByProduct({id});
+    if (isNormalResponseBody(response)) {
+      setList(_.map(response?.results, o => ({...o, leader_price})) || []);
+    }
+    setCurrent(record);
+    handleUpdateModalVisible(true);
+  };
 
   const actions = (item: ProductBaseListItem): any[] => {
-    return [
-      <a
-        key="edit"
-        onClick={e => {
-          e.preventDefault();
-          showEditModal(item);
-        }}
-      >
-        编辑
-      </a>,
-      <MoreBtn key="more" item={item}/>,
-    ];
-  }
+    switch (identity) {
+      case 1:
+        return [
+          <a
+            key="edit"
+            onClick={e => {
+              e.preventDefault();
+              showEditModal(item);
+            }}
+          >
+            编辑
+          </a>,
+          <MoreBtn key="more" item={item}/>,
+        ];
+      case 2:
+        return [
+          <a
+            key="define"
+            onClick={e => {
+              e.preventDefault();
+              handleSecondPrice(item);
+            }}
+          >
+            编辑组员价格
+          </a>
+        ];
+
+    }
+    return [];
+  };
+
   return (
     <div>
       <div className={styles.standardList}>
         <Card bordered={false}>
-
           <Row>
             {(productType(0) as ProductType[]).map(d => {
               return (
@@ -296,9 +342,7 @@ export const ProductConfigList: FC<BasicListProps> = props => {
                 </Col>
               )
             })}
-
           </Row>
-
         </Card>
 
         <Card
@@ -346,6 +390,23 @@ export const ProductConfigList: FC<BasicListProps> = props => {
           />
         </Card>
       </div>
+      <PublishModal
+        onSubmit={async (value, callback) => {
+          const response = await modifyProductSecondPrice({id: current?.id as number, data: value as PublishType});
+          const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
+          if (success) {
+            callback();
+            handleUpdateModalVisible(false);
+            setCurrent({});
+          }
+        }}
+        onCancel={() => {
+          handleUpdateModalVisible(false);
+          setCurrent({});
+        }}
+        updateModalVisible={updateModalVisible}
+        list={list}
+      />
       <ValidatePassword
         visible={validateVisible}
         onCreate={async (values) => {
@@ -388,4 +449,4 @@ export default connect(
     currentUser: user.currentUser,
     loading: loading.models.productBase,
   }),
-)(ProductConfigList);
+)(Product);

@@ -1,14 +1,16 @@
 import React, {FC, useEffect, useState} from 'react';
 import {Store} from 'rc-field-form/lib/interface';
-import {Button, Form, Input, InputNumber, Modal, Result, Select, Tooltip, Upload} from 'antd';
+import {Button, Divider, Form, Input, InputNumber, Modal, Result, Select, Tooltip, Upload} from 'antd';
 import styles from '../style.less';
-import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
 import {EyeOutlined, InboxOutlined} from "@ant-design/icons/lib";
 import {UploadListType} from "antd/lib/upload/interface";
 import _ from 'lodash';
-import {LabelListItem} from "@/pages/dfdk/label/data";
+import {ProductBaseListItem} from "../data";
+import {queryProduct} from "../service";
+import {useToggle} from "react-use";
+import {isNormalResponseBody, ProductType, productType} from "@/utils/utils";
 
-const {Option} = Select;
+const {Option, OptGroup} = Select;
 
 interface OperationModalProps {
   done: boolean;
@@ -17,7 +19,6 @@ interface OperationModalProps {
   onDone: () => void;
   onSubmit: (values: ProductBaseListItem, callback: Function) => void;
   onCancel: () => void;
-  labelArr: LabelListItem[];
 }
 
 const {TextArea} = Input;
@@ -28,10 +29,12 @@ const formLayout = {
 
 const OperationModal: FC<OperationModalProps> = props => {
   const [form] = Form.useForm();
-  const {done, visible, current, onDone, onCancel, onSubmit, labelArr} = props;
+  const [data, setData] = useState<ProductBaseListItem[]>([]);
+  const {done, visible, current, onDone, onCancel, onSubmit} = props;
   const [previewVisible, setPeviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const [result, setResult] = useState<ProductBaseListItem>();
+  const [isShow, toggleShow] = useToggle(false);
 
   useEffect(() => {
     if (form && !visible) {
@@ -45,7 +48,6 @@ const OperationModal: FC<OperationModalProps> = props => {
       setTimeout(() => {
         form.setFieldsValue({
           ..._.omit(current, ['avatar'])
-          // createdAt: current.createdAt ? moment(current.createdAt) : null,
         });
       }, 0);
     }
@@ -70,11 +72,10 @@ const OperationModal: FC<OperationModalProps> = props => {
             <div className={styles.resultImageContainer}>
               <img src={result?.avatar || ''} style={result?.avatar ? {backgroundColor: '#4f4f4f'} : {}}/>
               <div>
-                <span>配件名：{result?.conf_name}</span>
-                <span>备注：{result?.conf_mark}</span>
-                <span>描述：{result?.con_desc}</span>
+                <span>产品名：{result?.pro_type}</span>
+                <span>备注：{result?.mark}</span>
+                <span>描述：{result?.desc}</span>
                 <span>组长价格：{result?.leader_price}</span>
-                <span>二级组员价格 ：{result?.second_price}</span>
               </div>
             </div>
           )}
@@ -154,26 +155,89 @@ const OperationModal: FC<OperationModalProps> = props => {
         });
       }
     };
+
+    const fetchProduct = _.debounce(async (index: number) => {
+      const response = await queryProduct({
+        genre: form.getFieldValue('genre' + index),
+        pageSize: 9999,
+      });
+      if (isNormalResponseBody(response)) {
+        if (index === 1) {
+          setData(response?.results || []);
+        }
+      }
+    }, 800);
+
     return (
       <Form form={form} {...formLayout} onFinish={onFinish}>
         <Form.Item
-          name="conf_name"
-          label="配件名称"
-          rules={[{required: true, message: '请选择配件名称'}]}
+          name="pro_type"
+          label="产品型号"
+          rules={[{required: true, message: '请输入产品型号'}]}
         >
           <Input/>
         </Form.Item>
         <Form.Item
-          name="label"
-          label="配置分类"
+          name="genre"
+          label="分类"
           rules={[{required: true, message: '请选择类别'}]}
         >
-          <Select showSearch>
-            {_.head(labelArr) && labelArr.map(i => {
-              return <Option key={i.id} value={i.id}>{i.name}</Option>
+          <Select
+            showSearch
+            optionFilterProp="children"
+            filterOption={(input, option) => {
+              return (option?.label as string)?.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+            }}
+            onChange={(value) => {
+              if (value === 6 || value === 7 || value === 8) {
+                toggleShow(true);
+                fetchProduct(1)
+              }
+            }}
+          >
+            {(productType(0) as ProductType[]).map(v => {
+              return <Option key={v.key} value={v.key} label={v.label}>{v.label}</Option>
             })}
           </Select>
         </Form.Item>
+        {
+          isShow ?
+            <>
+              <Form.Item
+                name="id2"
+                label="归属(可多选)"
+                rules={[{required: false, message: '请选择归属'}]}
+                hasFeedback
+              >
+                <Select
+                  mode="multiple"
+                  showSearch
+                  labelInValue
+                  placeholder="必选配置"
+                  notFoundContent="请先选择类别"
+                  filterOption={false}
+                  style={{width: '100%'}}
+                >
+                  {
+                    (productType(-1) as { label: string; key: number; }[])?.map(d => {
+                      return (
+                        <OptGroup label={d?.label} key={d?.key}>
+                          {
+                            _.filter(data, o => o?.genre === d?.key)?.map(d2 => {
+                              return (
+                                <Option key={d2?.id} value={d2?.id}>{d2?.pro_type}</Option>
+                              )
+                            })
+                          }
+                        </OptGroup>
+                      )
+                    })
+                  }
+                </Select>
+              </Form.Item>
+            </>
+            : null
+        }
         <Form.Item label="请上传图片">
           <>
             <Modal
@@ -195,7 +259,7 @@ const OperationModal: FC<OperationModalProps> = props => {
             }
             <Form.Item
               name="avatar"
-              rules={[{validator: validateImage}]}
+              rules={[{required: false}, {validator: validateImage}]}
               valuePropName="fileList" getValueFromEvent={normFile} noStyle>
               <Upload.Dragger name="files" {...upLoadProp()}>
                 <p className="ant-upload-drag-icon">
@@ -207,7 +271,7 @@ const OperationModal: FC<OperationModalProps> = props => {
           </div>
         </Form.Item>
         <Form.Item
-          name="conf_mark"
+          name="mark"
           label="备注"
           rules={[{required: true, message: '请输入至少五个字符的备注！', min: 5}]}
         >
@@ -215,8 +279,8 @@ const OperationModal: FC<OperationModalProps> = props => {
         </Form.Item>
 
         <Form.Item
-          name="con_desc"
-          label="配件描述"
+          name="desc"
+          label="描述"
           rules={[{required: true, message: '请输入至少五个字符的产品描述！', min: 5}]}
         >
           <TextArea rows={4} placeholder="请输入至少五个字符"/>
@@ -232,24 +296,13 @@ const OperationModal: FC<OperationModalProps> = props => {
             style={{width: '350px'}}
           />
         </Form.Item>
-        <Form.Item
-          name="second_price"
-          label="二级组员价格"
-          rules={[{required: true, message: '请选择'}]}
-        >
-          <InputNumber
-            formatter={value => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={value => (value as string).replace(/¥\s?|(,*)/g, '')}
-            style={{width: '350px'}}
-          />
-        </Form.Item>
       </Form>
     );
   };
 
   return (
     <Modal
-      title={done ? null : `配件${current?.id ? '编辑' : '添加'}`}
+      title={done ? null : `产品${current?.id ? '编辑' : '添加'}`}
       className={styles.standardListForm}
       width={640}
       bodyStyle={done ? {padding: '72px 0'} : {padding: '28px 0 0'}}

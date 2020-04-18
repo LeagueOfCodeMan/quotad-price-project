@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {Form, InputNumber, Modal} from 'antd';
 import {SizeType} from "antd/es/config-provider/SizeContext";
-import styles from '@/pages/yuntai.less';
-import {ProductBaseListItem} from "@/pages/dfdk/product/data";
+import styles from '../../yuntai.less';
+import {ProductBaseListItem} from "@/pages/product/data";
 
 const FormItem = Form.Item;
 

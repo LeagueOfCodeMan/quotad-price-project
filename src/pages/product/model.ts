@@ -1,8 +1,8 @@
 import {AnyAction, Reducer} from 'redux';
 import {EffectsCommandMap} from 'dva';
-import {isNormalResponseBody} from "../../../utils/utils";
-import {ProductBaseList} from "@/pages/dfdk/product/data";
-import {countStatistics, queryProduct, queryStandardProduct} from "@/pages/dfdk/product/service";
+import {ProductBaseList} from "@/pages/product/data";
+import {countStatistics, queryProduct, queryStandardProduct} from "@/pages/product/service";
+import {isNormalResponseBody} from "@/utils/utils";
 
 export interface ProductBaseStateType {
   productList: NotRequired<ProductBaseList>;

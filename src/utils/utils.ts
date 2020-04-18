@@ -3,7 +3,7 @@ import pathRegexp from 'path-to-regexp';
 import {Route} from '@/models/connect';
 import {message} from 'antd';
 import _ from 'lodash';
-import {ProductBaseListItem} from '@/pages/dfdk/product/data';
+import {ProductBaseListItem} from '@/pages/product/data';
 import {CurrentUser} from "@/models/user";
 
 /* eslint no-useless-escape:0 import/prefer-default-export:0 */
@@ -253,6 +253,10 @@ export function productType(genre: number) {
   ];
   const valueEnumGenre = {};
   switch (genre) {
+    case -4:
+      return product.slice(2, 5);
+    case -3:
+      return product.slice(0, 2);
     case -2:
       product.slice(0, 5)?.forEach((i: { key: number; label: any; }) => {
         valueEnumGenre[i.key] = {text: i.label}

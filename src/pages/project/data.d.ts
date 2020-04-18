@@ -1,5 +1,4 @@
-import {ProductBaseListItem} from "@/pages/dfdk/product/data";
-import {ProductBaseListItem} from "@/pages/dfdk/product/product-config/data";
+import {ProductBaseListItem} from "@/pages/product/data";
 
 export interface ProjectListItem {
   id: number;

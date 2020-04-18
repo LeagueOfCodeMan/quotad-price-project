@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {Alert, Col, DatePicker, Divider, Form, Input, Modal, Row, Select} from 'antd';
-import styles from '@/pages/yuntai.less';
-import {AddressInfo, AddressListItem} from "@/pages/usermanager/settings/data";
+import styles from '../../yuntai.less';
+import {AddressInfo, AddressListItem} from "../../usermanager/settings/data";
 import moment from "moment";
-import {ProjectListItem} from "@/pages/project/data";
+import {ProjectListItem} from "../data";
 import {CreateProjectParams} from "@/pages/project/service";
 
 const {Option} = Select;
