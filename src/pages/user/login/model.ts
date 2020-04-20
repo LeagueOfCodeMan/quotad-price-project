@@ -68,7 +68,7 @@ const Model: ModelType = {
       // Login successfully
       if (response.id > 0) {
         message.success('登录成功！');
-        yield put(routerRedux.replace('/dfdk/product/product-base'));
+        yield put(routerRedux.replace('/project'));
       }
     },
 

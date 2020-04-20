@@ -266,6 +266,8 @@ export function productType(genre: number) {
       return product.slice(0, 5);
     case 0:
       return product;
+    case -5:
+      return product.slice(0, 1);
     default:
       return _.head(product.filter(d => d.key === genre))?.label || '';
   }

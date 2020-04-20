@@ -9,6 +9,7 @@ import {ProductBaseListItem} from "../data";
 import {queryProduct} from "../service";
 import {useToggle} from "react-use";
 import {isNormalResponseBody, ProductType, productType} from "@/utils/utils";
+import {LabeledValue} from "antd/lib/select";
 
 const {Option, OptGroup} = Select;
 
@@ -35,6 +36,8 @@ const OperationModal: FC<OperationModalProps> = props => {
   const [previewImage, setPreviewImage] = useState('');
   const [result, setResult] = useState<ProductBaseListItem>();
   const [isShow, toggleShow] = useToggle(false);
+  const [selects, setSelects] = useState<number[]>([]);
+  const [selects2, setSelects2] = useState<number[]>([]);
 
   useEffect(() => {
     if (form && !visible) {
@@ -142,9 +145,21 @@ const OperationModal: FC<OperationModalProps> = props => {
     //  拦截生成FormData进行请求，请求完成回调返回结果并显示结果页
     const onFinish = (values: Store) => {
       const formData = new FormData();
-      Object.keys(values).map((item) => {
+      console.log(values);
+      const {avatar, belong, belong2, desc, leader_price, mark, pro_type, genre} = values;
+      const conf_list: { conf: number; is_required: boolean; }[] = [];
+      belong?.forEach((d: { value: number; }) => {
+        conf_list.push({conf: d?.value, is_required: true});
+      });
+      belong2?.forEach((d: { value: number; }) => {
+        conf_list.push({conf: d?.value, is_required: false});
+      });
+      const payload = {avatar, desc, leader_price, mark, pro_type, genre, conf_list}
+      Object.keys(_.pickBy(payload, d=>d)).map((item) => {
         if (item === 'avatar') {
-          formData.append(item, values?.[item]?.[0]?.originFileObj || current?.avatar);
+          if (values?.[item]?.[0]?.originFileObj) {
+            formData.append(item, values?.[item]?.[0]?.originFileObj || current?.avatar);
+          }
         } else {
           formData.append(item, values?.[item]);
         }
@@ -157,16 +172,52 @@ const OperationModal: FC<OperationModalProps> = props => {
     };
 
     const fetchProduct = _.debounce(async (index: number) => {
-      const response = await queryProduct({
-        genre: form.getFieldValue('genre' + index),
-        pageSize: 9999,
-      });
+      const payload = {pageSize: 9999,};
+      if (index === 6) {
+        payload['genre__iexact'] = 1;
+      } else {
+        payload['genre__lte'] = 5;
+        payload['genre__gte'] = 1;
+      }
+      const response = await queryProduct(payload);
       if (isNormalResponseBody(response)) {
-        if (index === 1) {
-          setData(response?.results || []);
-        }
+        setData(response?.results || []);
       }
     }, 800);
+
+    const handleChangeBelong = (value: any, index: number) => {
+      const belong = form.getFieldValue('belong');
+      const belong2 = form.getFieldValue('belong2');
+      if (index === 1) {
+        changeFieldWhenBelongChange(value, belong2, 'belong2');
+      } else {
+        changeFieldWhenBelongChange(value, belong, 'belong');
+      }
+    };
+
+    const changeFieldWhenBelongChange = (
+      field: { value: number; label: string; key: number; }[],
+      field2: { value: number; label: string; key: number; }[], update: string) => {
+      const updateVal = field2;
+      const notUpdateVal = field;
+      if (_.head(field) && _.head(field2)) {
+        _.remove(updateVal, (o) => {
+          return !!_.find(notUpdateVal, (oo) => oo?.value === o?.value);
+        });
+        console.log(field, field2, updateVal);
+        const finalBelong = _.map(_.filter(data, o => !!_.find(updateVal, (oo) => oo?.value === o?.id)), o => ({
+          value: o?.id,
+          label: o?.pro_type
+        }));
+
+        console.log(finalBelong);
+        if (update === 'belong') {
+          form.setFieldsValue({belong: finalBelong});
+        } else {
+          form.setFieldsValue({belong2: finalBelong});
+        }
+      }
+    }
 
     return (
       <Form form={form} {...formLayout} onFinish={onFinish}>
@@ -191,7 +242,7 @@ const OperationModal: FC<OperationModalProps> = props => {
             onChange={(value) => {
               if (value === 6 || value === 7 || value === 8) {
                 toggleShow(true);
-                fetchProduct(1)
+                fetchProduct(value)
               }
             }}
           >
@@ -204,22 +255,53 @@ const OperationModal: FC<OperationModalProps> = props => {
           isShow ?
             <>
               <Form.Item
-                name="id2"
-                label="归属(可多选)"
+                name="belong"
+                label="归属(绑定对象必选)"
                 rules={[{required: false, message: '请选择归属'}]}
                 hasFeedback
               >
                 <Select
                   mode="multiple"
-                  showSearch
-                  labelInValue
-                  placeholder="必选配置"
+                  placeholder="可多选"
                   notFoundContent="请先选择类别"
-                  filterOption={false}
                   style={{width: '100%'}}
+                  labelInValue
+                  onChange={(value) => handleChangeBelong(value, 1)}
                 >
                   {
-                    (productType(-1) as { label: string; key: number; }[])?.map(d => {
+                    (productType(form.getFieldValue('genre') === 6 ? -5 : -1) as { label: string; key: number; }[])?.map(d => {
+                      return (
+                        <OptGroup label={d?.label} key={d?.key}>
+                          {
+                            _.filter(data, o => o?.genre === d?.key)?.map(d2 => {
+                              return (
+                                <Option key={d2?.id} value={d2?.id}>{d2?.pro_type}</Option>
+                              )
+                            })
+                          }
+                        </OptGroup>
+                      )
+                    })
+                  })
+                  }
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="belong2"
+                label="归属(绑定对象可选)"
+                rules={[{required: false, message: '请选择归属'}]}
+                hasFeedback
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="可多选"
+                  notFoundContent="请先选择类别"
+                  style={{width: '100%'}}
+                  labelInValue
+                  onChange={(value) => handleChangeBelong(value, 2)}
+                >
+                  {
+                    (productType(form.getFieldValue('genre') === 6 ? -5 : -1) as { label: string; key: number; }[])?.map(d => {
                       return (
                         <OptGroup label={d?.label} key={d?.key}>
                           {
@@ -259,7 +341,9 @@ const OperationModal: FC<OperationModalProps> = props => {
             }
             <Form.Item
               name="avatar"
-              rules={[{required: false}, {validator: validateImage}]}
+              rules={[{required: false}
+                // , {validator: validateImage}
+              ]}
               valuePropName="fileList" getValueFromEvent={normFile} noStyle>
               <Upload.Dragger name="files" {...upLoadProp()}>
                 <p className="ant-upload-drag-icon">
@@ -273,7 +357,7 @@ const OperationModal: FC<OperationModalProps> = props => {
         <Form.Item
           name="mark"
           label="备注"
-          rules={[{required: true, message: '请输入至少五个字符的备注！', min: 5}]}
+          rules={[{required: false, message: '请输入至少五个字符的备注！', min: 5}]}
         >
           <TextArea rows={2} placeholder="请输入至少五个字符"/>
         </Form.Item>
