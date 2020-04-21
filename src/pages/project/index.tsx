@@ -24,8 +24,8 @@ import {CurrentUser, UserModelState} from "@/models/user";
 import {addIcontains, addKeyToEachArray, ResultType, ValidatePwdResult} from "@/utils/utils";
 import {testPassword} from "@/services/user";
 
-const { confirm } = Modal;
-const { Text } = Typography;
+const {confirm} = Modal;
+const {Text} = Typography;
 
 interface BasicListProps {
   project: ProjectStateType;
@@ -52,7 +52,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
         children2.push({
           title: (
             <span>
-              <b style={{ color: '#FF6A00' }}>{d?.project_name}</b>
+              <b style={{color: '#FF6A00'}}>{d?.project_name}</b>
             </span>
           ),
           value: 'project_name' + '-' + d?.project_name + d?.id,
@@ -66,7 +66,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
           project.push({
             title: (
               <span>
-                <b style={{ color: '#FF6A00' }}>{d2?.project_name}</b>
+                <b style={{color: '#FF6A00'}}>{d2?.project_name}</b>
               </span>
             ),
             value: 'project_name' + '-' + d2?.project_name + '-' + d2?.id,
@@ -75,7 +75,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
         children3.push({
           title: (
             <span>
-              <b style={{ color: '#FF6A00' }}>{d?.username}</b>
+              <b style={{color: '#FF6A00'}}>{d?.username}</b>
             </span>
           ),
           value: 'username' + '-' + d?.username,
@@ -90,7 +90,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
           project.push({
             title: (
               <span>
-                <b style={{ color: '#FF6A00' }}>{d2?.project_name}</b>
+                <b style={{color: '#FF6A00'}}>{d2?.project_name}</b>
               </span>
             ),
             value: 'project_name' + '-' + d2?.project_name + '-' + d2?.id,
@@ -99,7 +99,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
         children4.push({
           title: (
             <span>
-              <b style={{ color: '#FF6A00' }}>{d?.username}</b>
+              <b style={{color: '#FF6A00'}}>{d?.username}</b>
             </span>
           ),
           value: 'username' + '-' + d?.username,
@@ -135,7 +135,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       return {
         title: (
           <span>
-            组长：<b style={{ color: '#08c' }}>{v2?.username}</b>
+            组长：<b style={{color: '#08c'}}>{v2?.username}</b>
           </span>
         ),
         value: 'username' + '-' + v2?.username,
@@ -143,7 +143,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       };
     });
     return {
-      title: <b style={{ color: '#FF6A00' }}>{v?.area}</b>,
+      title: <b style={{color: '#FF6A00'}}>{v?.area}</b>,
       value: v?.area,
       disabled: true,
       children: child,
@@ -165,19 +165,19 @@ interface ListSearchParams {
 const ProjectList: FC<BasicListProps> = props => {
   const {
     dispatch,
-    project: { projectList },
+    project: {projectList},
     users,
     currentUser,
     addressList,
   } = props;
-  const { identity } = currentUser;
+  const {identity} = currentUser;
   const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState }>({
-    addr: { show: false },
-    email: { show: false },
-    ['data_joined']: { show: false },
-    ['last_login']: { show: false },
-    company: { show: false },
-    duty: { show: false },
+    addr: {show: false},
+    email: {show: false},
+    ['data_joined']: {show: false},
+    ['last_login']: {show: false},
+    company: {show: false},
+    duty: {show: false},
   });
   const actionRef = useRef<ActionType>();
   const [visible, setVisible] = useState<boolean>(false);
@@ -190,7 +190,7 @@ const ProjectList: FC<BasicListProps> = props => {
     pageSize: 3,
   });
 
-  const { results = [], count = 0 } = projectList;
+  const {results = [], count = 0} = projectList;
 
   useEffectOnce(() => {
     dispatch({
@@ -224,7 +224,7 @@ const ProjectList: FC<BasicListProps> = props => {
     pageSize: 3,
     total: count,
     onChange: (page: number, pageSize: number) => {
-      setListParams({ ...listParams, current: page, pageSize });
+      setListParams({...listParams, current: page, pageSize});
     },
   };
 
@@ -251,16 +251,16 @@ const ProjectList: FC<BasicListProps> = props => {
   };
 
   const validatePasswordSuccessToDo = () => {
-    const { id, pro_type, desc, mark } = current as ProjectListItem;
+    const {id, pro_type, desc, mark} = current as ProjectListItem;
     if (validateType === ValidateType.DELETE_CONFIG) {
       const hide = () => {
         message.loading('正在删除');
       };
       confirm({
         title: '删除产品',
-        icon: <ExclamationCircleOutlined />,
+        icon: <ExclamationCircleOutlined/>,
         content: (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{display: 'flex', flexDirection: 'column'}}>
             <span>
               产品名：<span>{pro_type}</span>
             </span>
@@ -276,11 +276,11 @@ const ProjectList: FC<BasicListProps> = props => {
         okType: 'danger',
         cancelText: '取消',
         onOk: async () => {
-          const result: ResultType | string = await deleteProduct({ id });
+          const result: ResultType | string = await deleteProduct({id});
           const success: boolean = new ValidatePwdResult(result).validate('删除成功', null, hide);
           // 刷新数据
           if (success) {
-            setListParams({ ...listParams, current: 1 });
+            setListParams({...listParams, current: 1});
             setCurrent({});
           }
         },
@@ -294,17 +294,17 @@ const ProjectList: FC<BasicListProps> = props => {
   // ================= 列表操作 ================
   const MoreBtn: React.FC<{
     item: ProjectListItem;
-  }> = ({ item }) => (
+  }> = ({item}) => (
     <Dropdown
       overlay={
-        <Menu onClick={({ key }) => editAndDelete(key, item)}>
+        <Menu onClick={({key}) => editAndDelete(key, item)}>
           <Menu.Item key="edit">编辑</Menu.Item>
           <Menu.Item key="delete">删除</Menu.Item>
         </Menu>
       }
     >
       <a>
-        更多 <DownOutlined />
+        更多 <DownOutlined/>
       </a>
     </Dropdown>
   );
@@ -312,11 +312,11 @@ const ProjectList: FC<BasicListProps> = props => {
   const action = () => {
     const buttons = [];
     const treeButton = (
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{display: 'flex', justifyContent: 'space-between'}}>
         <TreeSelect
           showSearch
-          style={{ width: 150, marginRight: '25px' }}
-          dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
+          style={{width: 150, marginRight: '25px'}}
+          dropdownStyle={{maxHeight: 400, overflow: 'auto'}}
           placeholder="请选择用户或项目"
           allowClear
           treeData={treeData()}
@@ -338,7 +338,7 @@ const ProjectList: FC<BasicListProps> = props => {
       buttons.push(treeButton);
     }
     const add = (
-      <Button icon={<PlusOutlined />} type="primary" onClick={showModal}>
+      <Button icon={<PlusOutlined/>} type="primary" onClick={showModal}>
         新建
       </Button>
     );
@@ -355,7 +355,7 @@ const ProjectList: FC<BasicListProps> = props => {
     [key: string]: any;
   }): Promise<RequestData<ProjectListItem>> => {
     const searchParamsType = addIcontains(params);
-    const result = await queryProject({ ...searchParamsType });
+    const result = await queryProject({...searchParamsType});
     return Promise.resolve({
       data: result?.results || [],
       success: true,
@@ -368,9 +368,9 @@ const ProjectList: FC<BasicListProps> = props => {
       title: '状态',
       dataIndex: 'pro_status',
       valueEnum: {
-        1: { text: '未下单' },
-        2: { text: '已下单' },
-        3: { text: '已完成' },
+        1: {text: '未下单'},
+        2: {text: '已下单'},
+        3: {text: '已完成'},
       },
     },
     {
@@ -384,6 +384,8 @@ const ProjectList: FC<BasicListProps> = props => {
     {
       title: '项目描述',
       dataIndex: 'project_desc',
+      ellipsis: true,
+      width: 10,
     },
     {
       title: '项目采购总价',
@@ -391,45 +393,26 @@ const ProjectList: FC<BasicListProps> = props => {
       hideInSearch: true,
       render: (text, record) => {
         const {
-          leader_total_price,
           leader_total_quota,
-          member_total_price,
-          member_total_quota,
-          second_total_price,
-          second_total_quota,
+          sell_total_quota
         } = record;
         return (
           <div>
             {identity === 1 || identity === 2 ? (
               <>
-                <Text style={{ color: '#1890FF' }}>组长：</Text>
-                <Text style={{ color: '#FF6A00' }}>
-                  ¥ {leader_total_price || leader_total_quota}
+                <Text style={{color: '#1890FF'}}>组长：</Text>
+                <Text style={{color: '#FF6A00'}}>
+                  ¥ {leader_total_quota}
                 </Text>
-                <Divider type="vertical" />
+                <Divider type="vertical"/>
               </>
             ) : null}
-            {identity === 2 || identity === 3 ? (
-              <>
-                <Text style={{ color: '#61C37A' }}>{identity === 2 ? '一级组员：' : ''}</Text>
-                <Text style={{ color: '#FF6A00' }}>
-                  {member_total_price || member_total_quota
-                    ? '¥ ' + (member_total_price || member_total_quota)
-                    : '尚未定价'}
-                </Text>
-                <Divider type="vertical" />
-              </>
-            ) : null}
-            {identity === 2 || identity === 4 ? (
-              <>
-                <Text style={{ color: '#61C37A' }}>{identity === 2 ? '二级组员：' : ''}</Text>
-                <Text style={{ color: '#FF6A00' }}>
-                  {second_total_price || second_total_quota
-                    ? '¥ ' + (second_total_price || second_total_quota)
-                    : '尚未定价'}
-                </Text>
-              </>
-            ) : null}
+            <>
+              <Text style={{color: '#61C37A'}}>{identity === 2 ? '采购人价格：' : ''}</Text>
+              <Text style={{color: '#FF6A00'}}>
+                {sell_total_quota}
+              </Text>
+            </>
           </div>
         );
       },
@@ -452,7 +435,7 @@ const ProjectList: FC<BasicListProps> = props => {
               e.preventDefault();
               dispatch({
                 type: 'user/saveProjectListItem',
-                payload: { project: record },
+                payload: {project: record},
               });
               router.push('/project/detail');
             }}
@@ -471,7 +454,7 @@ const ProjectList: FC<BasicListProps> = props => {
               >
                 下单
               </a>,
-              <MoreBtn key="more" item={record} />,
+              <MoreBtn key="more" item={record}/>,
             ]);
         }
         return template;
@@ -483,7 +466,7 @@ const ProjectList: FC<BasicListProps> = props => {
     <div>
       <div className={styles.standardList}>
         <ProTable<ProjectListItem>
-          options={{ reload: true, fullScreen: true, setting: true, density: false }}
+          options={{reload: true, fullScreen: true, setting: true, density: false}}
           size="small"
           actionRef={actionRef}
           rowKey={record => record.id}
@@ -494,7 +477,7 @@ const ProjectList: FC<BasicListProps> = props => {
           columns={columns}
           columnsStateMap={columnsStateMap}
           onColumnsStateChange={map => setColumnsStateMap(map)}
-          pagination={{ pageSize: 5, showQuickJumper: true }}
+          pagination={{pageSize: 5, showQuickJumper: true}}
         />
       </div>
       <ValidatePassword
@@ -531,7 +514,7 @@ const ProjectList: FC<BasicListProps> = props => {
       <EditProject
         onSubmit={async value => {
           console.log(value);
-          const response = await modifyProject({ id: current?.id as number, data: value });
+          const response = await modifyProject({id: current?.id as number, data: value});
           const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
           if (success) {
             setEditVisible(false);
@@ -550,10 +533,10 @@ const ProjectList: FC<BasicListProps> = props => {
 
 export default connect(
   ({
-    project,
-    loading,
-    user,
-  }: {
+     project,
+     loading,
+     user,
+   }: {
     project: ProjectStateType;
     loading: {
       models: { [key: string]: boolean };
