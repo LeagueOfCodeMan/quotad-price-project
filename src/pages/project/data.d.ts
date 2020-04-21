@@ -3,25 +3,21 @@ import {ProductBaseListItem} from "@/pages/product/data";
 export interface ProjectListItem {
   id: number;
   username: string;
+
+  user_name:string; // 用户单位
+  user_addr:string;
+  user_iphone:string;
+  user_contact:string;
+
   create_time: string;
   project_name: string;
-  project_company: string;
-  project_addr: {
-    id: number;
-    recipients: string;
-    addr: string;
-    tel: string;
-    [propName: string]: any;
-  }
-  delivery_time: string;
+  project_desc: string;
   // 采购价格
   leader_total_quota: string | null;
-  second_total_quota: string | null;
-  member_total_quota: string | null;
+  sell_total_quota: string | null;
   // 报价
   leader_total_price: string | null;
-  second_total_price: string | null;
-  member_total_price: string | null;
+  sell_total_price: string | null;
   pro_status: 1 | 2 | 3; // 1未下单，2已下单，3已完成
 
   [propName: string]: any;

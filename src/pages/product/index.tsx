@@ -24,7 +24,7 @@ import styles from './style.less';
 import {
   addProduct,
   deleteProduct,
-  modifyProductSecondPrice,
+  modifyProductSecondPrice, queryProductList,
   queryUsersByProduct,
   updateProduct
 } from "./service";
@@ -169,8 +169,11 @@ export const Product: FC<BasicListProps> = props => {
     setCurrent({});
   };
 
-  const showEditModal = (item: ProductBaseListItem) => {
-    setCurrent(item);
+  const showEditModal = async (item: ProductBaseListItem) => {
+    const response = await queryProductList({id: item?.id});
+    if (Array.isArray(response)) {
+      setCurrent({...item, conf_list: response});
+    }
     setVisible(true);
   };
 
@@ -422,6 +425,7 @@ export const Product: FC<BasicListProps> = props => {
           setValidateVisible(false);
         }}
       />
+
       <OperationModal
         done={done}
         current={current}

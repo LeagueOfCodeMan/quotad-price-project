@@ -353,7 +353,7 @@ const ProjectList: FC<BasicListProps> = props => {
     pageSize?: number;
     current?: number;
     [key: string]: any;
-  }): Promise<RequestData<UserListItem>> => {
+  }): Promise<RequestData<ProjectListItem>> => {
     const searchParamsType = addIcontains(params);
     const result = await queryProject({ ...searchParamsType });
     return Promise.resolve({
@@ -365,16 +365,25 @@ const ProjectList: FC<BasicListProps> = props => {
 
   const columns: ProColumns<ProjectListItem>[] = [
     {
+      title: '状态',
+      dataIndex: 'pro_status',
+      valueEnum: {
+        1: { text: '未下单' },
+        2: { text: '已下单' },
+        3: { text: '已完成' },
+      },
+    },
+    {
       title: '项目名称',
       dataIndex: 'project_name',
     },
     {
-      title: '公司名称',
-      dataIndex: 'project_company',
-    },
-    {
       title: '所属用户',
       dataIndex: 'username',
+    },
+    {
+      title: '项目描述',
+      dataIndex: 'project_desc',
     },
     {
       title: '项目采购总价',
@@ -430,20 +439,6 @@ const ProjectList: FC<BasicListProps> = props => {
       dataIndex: 'create_time',
       valueType: 'dateTime',
       hideInSearch: true,
-    },
-    {
-      title: '交货时间',
-      dataIndex: 'delivery_time',
-      hideInSearch: true,
-    },
-    {
-      title: '状态',
-      dataIndex: 'pro_status',
-      valueEnum: {
-        1: { text: '未下单' },
-        2: { text: '已下单' },
-        3: { text: '已完成' },
-      },
     },
     {
       title: '操作',

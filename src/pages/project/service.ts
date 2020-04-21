@@ -15,7 +15,7 @@ interface ProjectDetailParams extends Partial<ProductBaseListItem> {
 
 export interface CreateProjectParams {
   project_name: string;
-  project_company: string;
+  project_desc: string;
   product_list?: ProductList;
   user_name?: string;
   user_iphone?: string;

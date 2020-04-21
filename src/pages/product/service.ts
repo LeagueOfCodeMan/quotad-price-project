@@ -42,8 +42,10 @@ export async function modifyProductMemberPrice(params: { id: number, data: Param
   });
 }
 
-export async function modifyProductSecondPrice(params: { id: number,
-  data: { second_price: string | number, user_list?: number[]; } }) {
+export async function modifyProductSecondPrice(params: {
+  id: number,
+  data: { second_price: string | number, user_list?: number[]; }
+}) {
   return request('/api/product/' + params.id + '/mod_second_price', {
     method: 'POST',
     data: params.data,
@@ -83,4 +85,9 @@ export async function deleteStandardProduct(params?: { id: number }) {
 export async function queryUsersByProduct(params: { id: number }) {
   return request('/api/product/' + params.id + '/second_user_list'
   );
+}
+
+// 获取配件、服务所属
+export async function queryProductList(params: ParamsType) {
+  return request('/api/product/' + params.id + '/get_product_list');
 }

@@ -1,6 +1,6 @@
 import React, {FC, useEffect, useState} from 'react';
 import {Store} from 'rc-field-form/lib/interface';
-import {Button, Divider, Form, Input, InputNumber, Modal, Result, Select, Tooltip, Upload} from 'antd';
+import {Button, Form, Input, InputNumber, Modal, Result, Select, Tooltip, Upload} from 'antd';
 import styles from '../style.less';
 import {EyeOutlined, InboxOutlined} from "@ant-design/icons/lib";
 import {UploadListType} from "antd/lib/upload/interface";
@@ -9,7 +9,6 @@ import {ProductBaseListItem} from "../data";
 import {queryProduct} from "../service";
 import {useToggle} from "react-use";
 import {isNormalResponseBody, ProductType, productType} from "@/utils/utils";
-import {LabeledValue} from "antd/lib/select";
 
 const {Option, OptGroup} = Select;
 
@@ -36,8 +35,6 @@ const OperationModal: FC<OperationModalProps> = props => {
   const [previewImage, setPreviewImage] = useState('');
   const [result, setResult] = useState<ProductBaseListItem>();
   const [isShow, toggleShow] = useToggle(false);
-  const [selects, setSelects] = useState<number[]>([]);
-  const [selects2, setSelects2] = useState<number[]>([]);
 
   useEffect(() => {
     if (form && !visible) {
@@ -47,10 +44,36 @@ const OperationModal: FC<OperationModalProps> = props => {
 
   useEffect(() => {
     if (current) {
+      console.log(current);
+      const {conf_list, genre} = current;
+      const belong: { label: string; value: number; }[] = [];
+      const belong2: { label: string; value: number; }[] = [];
+      if (genre === 6 || genre === 7 || genre === 8) {
+        fetchProduct(genre);
+        toggleShow(true);
+        if (_.head(conf_list)) {
+          conf_list?.forEach(d => {
+            if (d?.is_required) {
+              belong.push({
+                value: d?.id,
+                label: d?.pro_type
+              });
+            } else {
+              belong2.push({
+                value: d?.id,
+                label: d?.pro_type
+              });
+            }
+          })
+        }
+      } else {
+        toggleShow(false);
+      }
+
       setPreviewImage(current?.avatar || '')
       setTimeout(() => {
         form.setFieldsValue({
-          ..._.omit(current, ['avatar'])
+          ..._.omit(current, ['avatar']), belong, belong2
         });
       }, 0);
     }
@@ -65,6 +88,21 @@ const OperationModal: FC<OperationModalProps> = props => {
     ? {footer: null, onCancel: onDone}
     : {okText: '保存', onOk: handleSubmit, onCancel};
 
+  // todo 获取产品列表
+  const fetchProduct = _.debounce(async (index: number) => {
+    const payload = {pageSize: 9999,};
+    if (index === 6) {
+      payload['genre__iexact'] = 1;
+    } else {
+      payload['genre__lte'] = 5;
+      payload['genre__gte'] = 1;
+    }
+    const response = await queryProduct(payload);
+    if (isNormalResponseBody(response)) {
+      setData(response?.results || []);
+    }
+  }, 800);
+
   const getModalContent = () => {
     if (done) {
       return (
@@ -77,7 +115,14 @@ const OperationModal: FC<OperationModalProps> = props => {
               <div>
                 <span>产品名：{result?.pro_type}</span>
                 <span>备注：{result?.mark}</span>
-                <span>描述：{result?.desc}</span>
+                <span>描述：</span>
+                <ul style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
+                  {result?.desc?.split("\n")?.map((o, i) => {
+                    return (
+                      <li key={i}>{o}<br/></li>
+                    )
+                  })}
+                </ul>
                 <span>组长价格：{result?.leader_price}</span>
               </div>
             </div>
@@ -126,26 +171,25 @@ const OperationModal: FC<OperationModalProps> = props => {
       showUploadList: false,
     });
 
-    const validateImage = (rule: any, value: { type: string; size: number; }[]): Promise<any> => {
-      if (current?.avatar) {
-        return Promise.resolve();
-      }
-      const file = value?.[0] || {};
-      const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
-      if (!isJpgOrPng) {
-        return Promise.reject('仅支持上传 JPG/PNG 文件!');
-      }
-      const isLt2M = file.size / 1024 / 1024 < 2;
-      if (!isLt2M) {
-        return Promise.reject('文件不能大于 2MB!');
-      }
-      return Promise.resolve();
-    }
+    // const validateImage = (rule: any, value: { type: string; size: number; }[]): Promise<any> => {
+    //   if (current?.avatar) {
+    //     return Promise.resolve();
+    //   }
+    //   const file = value?.[0] || {};
+    //   const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+    //   if (!isJpgOrPng) {
+    //     return Promise.reject('仅支持上传 JPG/PNG 文件!');
+    //   }
+    //   const isLt2M = file.size / 1024 / 1024 < 2;
+    //   if (!isLt2M) {
+    //     return Promise.reject('文件不能大于 2MB!');
+    //   }
+    //   return Promise.resolve();
+    // }
 
     //  拦截生成FormData进行请求，请求完成回调返回结果并显示结果页
     const onFinish = (values: Store) => {
       const formData = new FormData();
-      console.log(values);
       const {avatar, belong, belong2, desc, leader_price, mark, pro_type, genre} = values;
       const conf_list: { conf: number; is_required: boolean; }[] = [];
       belong?.forEach((d: { value: number; }) => {
@@ -155,35 +199,27 @@ const OperationModal: FC<OperationModalProps> = props => {
         conf_list.push({conf: d?.value, is_required: false});
       });
       const payload = {avatar, desc, leader_price, mark, pro_type, genre, conf_list}
-      Object.keys(_.pickBy(payload, d=>d)).map((item) => {
+      Object.keys(_.pickBy(payload, d => !_.isUndefined(d))).map((item) => {
         if (item === 'avatar') {
-          if (values?.[item]?.[0]?.originFileObj) {
-            formData.append(item, values?.[item]?.[0]?.originFileObj || current?.avatar);
+          if (payload?.[item]?.[0]?.originFileObj) {
+            formData.append(item, payload?.[item]?.[0]?.originFileObj || current?.avatar);
           }
-        } else {
-          formData.append(item, values?.[item]);
+        } else if (item === 'conf_list') {
+          console.log(payload?.[item], 111);
+          formData.append(`conf_list`, JSON.stringify(payload?.[item]));
+
+        }
+        else {
+          formData.append(item, payload?.[item]);
         }
       });
       if (onSubmit) {
+        toggleShow(false);
         onSubmit(formData as any, (response: ProductBaseListItem) => {
           setResult(response);
         });
       }
     };
-
-    const fetchProduct = _.debounce(async (index: number) => {
-      const payload = {pageSize: 9999,};
-      if (index === 6) {
-        payload['genre__iexact'] = 1;
-      } else {
-        payload['genre__lte'] = 5;
-        payload['genre__gte'] = 1;
-      }
-      const response = await queryProduct(payload);
-      if (isNormalResponseBody(response)) {
-        setData(response?.results || []);
-      }
-    }, 800);
 
     const handleChangeBelong = (value: any, index: number) => {
       const belong = form.getFieldValue('belong');
@@ -204,7 +240,6 @@ const OperationModal: FC<OperationModalProps> = props => {
         _.remove(updateVal, (o) => {
           return !!_.find(notUpdateVal, (oo) => oo?.value === o?.value);
         });
-        console.log(field, field2, updateVal);
         const finalBelong = _.map(_.filter(data, o => !!_.find(updateVal, (oo) => oo?.value === o?.id)), o => ({
           value: o?.id,
           label: o?.pro_type
@@ -243,6 +278,8 @@ const OperationModal: FC<OperationModalProps> = props => {
               if (value === 6 || value === 7 || value === 8) {
                 toggleShow(true);
                 fetchProduct(value)
+              } else {
+                toggleShow(false);
               }
             }}
           >

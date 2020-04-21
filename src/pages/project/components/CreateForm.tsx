@@ -33,7 +33,7 @@ export interface FormValueType {
   count?: number;
   conf_par?: { id: number; count: number; }[];
   project_name?: string;
-  project_company?: string;
+  project_desc?: string;
   user_name?: string;
   user_iphone?: string;
   user_contact?: string;
@@ -63,7 +63,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
   const [data, setData] = useState<ProductBaseListItem[]>([]);
   const [dataSource, setDataSource] = useState<ProductBaseListItem[]>([]);
   const [current, setCurrent] = useState<ProductBaseListItem>();
-  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [currentStep, setCurrentStep] = useState<number>(0);
   const [totalPrice, setPrice] = useState<string>("0.00");
 
   const [form] = Form.useForm();
@@ -114,33 +114,40 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
       }
       forward();
     } else {
-      const {project_name, project_company, user_name, user_addr, user_iphone, user_contact} = formVals;
+      const {project_name, project_desc, user_name, user_addr, user_iphone, user_contact} = formVals;
       const product_list = _.map(dataSource, o => {
         return (
           {production: o?.id, count: o?.count, conf_par: o?.conf_par}
         )
       });
       const payload = {
-        project_name, project_company, product_list
+        project_name, project_desc, product_list
         , user_name, user_addr, user_iphone, user_contact
       };
       handleUpdate(payload as CreateProjectParams);
     }
   };
 
-  const fetchProduct = _.debounce(async () => {
-    const response = await queryProduct({
-      genre: form.getFieldValue('genre'),
-      pageSize: 9999,
-    });
+  const fetchProduct = _.debounce(async (index: any) => {
+    const payload = {pageSize: 9999,};
+    if (index === 1) {
+      payload['genre__lte'] = 2;
+      payload['genre__gte'] = 1;
+    } else {
+      payload['genre__lte'] = 5;
+      payload['genre__gte'] = 3;
+    }
+    const response = await queryProduct(payload);
     if (isNormalResponseBody(response)) {
       setData(response?.results || []);
     }
   }, 800);
 
-  const handleChange = (value: number) => {
+  const handleChange = (value: any) => {
+    const checkedCurrent = _.head(_.filter(data, o => o?.id === value?.value));
+    console.log(value, data, checkedCurrent);
     calculate();
-    setCurrent(_.head(_.filter(data, o => o?.id === value)));
+    setCurrent(checkedCurrent);
   };
 
   /**
@@ -286,7 +293,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
   };
 
   const renderContent = () => {
-    const {project_name, project_company, user_name, user_addr, user_iphone, user_contact} = formVals;
+    const {project_name, project_desc, user_name, user_addr, user_iphone, user_contact} = formVals;
     if (currentStep === 1) {
       return (
         <>
@@ -299,8 +306,8 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
               >
                 <Select
                   placeholder="产品类别"
-                  onChange={() => {
-                    fetchProduct();
+                  onChange={(val) => {
+                    fetchProduct(val);
                   }}
                   style={{width: '120px'}}
                 >
@@ -361,7 +368,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
               </Form.Item>
             </Col>
           </Row>
-          {form.getFieldValue('production') ?
+          {_.head(current?.conf_list) ?
             <>
               <Alert message="服务与配件" type="info" closable style={{marginBottom: '10px'}}/>
               <div className={styles.standardWrapper}>
@@ -452,12 +459,16 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
         <>
           <Alert message="项目信息" type="info" closable style={{marginBottom: '10px'}}/>
           <div className={styles.listContentWrapper}>
-            <Descriptions column={4}>
-              <Descriptions.Item label="项目名称">
+            <Descriptions column={4} layout="vertical">
+              <Descriptions.Item label="项目名称" span={2}>
                 <Text style={{color: '#181818'}}>{project_name}</Text>
               </Descriptions.Item>
-              <Descriptions.Item label="项目描述">
-                <Text style={{color: '#181818'}}>{project_company}</Text>
+              <Descriptions.Item label="项目描述" span={2}>
+                {project_desc?.split("\n")?.map((o, i) => {
+                  return (
+                    <div key={i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+                  )
+                })}
               </Descriptions.Item>
               <Descriptions.Item label="用户信息" span={4}>
                 用户名称： <Text style={{color: '#181818'}}>{user_name}</Text>
@@ -465,8 +476,8 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
                 地址：<Text style={{color: '#181818'}}>{user_addr}</Text>
                 <br/>
                 电话：<Text style={{color: '#181818'}}>{user_iphone}</Text>
-                <br/>
-                电话：<Text style={{color: '#181818'}}>{user_contact}</Text>
+                <Divider type="vertical"/>
+                联系人：<Text style={{color: '#181818'}}>{user_contact}</Text>
               </Descriptions.Item>
             </Descriptions>
           </div>
