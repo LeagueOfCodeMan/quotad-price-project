@@ -25,22 +25,13 @@ export interface CreateProjectParams {
 
 export type ProductList = {
   production: number; count: number;
-  conf_par: { id: number; count: number; }
+  conf_par: { id: number; count: number; }[]
 }[];
 
 export async function queryProject(params: ParamsType) {
   return request('/api/project', {
     params,
   });
-}
-
-export async function queryProjectOneDetail(params: {
-  id: number; params: ProjectDetailParams
-}) {
-  return request('/api/project/' + params.id, {
-      params: params?.params,
-    }
-  );
 }
 
 export async function createProject(params: CreateProjectParams) {
@@ -50,7 +41,7 @@ export async function createProject(params: CreateProjectParams) {
   });
 }
 
-export async function modifyProductList(params: { id: number; data: { product_list: ProductList; product_type: number; } }) {
+export async function modifyProductList(params: { id: number; data: { product_list: ProductList; } }) {
   return request('/api/project/' + params.id + '/mod_porduct_list', {
     method: 'POST',
     data: params.data,
@@ -60,6 +51,6 @@ export async function modifyProductList(params: { id: number; data: { product_li
 export async function modifyProject(params: { id: number; data: CreateProjectParams }) {
   return request('/api/project/' + params.id, {
     method: 'PUT',
-    data: params,
+    data: params.data,
   });
 }

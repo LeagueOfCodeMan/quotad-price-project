@@ -16,7 +16,6 @@ import {
   Typography
 } from 'antd';
 import {v4 as uuidv4} from 'uuid';
-import {AddressInfo} from '../../usermanager/settings/data';
 import _ from 'lodash';
 import {queryProduct} from '../../product/service';
 import {ProductBaseListItem} from '../../product/data';
@@ -44,7 +43,6 @@ export interface UpdateFormProps {
   onCancel: (flag?: boolean, formVals?: FormValueType) => void;
   onSubmit: (values: CreateProjectParams) => void;
   updateModalVisible: boolean;
-  addressList: AddressInfo;
   currentUser: CurrentUser;
 }
 
@@ -76,6 +74,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
   } = props;
 
   useEffect(() => {
+    console.log(current)
     if (current && formRef) {
       setTimeout(() => {
         const conf_par: { id: number; count: number; }[] = [];
@@ -145,7 +144,6 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
 
   const handleChange = (value: any) => {
     const checkedCurrent = _.head(_.filter(data, o => o?.id === value?.value));
-    console.log(value, data, checkedCurrent);
     calculate();
     setCurrent(checkedCurrent);
   };

@@ -4,10 +4,10 @@ export interface ProjectListItem {
   id: number;
   username: string;
 
-  user_name:string; // 用户单位
-  user_addr:string;
-  user_iphone:string;
-  user_contact:string;
+  user_name: string; // 用户单位
+  user_addr: string;
+  user_iphone: string;
+  user_contact: string;
 
   create_time: string;
   project_name: string;
@@ -18,7 +18,9 @@ export interface ProjectListItem {
   // 报价
   leader_total_price: string | null;
   sell_total_price: string | null;
-  pro_status: 1 | 2 | 3; // 1未下单，2已下单，3已完成
+  // 1进行中，2已下单，3终止，4审核中，5交付中，6 已完成
+  pro_status: 1 | 2 | 3 | 4 | 5 | 6;
+  product_list: ProjectProductionInfoItem[];
 
   [propName: string]: any;
 }
@@ -29,18 +31,18 @@ export interface ProjectListInfo {
 }
 
 export type ProjectProductionInfoItem = {
-  id:number;
+  id: number;
   create_time: string;
   production: ProductBaseListItem;
   count: number;
   leader_quota?: string;
-  member_quota?: string;
-  second_quota?: string;
+  sell_quota?: string;
   leader_price?: string;
-  member_price?: string;
-  second_price?: string;
+  sell_price?: string;
   user: number;
+  uuid?:string;
   conf_par: ProductBaseListItem[];
+  conf_list?: ProductBaseListItem[];
 };
 
 export type ProjectProductionInfo = ProjectProductionInfoItem[];

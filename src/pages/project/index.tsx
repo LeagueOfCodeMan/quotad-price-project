@@ -1,6 +1,6 @@
 import React, {FC, useEffect, useRef, useState} from 'react';
 import {DownOutlined} from '@ant-design/icons';
-import {Button, Divider, Dropdown, Menu, message, Modal, TreeSelect, Typography,} from 'antd';
+import {Button, Divider, Descriptions, Dropdown, Menu, message, Modal, Tooltip, TreeSelect, Typography,} from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import {ProjectStateType} from './model';
@@ -15,14 +15,17 @@ import {useEffectOnce} from 'react-use';
 import {AddressInfo} from '../usermanager/settings/data';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
-import {CurrentChildren, CurrentChildrenResults, UserListItem} from "@/models/data";
+import {CurrentChildren, CurrentChildrenResults} from "@/models/data";
 import {ProjectListItem} from "@/pages/project/data";
-import {createProject, modifyProject, queryProject} from "@/pages/project/service";
+import {createProject, modifyProductList, modifyProject, queryProject} from "@/pages/project/service";
 import CreateForm from "@/pages/project/components/CreateForm";
 import EditProject from "@/pages/project/components/EditProject";
 import {CurrentUser, UserModelState} from "@/models/user";
-import {addIcontains, addKeyToEachArray, ResultType, ValidatePwdResult} from "@/utils/utils";
+import {actPrice, addIcontains, addKeyToEachArray, productType, ResultType, ValidatePwdResult} from "@/utils/utils";
 import {testPassword} from "@/services/user";
+import ScrollList from "@/components/ScrollList";
+import EditProductList from "@/pages/project/components/EditProductList";
+import CreateOrder from "@/pages/project/components/CreateOrder";
 
 const {confirm} = Modal;
 const {Text} = Typography;
@@ -181,7 +184,9 @@ const ProjectList: FC<BasicListProps> = props => {
   });
   const actionRef = useRef<ActionType>();
   const [visible, setVisible] = useState<boolean>(false);
+  const [orderVisible, setOrderVisible] = useState<boolean>(false);
   const [editVisible, setEditVisible] = useState<boolean>(false);
+  const [editVisible2, setEditVisible2] = useState<boolean>(false);
   const [current, setCurrent] = useState<NotRequired<ProjectListItem>>({});
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>('');
@@ -226,16 +231,6 @@ const ProjectList: FC<BasicListProps> = props => {
     onChange: (page: number, pageSize: number) => {
       setListParams({...listParams, current: page, pageSize});
     },
-  };
-
-  const editAndDelete = (key: string, currentItem: ProjectListItem) => {
-    setCurrent(currentItem);
-    if (key === 'delete') {
-      setValidateType(ValidateType.DELETE_CONFIG);
-      setValidateVisible(true);
-    } else if (key === 'edit') {
-      setEditVisible(true);
-    }
   };
 
   const treeData = () => {
@@ -292,22 +287,6 @@ const ProjectList: FC<BasicListProps> = props => {
   };
 
   // ================= 列表操作 ================
-  const MoreBtn: React.FC<{
-    item: ProjectListItem;
-  }> = ({item}) => (
-    <Dropdown
-      overlay={
-        <Menu onClick={({key}) => editAndDelete(key, item)}>
-          <Menu.Item key="edit">编辑</Menu.Item>
-          <Menu.Item key="delete">删除</Menu.Item>
-        </Menu>
-      }
-    >
-      <a>
-        更多 <DownOutlined/>
-      </a>
-    </Dropdown>
-  );
 
   const action = () => {
     const buttons = [];
@@ -367,28 +346,107 @@ const ProjectList: FC<BasicListProps> = props => {
     {
       title: '状态',
       dataIndex: 'pro_status',
+      width: 100,
       valueEnum: {
-        1: {text: '未下单'},
-        2: {text: '已下单'},
-        3: {text: '已完成'},
+        1: {text: '进行中', status: 'Processing'},
+        2: {text: '已下单', status: 'Warning'},
+        3: {text: '终止', status: 'Error'},
+        4: {text: '审核中', status: 'Processing'},
+        5: {text: '交付中', status: 'Processing'},
+        6: {text: '已完成', status: 'Success'},
       },
     },
     {
       title: '项目名称',
       dataIndex: 'project_name',
+      width: 100,
+      ellipsis: true,
     },
     {
-      title: '所属用户',
+      title: '用户',
       dataIndex: 'username',
+      render: (text, record) => {
+        const {user_name, user_addr, user_iphone, user_contact} = record;
+        return (
+          <div>
+            <Tooltip
+              placement="top"
+              title={
+                <div className={styles.listContentWrapper}>
+                  <Descriptions column={4} layout="vertical">
+                    <Descriptions.Item label={<span style={{color: '#FFFFFF'}}>用户详细信息：</span>} span={4}>
+                      <span style={{color: '#FFFFFF'}}>用户名称： </span><Text style={{color: '#FFFFFF'}}>{user_name}</Text>
+                      <br/>
+                      <span style={{color: '#FFFFFF'}}>地址：</span><Text style={{color: '#FFFFFF'}}>{user_addr}</Text>
+                      <br/>
+                      <span style={{color: '#FFFFFF'}}>电话：</span><Text style={{color: '#FFFFFF'}}>{user_iphone}</Text>
+                      <br/>
+                      <span style={{color: '#FFFFFF'}}>联系人：</span><Text style={{color: '#FFFFFF'}}>{user_contact}</Text>
+                    </Descriptions.Item>
+                  </Descriptions>
+                </div>
+              }>
+              <span>{text}...</span>
+            </Tooltip>
+          </div>
+        )
+      }
     },
     {
       title: '项目描述',
       dataIndex: 'project_desc',
       ellipsis: true,
-      width: 10,
+      width: 100,
     },
     {
-      title: '项目采购总价',
+      title: '销售产品',
+      dataIndex: 'production',
+      hideInSearch: true,
+      render: (text, record) => {
+        const {product_list} = record;
+        return (
+          <div>
+            <ScrollList title="产品详情">
+              {product_list?.map(item => {
+                return (
+                  <div key={item?.id}>
+                    <div>
+                      <span>{productType(item?.production?.genre)}：</span>
+                      <span>{item?.production?.pro_type}</span>
+                    </div>
+                    <div style={{margin: '2px 2px 2px 20px', width: '100%'}}>
+                      {item?.conf_par?.map(d => {
+                        return (
+                          <div key={d?.id}>
+                            {productType(d?.genre)}：
+                            <span>{d?.pro_type}</span>
+                            <br/>
+                            <span style={{color: '#FF6A00'}}>{d?.sell_price ? `价格：¥${d?.sell_price}` : '尚未定价'}</span>
+                            <Divider type="vertical"/>
+                            <span>数量：{d?.count}</span>
+                          </div>
+                        )
+                      })
+                      }
+                    </div>
+                    <div>
+                      产品数量：{item?.count}
+                      <Divider type="vertical"/>
+                      <span style={{color: '#FF6A00'}}>
+                        {item?.sell_quota ? `产品总价：¥${item?.sell_quota}` : '尚未定价'}
+                        </span>
+                    </div>
+                    <Divider type="horizontal"/>
+                  </div>
+                )
+              })}
+            </ScrollList>
+          </div>
+        );
+      },
+    },
+    {
+      title: '销售总价',
       dataIndex: 'price',
       hideInSearch: true,
       render: (text, record) => {
@@ -428,39 +486,78 @@ const ProjectList: FC<BasicListProps> = props => {
       dataIndex: 'option',
       valueType: 'option',
       render: (_, record) => {
-        const template = [
+        const template: JSX.Element[] = [];
+        const edit = (
           <a
-            key="detail"
+            key="edit"
             onClick={e => {
               e.preventDefault();
-              dispatch({
-                type: 'user/saveProjectListItem',
-                payload: {project: record},
-              });
-              router.push('/project/detail');
+              setCurrent(record);
+              setEditVisible(true);
             }}
           >
-            产品详情
-          </a>,
-        ];
+            编辑基础
+          </a>
+        );
+        const edit2 = (
+          <a
+            key="edit2"
+            onClick={e => {
+              e.preventDefault();
+              setCurrent(record);
+              setEditVisible2(true);
+            }}
+          >
+            编辑产品清单
+          </a>
+        );
+        const remove = (<a
+          key="remove"
+          onClick={e => {
+            e.preventDefault();
+            setValidateType(ValidateType.DELETE_CONFIG);
+            setValidateVisible(true);
+          }}
+        >
+          撤销
+        </a>);
+
         switch (currentUser?.identity) {
           case 2:
-            return template.concat([
-              <a
-                key="order"
-                onClick={e => {
-                  e.preventDefault();
-                }}
-              >
-                下单
-              </a>,
-              <MoreBtn key="more" item={record}/>,
-            ]);
+            template.push(<a
+              key="order"
+              onClick={e => {
+                e.preventDefault();
+                setCurrent(record);
+                setOrderVisible(true);
+              }}
+            >
+              下单
+            </a>);
+            if (record?.username === currentUser?.username) {
+              template.push(edit, edit2, remove)
+            }
+            return addDividerToActions(template);
+          case 3:
+          case 4:
+            if (record?.username === currentUser?.username) {
+              template.push(edit, edit2, remove)
+            }
+            return addDividerToActions(template);
         }
         return template;
       },
     },
   ];
+
+  const addDividerToActions = (template: JSX.Element[]) => {
+    return template?.map((item, index) => {
+      if (index === template?.length - 1) {
+        return (<>{item}</>);
+      }
+      return (<>{item}<Divider type="vertical"/></>);
+    });
+  };
 
   return (
     <div>
@@ -474,6 +571,9 @@ const ProjectList: FC<BasicListProps> = props => {
             return action();
           }}
           request={request}
+          search={{
+            collapsed: false,
+          }}
           columns={columns}
           columnsStateMap={columnsStateMap}
           onColumnsStateChange={map => setColumnsStateMap(map)}
@@ -501,13 +601,36 @@ const ProjectList: FC<BasicListProps> = props => {
             const success = new ValidatePwdResult(response).validate('创建成功', null, undefined);
             if (success) {
               setVisible(false);
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
             }
           }}
           onCancel={() => {
             setVisible(false);
           }}
           updateModalVisible={visible}
-          addressList={addressList}
+          currentUser={currentUser}
+        />
+      ) : null}
+      {orderVisible ? (
+        <CreateOrder
+          onSubmit={async value => {
+            console.log(value);
+            // const response = await createProject(value);
+            // const success = new ValidatePwdResult(response).validate('创建成功', null, undefined);
+            // if (success) {
+            //   setOrderVisible(false);
+            // }
+            if (actionRef.current) {
+              actionRef.current.reload();
+            }
+          }}
+          onCancel={() => {
+            setOrderVisible(false);
+          }}
+          updateModalVisible={orderVisible}
+          current={current}
           currentUser={currentUser}
         />
       ) : null}
@@ -518,15 +641,37 @@ const ProjectList: FC<BasicListProps> = props => {
           const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
           if (success) {
             setEditVisible(false);
+            if (actionRef.current) {
+              actionRef.current.reload();
+            }
           }
         }}
         onCancel={() => {
           setEditVisible(false);
         }}
         updateModalVisible={editVisible}
-        addressList={addressList}
         current={current}
       />
+      {editVisible2 ? (
+        <EditProductList
+          onSubmit={async value => {
+            const response = await modifyProductList({id: current?.id as number, data: {product_list: value}});
+            const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
+            if (success) {
+              setEditVisible2(false);
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
+            setEditVisible2(false);
+          }}
+          updateModalVisible={editVisible2}
+          current={current}
+          currentUser={currentUser}
+        />
+      ) : null}
     </div>
   );
 };
