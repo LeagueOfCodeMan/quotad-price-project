@@ -135,6 +135,13 @@ export default {
           authority: needUserAuthority,
           routes: [
             {
+              path: '/order',
+              icon: 'smile',
+              name: 'order',
+              component: './order',
+              authority: needManagerAuthority,
+            },
+            {
               path: '/project',
               icon: 'smile',
               name: 'project',

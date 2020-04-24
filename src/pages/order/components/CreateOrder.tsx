@@ -26,7 +26,6 @@ import {CurrentUser} from "@/models/user";
 import {actPrice, isNormalResponseBody, productType} from "@/utils/utils";
 import {ProjectListItem} from "@/pages/project/data";
 import {useToggle} from "react-use";
-import {MinusCircleOutlined, PlusOutlined} from "@ant-design/icons/lib";
 
 
 export interface FormValueType {
@@ -46,7 +45,6 @@ export interface FormValueType {
   contract_addr?: string;
   contract_contact?: string;
   contract_phone?: string;
-  other_list?: { pro_type: string; price: string; count: number; }[];
 }
 
 export interface UpdateFormProps {
@@ -71,7 +69,6 @@ export interface CreateOrderParams {
   contract_contact: string;
   contract_phone: string;
   product_list: ProductList;
-  other_list: { pro_type: string; price: string; count: number; }[];
 }
 
 const {Step} = Steps;
@@ -121,7 +118,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
       const data = current2?.product_list?.map(item => {
         return (
           {
-            ...item, price: getPriceBasedIdentity(item?.production), ...item?.production, uuid: uuidv4(),
+            ...item, price:getPriceBasedIdentity(item?.production), ...item?.production, uuid: uuidv4(),
             conf_par: _.map(item?.conf_par, d => ({...d, price: getPriceBasedIdentity(d), uuid: uuidv4(),}))
           }
         )
@@ -186,7 +183,6 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
         bill_id, bill_addr, bill_phone, bill_bank, bill_account,
         contract_addr, contract_contact, contract_phone,
       } = fieldsValue;
-      const {other_list} = formVals;
       const product_list = _.map(dataSource, o => {
         return (
           {production: o?.id, count: o?.count, conf_par: _.map(o?.conf_par, d => ({id: d?.id, count: d?.count}))}
@@ -195,7 +191,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
       const payload = {
         company, addr, contact, phone,
         bill_id, bill_addr, bill_phone, bill_bank, bill_account,
-        contract_addr, contract_contact, contract_phone, product_list, other_list
+        contract_addr, contract_contact, contract_phone, product_list
       };
       handleUpdate(payload as CreateOrderParams);
     }
@@ -560,84 +556,6 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
             }}
 
           />
-          <Alert
-            message="附加产品"
-            type="info"
-          />
-          <Form.List name="other_list">
-            {(fields, {add, remove}) => {
-              /**
-               * `fields` internal fill with `name`, `key`, `fieldKey` props.
-               * You can extends this into sub field to support multiple dynamic fields.
-               */
-              return (
-                <div>
-                  {fields.map((field, index) => (
-                    <Row key={field.key}>
-                      <Col span={9}>
-                        <Form.Item
-                          label="产品名"
-                          name={[field.name, "pro_type"]}
-                          // @ts-ignore
-                          fieldKey={[field.fieldKey, "pro_type"]}
-                          rules={[{required: true, message: '产品名'}]}
-                        >
-                          <Input placeholder="产品名" style={{width: 100}}/>
-                        </Form.Item>
-                      </Col>
-                      <Col span={7}>
-                        <Form.Item
-                          label="单价"
-                          name={[field.name, "price"]}
-                          // @ts-ignore
-                          fieldKey={[field.fieldKey, "price"]}
-                          rules={[{required: true, message: '单价'}]}
-                        >
-                          <InputNumber
-                            formatter={value => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            parser={value => (value as string).replace(/¥\s?|(,*)/g, '')}
-                            min={0}
-                            style={{width: 100}}
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col span={7}>
-                        <Form.Item
-                          label="数量"
-                          style={{marginRight: '10px'}}
-                          name={[field.name, "count"]}
-                          // @ts-ignore
-                          fieldKey={[field.fieldKey, "count"]}
-                          rules={[{required: true, message: '数量'}]}
-                        >
-                          <InputNumber placeholder="数量" style={{width: 100}}/>
-                        </Form.Item>
-                      </Col>
-                      <Col flex="none" span={1}>
-                        <MinusCircleOutlined
-                          className="dynamic-delete-button"
-                          onClick={() => {
-                            remove(field.name);
-                          }}
-                        />
-                      </Col>
-                    </Row>
-                  ))}
-                  <Form.Item>
-                    <Button
-                      type="dashed"
-                      onClick={() => {
-                        add();
-                      }}
-                      style={{width: "560px"}}
-                    >
-                      <PlusOutlined/> 添加其他产品
-                    </Button>
-                  </Form.Item>
-                </div>
-              );
-            }}
-          </Form.List>
         </>
       );
     }

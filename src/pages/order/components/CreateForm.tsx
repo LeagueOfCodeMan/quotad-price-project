@@ -531,7 +531,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
           >
             <Input placeholder="项目名称" style={{width: 270}}/>
           </Form.Item>
-          <Form.Item label="项目描述" name="project_desc" rules={[{required: true, message: '项目描述'}]}>
+          <Form.Item label="项目描述" name="project_desc" rules={[{required: false, message: '项目描述'}]}>
             <TextArea rows={2} placeholder="请输入至少五个字符" style={{width: 270}}/>
           </Form.Item>
         </div>
@@ -540,7 +540,6 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
           <Form.Item
             label="用户名称"
             name="user_name"
-            rules={[{required: true, message: '用户名称'}]}
           >
             <Input placeholder="用户名称" style={{width: 270}}/>
           </Form.Item>

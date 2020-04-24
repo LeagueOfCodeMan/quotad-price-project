@@ -8,28 +8,23 @@ import styles from './style.less';
 import ValidatePassword from '../../components/ValidatePassword/index';
 import {ExclamationCircleOutlined, PlusOutlined,} from '@ant-design/icons/lib';
 import _ from 'lodash';
+import {deleteProduct} from '../product/service';
 import {useEffectOnce} from 'react-use';
 import {AddressInfo} from '../usermanager/settings/data';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
 import {CurrentChildren, CurrentChildrenResults} from "@/models/data";
 import {ProjectListItem} from "@/pages/project/data";
-import {
-  createOrder,
-  createProject,
-  modifyProductList,
-  modifyProject,
-  queryProject,
-  terminateProject
-} from "@/pages/project/service";
+import {createOrder, createProject, modifyProductList, modifyProject, queryProject} from "@/pages/project/service";
 import CreateForm from "@/pages/project/components/CreateForm";
 import EditProject from "@/pages/project/components/EditProject";
 import {CurrentUser, UserModelState} from "@/models/user";
-import {addIcontains, addKeyToEachArray, productType, projectType, ResultType, ValidatePwdResult} from "@/utils/utils";
+import {addIcontains, addKeyToEachArray, productType, ResultType, ValidatePwdResult} from "@/utils/utils";
 import {testPassword} from "@/services/user";
 import ScrollList from "@/components/ScrollList";
 import EditProductList from "@/pages/project/components/EditProductList";
 import CreateOrder from "@/pages/project/components/CreateOrder";
+import {OrderListItem} from "@/pages/order/data";
 
 const {confirm} = Modal;
 const {Text} = Typography;
@@ -169,7 +164,7 @@ interface ListSearchParams {
   [propName: string]: any;
 }
 
-const ProjectList: FC<BasicListProps> = props => {
+const OrderList: FC<BasicListProps> = props => {
   const {
     dispatch,
     users,
@@ -237,29 +232,24 @@ const ProjectList: FC<BasicListProps> = props => {
   };
 
   const validatePasswordSuccessToDo = () => {
-    const {id, project_name, project_desc, pro_status} = current as ProjectListItem;
+    const {id, pro_type, desc, mark} = current as ProjectListItem;
     if (validateType === ValidateType.DELETE_CONFIG) {
       const hide = () => {
-        message.loading('正在终止');
+        message.loading('正在删除');
       };
       confirm({
-        title: '终止项目',
+        title: '删除产品',
         icon: <ExclamationCircleOutlined/>,
         content: (
           <div style={{display: 'flex', flexDirection: 'column'}}>
             <span>
-              项目名称：<span>{project_name}</span>
+              产品名：<span>{pro_type}</span>
             </span>
             <span>
-              项目状态：<span>{projectType(pro_status)}</span>
+              备注：<span>{mark}</span>
             </span>
             <span>
-              项目描述：
-              {project_desc?.split("\n")?.map((o, i) => {
-                return (
-                  <div key={i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
-                )
-              })}
+              描述：<span>{desc}</span>
             </span>
           </div>
         ),
@@ -267,8 +257,8 @@ const ProjectList: FC<BasicListProps> = props => {
         okType: 'danger',
         cancelText: '取消',
         onOk: async () => {
-          const result: ResultType | string = await terminateProject({id});
-          const success: boolean = new ValidatePwdResult(result).validate('终止成功', null, hide);
+          const result: ResultType | string = await deleteProduct({id});
+          const success: boolean = new ValidatePwdResult(result).validate('删除成功', null, hide);
           // 刷新数据
           if (success) {
             setListParams({...listParams, current: 1});
@@ -338,108 +328,34 @@ const ProjectList: FC<BasicListProps> = props => {
     });
   };
 
-  const columns: ProColumns<ProjectListItem>[] = [
+  const columns: ProColumns<OrderListItem>[] = [
     {
       title: '状态',
-      dataIndex: 'pro_status',
+      dataIndex: 'order_status',
       width: 100,
       valueEnum: {
         1: {text: '进行中', status: 'Processing'},
-        2: {text: '已下单', status: 'Warning'},
-        3: {text: '已终止', status: 'Error'},
-        4: {text: '审核中', status: 'Processing'},
-        5: {text: '交付中', status: 'Processing'},
-        6: {text: '已完成', status: 'Success'},
+        2: {text: '已终止', status: 'Warning'},
+        3: {text: '已完成', status: 'Error'},
       },
     },
     {
-      title: '项目名称',
-      dataIndex: 'project_name',
-      width: 100,
-      ellipsis: true,
-    },
-    {
-      title: '用户',
+      title: '地区',
       dataIndex: 'username',
-      render: (text, record) => {
-        const {user_name, user_addr, user_iphone, user_contact} = record;
-        return (
-          <div>
-            <Tooltip
-              placement="top"
-              title={
-                <div className={styles.listContentWrapper}>
-                  <Descriptions column={4} layout="vertical">
-                    <Descriptions.Item label={<span style={{color: '#FFFFFF'}}>用户详细信息：</span>} span={4}>
-                      <span style={{color: '#FFFFFF'}}>用户名称： </span><Text style={{color: '#FFFFFF'}}>{user_name}</Text>
-                      <br/>
-                      <span style={{color: '#FFFFFF'}}>地址：</span><Text style={{color: '#FFFFFF'}}>{user_addr}</Text>
-                      <br/>
-                      <span style={{color: '#FFFFFF'}}>电话：</span><Text style={{color: '#FFFFFF'}}>{user_iphone}</Text>
-                      <br/>
-                      <span style={{color: '#FFFFFF'}}>联系人：</span><Text style={{color: '#FFFFFF'}}>{user_contact}</Text>
-                    </Descriptions.Item>
-                  </Descriptions>
-                </div>
-              }>
-              <span>{text}...</span>
-            </Tooltip>
-          </div>
-        )
-      }
-    },
-    {
-      title: '项目描述',
-      dataIndex: 'project_desc',
-      ellipsis: true,
       width: 100,
+      ellipsis: true,
     },
     {
-      title: '销售产品',
-      dataIndex: 'production',
-      hideInSearch: true,
-      render: (text, record) => {
-        const {product_list} = record;
-        return (
-          <div>
-            <ScrollList title="产品详情">
-              {product_list?.map(item => {
-                return (
-                  <div key={item?.id}>
-                    <div>
-                      <span>{productType(item?.production?.genre)}：</span>
-                      <span>{item?.production?.pro_type}</span>
-                    </div>
-                    <div style={{margin: '2px 2px 2px 20px', width: '100%'}}>
-                      {item?.conf_par?.map(d => {
-                        return (
-                          <div key={d?.id}>
-                            {productType(d?.genre)}：
-                            <span>{d?.pro_type}</span>
-                            <br/>
-                            <span style={{color: '#FF6A00'}}>{d?.sell_price ? `价格：¥${d?.sell_price}` : '尚未定价'}</span>
-                            <Divider type="vertical"/>
-                            <span>数量：{d?.count}</span>
-                          </div>
-                        )
-                      })
-                      }
-                    </div>
-                    <div>
-                      产品数量：{item?.count}
-                      <Divider type="vertical"/>
-                      <span style={{color: '#FF6A00'}}>
-                        {item?.sell_quota ? `产品总价：¥${item?.sell_quota}` : '尚未定价'}
-                        </span>
-                    </div>
-                    <Divider type="horizontal"/>
-                  </div>
-                )
-              })}
-            </ScrollList>
-          </div>
-        );
-      },
+      title: '组长',
+      dataIndex: 'username',
+      width: 100,
+      ellipsis: true,
+    },
+    {
+      title: '组长单位',
+      dataIndex: 'leader_company',
+      width: 100,
+      ellipsis: true,
     },
     {
       title: '销售总价',
@@ -472,7 +388,7 @@ const ProjectList: FC<BasicListProps> = props => {
       },
     },
     {
-      title: '创建时间',
+      title: '订单创建时间',
       dataIndex: 'create_time',
       valueType: 'dateTime',
       hideInSearch: true,
@@ -482,12 +398,7 @@ const ProjectList: FC<BasicListProps> = props => {
       dataIndex: 'option',
       valueType: 'option',
       render: (_, record) => {
-        console.log(record);
-        const {pro_status} = record;
         const template: JSX.Element[] = [];
-        if (pro_status !== 1) {
-          return template;
-        }
         const edit = (
           <a
             key="edit"
@@ -516,29 +427,25 @@ const ProjectList: FC<BasicListProps> = props => {
           key="remove"
           onClick={e => {
             e.preventDefault();
-            setCurrent(record);
             setValidateType(ValidateType.DELETE_CONFIG);
             setValidateVisible(true);
           }}
         >
-          终止
+          撤销
         </a>);
-        const place = (
-          <a
-            key="order"
-            onClick={e => {
-              e.preventDefault();
-              setCurrent(record);
-              setOrderVisible(true);
-            }}
-          >
-            下单
-          </a>
-        );
 
         switch (currentUser?.identity) {
           case 2:
-            template.push(place);
+            template.push(<a
+              key="order"
+              onClick={e => {
+                e.preventDefault();
+                setCurrent(record);
+                setOrderVisible(true);
+              }}
+            >
+              下单
+            </a>);
             if (record?.username === currentUser?.username) {
               template.push(edit, edit2, remove)
             }
@@ -641,7 +548,6 @@ const ProjectList: FC<BasicListProps> = props => {
       ) : null}
       <EditProject
         onSubmit={async value => {
-          console.log(value);
           const response = await modifyProject({id: current?.id as number, data: value});
           const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
           if (success) {
@@ -703,4 +609,4 @@ export default connect(
     fetch: loading.effects['project/fetch'],
     queryProjectOneDetail: loading.effects['user/queryProjectOneDetail'],
   }),
-)(ProjectList);
+)(OrderList);

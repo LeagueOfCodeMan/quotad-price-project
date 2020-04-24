@@ -334,4 +334,24 @@ export const currentPrice = (item: ProductBaseListItem, identity: CurrentUser['i
     price = '¥ ' + item?.second_price;
   }
   return price;
-}
+};
+
+export const projectType = (pro_status:number) => {
+  switch (pro_status) {
+    case 1:
+      return '进行中';
+    case 2:
+      return '已下单';
+    case 3:
+      return '已终止';
+    case 4:
+      return '审核中';
+    case 5:
+      return '交付中';
+    case 6:
+      return '已完成';
+    default:
+      return '未知状态';
+  }
+};
+

@@ -29,7 +29,7 @@ export default {
   },
   net: {
     '/api/': {
-      target: 'http://192.168.1.245:9099/',
+      target: 'http://192.168.1.188:9099/',
       changeOrigin: true,
       pathRewrite: { '^': '' },
     },

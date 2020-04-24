@@ -57,6 +57,7 @@ export default {
 
 
   'menu.product': '产品管理',
+  'menu.order': '订单管理',
 
   'menu.project': '项目管理',
 
