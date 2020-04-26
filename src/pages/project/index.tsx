@@ -1,4 +1,4 @@
-import React, {FC, useEffect, useRef, useState} from 'react';
+import React, {FC, useRef, useState} from 'react';
 import {Button, Descriptions, Divider, message, Modal, Tooltip, TreeSelect, Typography,} from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
@@ -9,7 +9,6 @@ import ValidatePassword from '../../components/ValidatePassword/index';
 import {ExclamationCircleOutlined, PlusOutlined,} from '@ant-design/icons/lib';
 import _ from 'lodash';
 import {useEffectOnce} from 'react-use';
-import {AddressInfo} from '../usermanager/settings/data';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
 import {CurrentChildren, CurrentChildrenResults} from "@/models/data";
@@ -25,7 +24,7 @@ import {
 import CreateForm from "@/pages/project/components/CreateForm";
 import EditProject from "@/pages/project/components/EditProject";
 import {CurrentUser, UserModelState} from "@/models/user";
-import {addIcontains, addKeyToEachArray, productType, projectType, ResultType, ValidatePwdResult} from "@/utils/utils";
+import {addKeyToEachArray, productType, projectType, ResultType, ValidatePwdResult} from "@/utils/utils";
 import {testPassword} from "@/services/user";
 import ScrollList from "@/components/ScrollList";
 import EditProductList from "@/pages/project/components/EditProductList";
@@ -41,7 +40,6 @@ interface BasicListProps {
   queryProjectOneDetail: boolean;
   currentUser: CurrentUser;
   users: NotRequired<CurrentChildren>;
-  addressList: AddressInfo;
 }
 
 enum ValidateType {
@@ -62,7 +60,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
               <b style={{color: '#FF6A00'}}>{d?.project_name}</b>
             </span>
           ),
-          value: 'project_name' + '-' + d?.project_name + d?.id,
+          value: 'project_name' + '-' + d?.project_name + '-' + d?.id,
         });
       });
       // 一级组员
@@ -165,6 +163,7 @@ interface ListSearchParams {
   pro_status?: 1 | 2 | 3;
   search?: string;
   username?: string;
+  project_name?: string;
 
   [propName: string]: any;
 }
@@ -176,14 +175,7 @@ const ProjectList: FC<BasicListProps> = props => {
     currentUser,
   } = props;
   const {identity} = currentUser;
-  const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState }>({
-    addr: {show: false},
-    email: {show: false},
-    ['data_joined']: {show: false},
-    ['last_login']: {show: false},
-    company: {show: false},
-    duty: {show: false},
-  });
+  const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState }>({});
   const actionRef = useRef<ActionType>();
   const [visible, setVisible] = useState<boolean>(false);
   const [orderVisible, setOrderVisible] = useState<boolean>(false);
@@ -192,32 +184,13 @@ const ProjectList: FC<BasicListProps> = props => {
   const [current, setCurrent] = useState<NotRequired<ProjectListItem>>({});
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>('');
-  const [listParams, setListParams] = useState<ListSearchParams>({
-    current: 1,
-    pageSize: 3,
-  });
+  const [listParams, setListParams] = useState<ListSearchParams>({});
 
   useEffectOnce(() => {
     dispatch({
       type: 'user/queryCurrentUsers',
     });
-    dispatch({
-      type: 'user/fetchAddress',
-    });
   });
-
-  useEffect(() => {
-    reloadList();
-  }, [listParams]);
-
-  const reloadList = () => {
-    dispatch({
-      type: 'project/fetch',
-      payload: {
-        ...listParams,
-      },
-    });
-  };
 
   const showModal = () => {
     setVisible(true);
@@ -271,8 +244,10 @@ const ProjectList: FC<BasicListProps> = props => {
           const success: boolean = new ValidatePwdResult(result).validate('终止成功', null, hide);
           // 刷新数据
           if (success) {
-            setListParams({...listParams, current: 1});
             setCurrent({});
+            if (actionRef.current) {
+              actionRef.current.reload();
+            }
           }
         },
         onCancel() {
@@ -329,8 +304,8 @@ const ProjectList: FC<BasicListProps> = props => {
     current?: number;
     [key: string]: any;
   }): Promise<RequestData<ProjectListItem>> => {
-    const searchParamsType = addIcontains(params);
-    const result = await queryProject({...searchParamsType});
+    console.log(params, 111);
+    const result = await queryProject({...params});
     return Promise.resolve({
       data: result?.results || [],
       success: true,
@@ -345,11 +320,10 @@ const ProjectList: FC<BasicListProps> = props => {
       width: 100,
       valueEnum: {
         1: {text: '进行中', status: 'Processing'},
-        2: {text: '已下单', status: 'Warning'},
-        3: {text: '已终止', status: 'Error'},
-        4: {text: '审核中', status: 'Processing'},
-        5: {text: '交付中', status: 'Processing'},
-        6: {text: '已完成', status: 'Success'},
+        2: {text: '已终止', status: 'Error'},
+        3: {text: '审核中', status: 'Warning'},
+        4: {text: '交付中', status: 'Processing'},
+        5: {text: '已完成', status: 'Success'},
       },
     },
     {
@@ -357,10 +331,12 @@ const ProjectList: FC<BasicListProps> = props => {
       dataIndex: 'project_name',
       width: 100,
       ellipsis: true,
+      hideInSearch: true,
     },
     {
       title: '用户',
       dataIndex: 'username',
+      hideInSearch: true,
       render: (text, record) => {
         const {user_name, user_addr, user_iphone, user_contact} = record;
         return (
@@ -405,7 +381,7 @@ const ProjectList: FC<BasicListProps> = props => {
             <ScrollList title="产品详情">
               {product_list?.map(item => {
                 return (
-                  <div key={item?.id}>
+                  <div key={item?.id + '-' + text}>
                     <div>
                       <span>{productType(item?.production?.genre)}：</span>
                       <span>{item?.production?.pro_type}</span>
@@ -477,12 +453,14 @@ const ProjectList: FC<BasicListProps> = props => {
       valueType: 'dateTime',
       hideInSearch: true,
     },
+  ];
+
+  const operation: ProColumns<ProjectListItem>[] = [
     {
       title: '操作',
       dataIndex: 'option',
       valueType: 'option',
       render: (_, record) => {
-        console.log(record);
         const {pro_status} = record;
         const template: JSX.Element[] = [];
         if (pro_status !== 1) {
@@ -555,6 +533,8 @@ const ProjectList: FC<BasicListProps> = props => {
     },
   ];
 
+
+
   const addDividerToActions = (template: JSX.Element[]) => {
     return template?.map((item, index) => {
       if (index === template?.length - 1) {
@@ -579,7 +559,8 @@ const ProjectList: FC<BasicListProps> = props => {
           search={{
             collapsed: false,
           }}
-          columns={columns}
+          params={{...listParams}}
+          columns={identity === 1 ? columns : columns.concat(operation)}
           columnsStateMap={columnsStateMap}
           onColumnsStateChange={map => setColumnsStateMap(map)}
           pagination={{pageSize: 5, showQuickJumper: true}}
@@ -699,7 +680,6 @@ export default connect(
     project,
     currentUser: user.currentUser,
     users: user.users,
-    addressList: user.addressList,
     fetch: loading.effects['project/fetch'],
     queryProjectOneDetail: loading.effects['user/queryProjectOneDetail'],
   }),

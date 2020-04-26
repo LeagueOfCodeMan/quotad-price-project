@@ -1,5 +1,5 @@
-import React, {FC, useEffect, useRef, useState} from 'react';
-import {Button, Descriptions, Divider, message, Modal, Tooltip, TreeSelect, Typography,} from 'antd';
+import React, {FC, useRef, useState} from 'react';
+import {Button, Divider, message, Modal, Tooltip, TreeSelect, Typography,} from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import {ProjectStateType} from './model';
@@ -10,21 +10,21 @@ import {ExclamationCircleOutlined, PlusOutlined,} from '@ant-design/icons/lib';
 import _ from 'lodash';
 import {deleteProduct} from '../product/service';
 import {useEffectOnce} from 'react-use';
-import {AddressInfo} from '../usermanager/settings/data';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
 import {CurrentChildren, CurrentChildrenResults} from "@/models/data";
 import {ProjectListItem} from "@/pages/project/data";
-import {createOrder, createProject, modifyProductList, modifyProject, queryProject} from "@/pages/project/service";
+import {createOrder, createProject, modifyProductList, modifyProject} from "@/pages/project/service";
 import CreateForm from "@/pages/project/components/CreateForm";
 import EditProject from "@/pages/project/components/EditProject";
 import {CurrentUser, UserModelState} from "@/models/user";
-import {addIcontains, addKeyToEachArray, productType, ResultType, ValidatePwdResult} from "@/utils/utils";
+import {addKeyToEachArray, ResultType, ValidatePwdResult} from "@/utils/utils";
 import {testPassword} from "@/services/user";
-import ScrollList from "@/components/ScrollList";
 import EditProductList from "@/pages/project/components/EditProductList";
 import CreateOrder from "@/pages/project/components/CreateOrder";
 import {OrderListItem} from "@/pages/order/data";
+import {queryOrder} from "@/pages/order/service";
+import {PaneDetail, TabsList, TabsList} from "@/pages/order/components/TabsList";
 
 const {confirm} = Modal;
 const {Text} = Typography;
@@ -36,11 +36,13 @@ interface BasicListProps {
   queryProjectOneDetail: boolean;
   currentUser: CurrentUser;
   users: NotRequired<CurrentChildren>;
-  addressList: AddressInfo;
 }
 
 enum ValidateType {
-  DELETE_CONFIG = 'DELETE_CONFIG',
+  CONFIRM = 'CONFIRM',
+  REFUSE = 'REFUSE',
+  TERMINATION = 'TERMINATION',
+  COMPLETE = 'COMPLETE',
 }
 
 type TreeDataItem = { title: JSX.Element; value: string; children?: TreeDataItem }[];
@@ -157,9 +159,9 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
 interface ListSearchParams {
   current?: number;
   pageSize?: number;
-  pro_status?: 1 | 2 | 3;
   search?: string;
   username?: string;
+  project_name?: string;
 
   [propName: string]: any;
 }
@@ -171,48 +173,23 @@ const OrderList: FC<BasicListProps> = props => {
     currentUser,
   } = props;
   const {identity} = currentUser;
-  const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState }>({
-    addr: {show: false},
-    email: {show: false},
-    ['data_joined']: {show: false},
-    ['last_login']: {show: false},
-    company: {show: false},
-    duty: {show: false},
-  });
+  const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState }>({});
   const actionRef = useRef<ActionType>();
   const [visible, setVisible] = useState<boolean>(false);
   const [orderVisible, setOrderVisible] = useState<boolean>(false);
   const [editVisible, setEditVisible] = useState<boolean>(false);
   const [editVisible2, setEditVisible2] = useState<boolean>(false);
   const [current, setCurrent] = useState<NotRequired<ProjectListItem>>({});
+  const [details, setDetails] = useState<OrderListItem[]>([]);
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>('');
-  const [listParams, setListParams] = useState<ListSearchParams>({
-    current: 1,
-    pageSize: 3,
-  });
+  const [listParams, setListParams] = useState<ListSearchParams>({});
 
   useEffectOnce(() => {
     dispatch({
       type: 'user/queryCurrentUsers',
     });
-    dispatch({
-      type: 'user/fetchAddress',
-    });
   });
-
-  useEffect(() => {
-    reloadList();
-  }, [listParams]);
-
-  const reloadList = () => {
-    dispatch({
-      type: 'project/fetch',
-      payload: {
-        ...listParams,
-      },
-    });
-  };
 
   const showModal = () => {
     setVisible(true);
@@ -233,7 +210,7 @@ const OrderList: FC<BasicListProps> = props => {
 
   const validatePasswordSuccessToDo = () => {
     const {id, pro_type, desc, mark} = current as ProjectListItem;
-    if (validateType === ValidateType.DELETE_CONFIG) {
+    if (validateType === ValidateType.REFUSE) {
       const hide = () => {
         message.loading('正在删除');
       };
@@ -318,9 +295,8 @@ const OrderList: FC<BasicListProps> = props => {
     pageSize?: number;
     current?: number;
     [key: string]: any;
-  }): Promise<RequestData<ProjectListItem>> => {
-    const searchParamsType = addIcontains(params);
-    const result = await queryProject({...searchParamsType});
+  }): Promise<RequestData<OrderListItem>> => {
+    const result = await queryOrder({...params});
     return Promise.resolve({
       data: result?.results || [],
       success: true,
@@ -328,139 +304,304 @@ const OrderList: FC<BasicListProps> = props => {
     });
   };
 
-  const columns: ProColumns<OrderListItem>[] = [
-    {
-      title: '状态',
-      dataIndex: 'order_status',
-      width: 100,
-      valueEnum: {
-        1: {text: '进行中', status: 'Processing'},
-        2: {text: '已终止', status: 'Warning'},
-        3: {text: '已完成', status: 'Error'},
+  const columnsGenerate = () => {
+    const template: ProColumns<OrderListItem>[] = [];
+    const columns: ProColumns<OrderListItem>[] = [
+      {
+        title: '状态',
+        dataIndex: 'order_status',
+        width: 100,
+        valueEnum: {
+          1: {text: '进行中', status: 'Processing'},
+          2: {text: '已终止', status: 'Warning'},
+          3: {text: '已完成', status: 'Error'},
+        },
       },
-    },
-    {
-      title: '地区',
-      dataIndex: 'username',
-      width: 100,
-      ellipsis: true,
-    },
-    {
-      title: '组长',
-      dataIndex: 'username',
-      width: 100,
-      ellipsis: true,
-    },
-    {
-      title: '组长单位',
-      dataIndex: 'leader_company',
-      width: 100,
-      ellipsis: true,
-    },
-    {
-      title: '销售总价',
-      dataIndex: 'price',
-      hideInSearch: true,
-      render: (text, record) => {
-        const {
-          leader_total_quota,
-          sell_total_quota
-        } = record;
-        return (
-          <div>
-            {identity === 1 || identity === 2 ? (
-              <>
-                <Text style={{color: '#1890FF'}}>组长：</Text>
-                <Text style={{color: '#FF6A00'}}>
-                  ¥ {leader_total_quota}
-                </Text>
-                <Divider type="vertical"/>
-              </>
-            ) : null}
-            <>
-              <Text style={{color: '#61C37A'}}>{identity === 2 ? '采购人价格：' : ''}</Text>
-              <Text style={{color: '#FF6A00'}}>
-                {sell_total_quota}
-              </Text>
-            </>
-          </div>
-        );
+    ]
+    const managerMessage: ProColumns<OrderListItem>[] = [
+      {
+        title: '地区',
+        dataIndex: 'area',
+        width: 100,
+        ellipsis: true,
       },
-    },
-    {
-      title: '订单创建时间',
-      dataIndex: 'create_time',
-      valueType: 'dateTime',
-      hideInSearch: true,
-    },
-    {
-      title: '操作',
-      dataIndex: 'option',
-      valueType: 'option',
-      render: (_, record) => {
-        const template: JSX.Element[] = [];
-        const edit = (
-          <a
-            key="edit"
-            onClick={e => {
-              e.preventDefault();
-              setCurrent(record);
-              setEditVisible(true);
-            }}
-          >
-            编辑基础
-          </a>
-        );
-        const edit2 = (
-          <a
-            key="edit2"
-            onClick={e => {
-              e.preventDefault();
-              setCurrent(record);
-              setEditVisible2(true);
-            }}
-          >
-            编辑产品清单
-          </a>
-        );
-        const remove = (<a
-          key="remove"
-          onClick={e => {
-            e.preventDefault();
-            setValidateType(ValidateType.DELETE_CONFIG);
-            setValidateVisible(true);
-          }}
-        >
-          撤销
-        </a>);
+      {
+        title: '组长',
+        dataIndex: 'order_user',
+        width: 100,
+        ellipsis: true,
+        hideInSearch: true,
+      },
+      {
+        title: '组长单位',
+        dataIndex: 'leader_company',
+        width: 100,
+        ellipsis: true,
+      },
+    ]
+    const commonMessage: ProColumns<OrderListItem>[] = [
+      {
+        title: '项目信息',
+        dataIndex: 'create_user',
+        hideInSearch: true,
+        render: (text, record) => {
+          return (
+            <div>
+              <Tooltip title={
+                record?.project_desc?.split("\n")?.map((o, i) => {
+                  return (
+                    <div key={i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+                  )
+                })
+              }>
+                <div>
+                  <div>
+                    <Text>项目创建人：</Text>
+                    <Text style={{color: '#1890FF'}}>
+                      {text}
+                    </Text>
+                  </div>
+                  <div>
+                    <Text>项目名称：</Text>
+                    <Text style={{color: '#1890FF'}}>
+                      {record?.project_name}
+                    </Text>
+                  </div>
+                  <Button type="link" onClick={() => {
+                    setDetails([...details, record])
+                  }}>
+                    更多详情
+                  </Button>
+                </div>
+              </Tooltip>
 
-        switch (currentUser?.identity) {
-          case 2:
-            template.push(<a
-              key="order"
-              onClick={e => {
-                e.preventDefault();
-                setCurrent(record);
-                setOrderVisible(true);
-              }}
-            >
-              下单
-            </a>);
-            if (record?.username === currentUser?.username) {
-              template.push(edit, edit2, remove)
-            }
-            return addDividerToActions(template);
-          case 3:
-          case 4:
-            if (record?.username === currentUser?.username) {
-              template.push(edit, edit2, remove)
-            }
-            return addDividerToActions(template);
+            </div>
+
+          )
         }
-        return template;
       },
-    },
-  ];
+      {
+        title: '销售总价',
+        dataIndex: 'order_leader_quota',
+        hideInSearch: true,
+        render: (text, record) => {
+          return (
+            <div>
+              <Text style={{color: '#FF6A00'}}>
+                ¥ {text}
+              </Text>
+              {record?.order_leader_price ?
+                <div>
+                  <Text style={{color: '#FF6A00'}}>
+                    ¥ {record?.order_leader_price}
+                  </Text>
+                </div> : null
+              }
+
+            </div>
+          );
+        },
+      },
+      {
+        title: '收货信息',
+        dataIndex: 'delivery_message',
+        hideInSearch: true,
+        render: (text, record) => {
+          return (
+            <div>
+              <div>
+                <Text>收货地址：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.addr}
+                </Text>
+              </div>
+              <div>
+                <Text>联系人：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.contact}
+                </Text>
+              </div>
+              <div>
+                <Text>联系电话：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.phone}
+                </Text>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        title: '开票信息',
+        dataIndex: 'bill_message',
+        hideInSearch: true,
+        render: (text, record) => {
+          return (
+            <div>
+              <div>
+                <Text>公司名称：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.company}
+                </Text>
+              </div>
+              <div>
+                <Text>税号：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.bill_id}
+                </Text>
+              </div>
+              <div>
+                <Text>地址：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.bill_addr}
+                </Text>
+              </div>
+              <div>
+                <Text>电话：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.bill_phone}
+                </Text>
+              </div>
+              <div>
+                <Text>开户行：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.bill_bank}
+                </Text>
+              </div>
+              <div>
+                <Text>账号：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.bill_account}
+                </Text>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        title: '合同、发票收件信息',
+        dataIndex: 'delivery_message',
+        hideInSearch: true,
+        render: (text, record) => {
+          return (
+            <div>
+              <div>
+                <Text>收货地址：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.contract_addr}
+                </Text>
+              </div>
+              <div>
+                <Text>联系人：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.contract_contact}
+                </Text>
+              </div>
+              <div>
+                <Text>联系电话：</Text>
+                <Text copyable style={{color: '#1890FF'}}>
+                  {record?.contract_phone}
+                </Text>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        title: '订单创建时间',
+        dataIndex: 'create_time',
+        valueType: 'dateTime',
+        hideInSearch: true,
+      },
+    ];
+    const operation: ProColumns<OrderListItem>[] = [
+      {
+        title: '操作',
+        dataIndex: 'option',
+        valueType: 'option',
+        render: (text, record) => {
+          const template2: JSX.Element[] = [];
+          // order_status 1 ： 可终止，同意，拒绝
+          // 2：无操作
+          // 3：已完成，打印合同，上传合同
+          const confirm = (<Button
+            type="link"
+            key="confirm"
+            onClick={() => {
+              setValidateType(ValidateType.CONFIRM);
+              setValidateVisible(true);
+            }}
+          >
+            同意
+          </Button>);
+          const refuse = (<Button
+            type="link"
+            key="refuse"
+            danger
+            onClick={() => {
+              setValidateType(ValidateType.REFUSE);
+              setValidateVisible(true);
+            }}
+          >
+            拒绝
+          </Button>);
+          const complete = (<Button
+            key="remove"
+            type="link"
+            onClick={() => {
+              setValidateType(ValidateType.COMPLETE);
+              setValidateVisible(true);
+            }}
+          >
+            完成
+          </Button>);
+          const termination = (<Button
+            type="link"
+            danger
+            key="termination"
+            onClick={() => {
+              setValidateType(ValidateType.TERMINATION);
+              setValidateVisible(true);
+            }}
+          >
+            终止
+          </Button>);
+          const print = (<Button
+            type="link"
+            key="print"
+            onClick={() => {
+            }}
+          >
+            打印合同
+          </Button>);
+          const upload = (<Button
+            type="link"
+            key="upload"
+            onClick={() => {
+            }}
+          >
+            上传合同
+          </Button>);
+          if (record?.order_status === 1) {
+            template2.push(confirm, refuse, complete, termination);
+          } else if (record?.order_status === 3) {
+            template2.push(print, upload);
+          }
+          return (
+            <div style={{display: 'flex', flexDirection: 'column'}}>
+              {template2}
+            </div>
+          );
+        },
+      },
+    ];
+    if (identity === 1) {
+      return template.concat(columns, managerMessage, commonMessage, operation);
+    } else {
+      return template.concat(columns, commonMessage);
+    }
+  }
+
 
   const addDividerToActions = (template: JSX.Element[]) => {
     return template?.map((item, index) => {
@@ -471,26 +612,62 @@ const OrderList: FC<BasicListProps> = props => {
     });
   };
 
+  const panesGenerate = () => {
+    const panes: PaneDetail[] = [
+      {
+        title: '订单列表',
+        content: (
+          <ProTable<OrderListItem>
+            options={{reload: true, fullScreen: true, setting: true, density: false}}
+            size="small"
+            actionRef={actionRef}
+            rowKey={record => record.id}
+            toolBarRender={() => {
+              return action();
+            }}
+            request={request}
+            params={{...listParams}}
+            search={{
+              collapsed: false,
+            }}
+            columns={columnsGenerate()}
+            columnsStateMap={columnsStateMap}
+            onColumnsStateChange={map => setColumnsStateMap(map)}
+            pagination={{pageSize: 5, showQuickJumper: true}}
+          />
+        ),
+        key: 'order',
+        closable: false,
+      },
+    ];
+    details?.forEach(d => {
+      panes.push({
+        title: `${d?.create_user + '-' + d?.project_name}`,
+        content: 'xxx',
+        key: d?.id?.toString(),
+        closable: true,
+      })
+    })
+
+    return panes;
+  };
+
+  const removeItem = (target: string) => {
+    console.log(target);
+    const newDetails = details;
+    _.remove(newDetails, d => d?.id?.toString() === target);
+    console.log(newDetails);
+    setDetails(newDetails);
+  };
+
   return (
     <div>
       <div className={styles.standardList}>
-        <ProTable<ProjectListItem>
-          options={{reload: true, fullScreen: true, setting: true, density: false}}
-          size="small"
-          actionRef={actionRef}
-          rowKey={record => record.id}
-          toolBarRender={() => {
-            return action();
-          }}
-          request={request}
-          search={{
-            collapsed: false,
-          }}
-          columns={columns}
-          columnsStateMap={columnsStateMap}
-          onColumnsStateChange={map => setColumnsStateMap(map)}
-          pagination={{pageSize: 5, showQuickJumper: true}}
+        <TabsList
+          panes={panesGenerate()}
+          removeItem={removeItem}
         />
+
       </div>
       <ValidatePassword
         visible={validateVisible}
@@ -605,7 +782,6 @@ export default connect(
     project,
     currentUser: user.currentUser,
     users: user.users,
-    addressList: user.addressList,
     fetch: loading.effects['project/fetch'],
     queryProjectOneDetail: loading.effects['user/queryProjectOneDetail'],
   }),

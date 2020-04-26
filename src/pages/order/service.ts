@@ -1,8 +1,8 @@
 import request from '../../utils/request';
-import {ProjectListItem} from "./data";
+import {OrderListItem} from "./data";
 
 
-interface ParamsType extends Partial<ProjectListItem> {
+interface ParamsType extends Partial<OrderListItem> {
   pageSize?: number;
   current?: number;
 }
@@ -22,8 +22,8 @@ export type ProductList = {
   conf_par: { id: number; count: number; }[]
 }[];
 
-export async function queryProject(params: ParamsType) {
-  return request('/api/project', {
+export async function queryOrder(params: ParamsType) {
+  return request('/api/order', {
     params,
   });
 }

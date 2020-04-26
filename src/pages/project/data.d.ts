@@ -18,8 +18,8 @@ export interface ProjectListItem {
   // 报价
   leader_total_price: string | null;
   sell_total_price: string | null;
-  // 1进行中，2已下单，3终止，4审核中，5交付中，6 已完成
-  pro_status: 1 | 2 | 3 | 4 | 5 | 6;
+  // 1进行中，2终止，3审核中，4交付中，5 已完成
+  pro_status: 1 | 2 | 3 | 4 | 5;
   product_list: ProjectProductionInfoItem[];
 
   [propName: string]: any;
@@ -40,7 +40,7 @@ export type ProjectProductionInfoItem = {
   leader_price?: string;
   sell_price?: string;
   user: number;
-  uuid?:string;
+  uuid?: string;
   conf_par: ProductBaseListItem[];
   conf_list?: ProductBaseListItem[];
 };
