@@ -438,7 +438,7 @@ const ProjectList: FC<BasicListProps> = props => {
               </>
             ) : null}
             <>
-              <Text style={{color: '#61C37A'}}>{identity === 2 ? '采购人价格：' : ''}</Text>
+              <Text style={{color: '#61C37A'}}>{(identity === 1 || identity === 2) ? '采购人价格：' : ''}</Text>
               <Text style={{color: '#FF6A00'}}>
                 {sell_total_quota}
               </Text>
@@ -532,7 +532,6 @@ const ProjectList: FC<BasicListProps> = props => {
       },
     },
   ];
-
 
 
   const addDividerToActions = (template: JSX.Element[]) => {

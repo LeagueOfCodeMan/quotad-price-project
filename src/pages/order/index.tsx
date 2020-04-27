@@ -24,7 +24,8 @@ import EditProductList from "@/pages/project/components/EditProductList";
 import CreateOrder from "@/pages/project/components/CreateOrder";
 import {OrderListItem} from "@/pages/order/data";
 import {queryOrder} from "@/pages/order/service";
-import {PaneDetail, TabsList, TabsList} from "@/pages/order/components/TabsList";
+import {PaneDetail, TabsList} from "@/pages/order/components/TabsList";
+import OrderDetail from "@/pages/order/components/OrderDetail";
 
 const {confirm} = Modal;
 const {Text} = Typography;
@@ -312,9 +313,10 @@ const OrderList: FC<BasicListProps> = props => {
         dataIndex: 'order_status',
         width: 100,
         valueEnum: {
-          1: {text: '进行中', status: 'Processing'},
-          2: {text: '已终止', status: 'Warning'},
-          3: {text: '已完成', status: 'Error'},
+          1: {text: '待确认', status: 'Warning'},
+          2: {text: '已确认', status: 'Processing'},
+          3: {text: '已终止', status: 'Error'},
+          4: {text: '已完成', status: 'Success'},
         },
       },
     ]
@@ -643,7 +645,7 @@ const OrderList: FC<BasicListProps> = props => {
     details?.forEach(d => {
       panes.push({
         title: `${d?.create_user + '-' + d?.project_name}`,
-        content: 'xxx',
+        content: <OrderDetail current={d} currentUser={currentUser}/>,
         key: d?.id?.toString(),
         closable: true,
       })

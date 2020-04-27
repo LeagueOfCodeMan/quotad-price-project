@@ -2,13 +2,13 @@ import {ProjectListItem} from "@/pages/project/data";
 
 export interface OrderListItem {
   id: number;
-  username: string;
   area: string;
   create_user: string;
   order_user: string;
   leader_company: string;
   project_name: string;
-  project_desc:string;
+  project_desc: string;
+  create_time: string;
 
   company?: string;
   addr?: string;
@@ -22,16 +22,19 @@ export interface OrderListItem {
   contract_addr?: string;
   contract_contact?: string;
   contract_phone?: string;
-  // 1 进行中 2 已终止 3 已完成
-  order_status?: 1 | 2 | 3;
+  // 1 待确认 2  已确认 3 已终止 4 已完成
+  order_status?: 1 | 2 | 3 | 4;
 
   order_leader_price: string;
   order_leader_quota: string;
 
   project: ProjectListItem[];
+  other_list: OtherListItem[];
 
   [propName: string]: any;
 }
+
+export type OtherListItem = { id: number; pro_type: string; price: string; count: number; };
 
 export interface OrderListInfo {
   count: number;
