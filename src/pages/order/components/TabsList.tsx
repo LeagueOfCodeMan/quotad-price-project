@@ -31,18 +31,20 @@ export class TabsList extends React.Component<TabsListProps, TabsListStates> {
 
   static getDerivedStateFromProps(props: TabsListProps, state: TabsListStates) {
     if (!_.isEqual(_.map(props.panes, d => (d?.key)), _.map(state.prevPanes, d => (d?.key)))) {
-      console.log(props.panes, state.prevPanes);
       return {
         activeKey: _.nth(props?.panes, -1)?.key,
         panes: props?.panes,
         prevPanes: props?.panes
       }
     } else {
-      return null;
+      return {
+        panes: props?.panes,
+        prevPanes: props?.panes
+      };
     }
   }
 
-  onChange = (activeKey: any) => {
+  onChange = (activeKey: string) => {
     this.setState({activeKey});
   };
 

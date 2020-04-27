@@ -1,8 +1,7 @@
-import {DownOutlined, PlusOutlined} from '@ant-design/icons';
-import {Button, Divider, Dropdown, Menu, message, Modal} from 'antd';
+import {PlusOutlined} from '@ant-design/icons';
+import {Button, Divider, message, Modal, Typography} from 'antd';
 import React, {useRef, useState} from 'react';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
-import {Dispatch} from "redux";
 import {connect} from "react-redux";
 import {RequestData} from "@ant-design/pro-table/es";
 import {UserModelState} from "@/models/user";
@@ -13,9 +12,9 @@ import {addIcontains, ResultType, ValidatePwdResult} from "@/utils/utils";
 import {AreaListItem, UserListItem} from "@/models/data";
 import {createArea, deleteArea, queryAreas, updateArea} from "@/pages/usermanager/arealist/service";
 import CreateForm from "@/pages/usermanager/arealist/components/CreateForm";
-import EditForm from "@/pages/usermanager/arealist/components/EditForm";
 
 const {confirm} = Modal;
+const {Text} = Typography;
 /**
  * 添加
  * @param fields
@@ -41,33 +40,77 @@ const handleUpdate = async (fields: AreaListItem, record: AreaListItem | {}) => 
   return new ValidatePwdResult(result).validate('修改成功', null, hide);
 };
 
-
-interface UserListProps {
-  dispatch: Dispatch<any>;
-  user: UserModelState;
-}
-
 enum ValidateType {
   DELETE_URL = 'DELETE_URL',
 }
 
-const AreaList: React.FC<UserListProps> = (props) => {
+const AreaList: React.FC<AreaListItem> = (props) => {
   const [createModalVisible, handleModalVisible] = useState<boolean>(false);
-  const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
   const [validateVisible, setValidateVisible] = useState(false);
-  const [editFormValues, setEditFormValues] = useState({});
+  const [current, setCurrent] = useState<NotRequired<AreaListItem>>({});
   const [validateType, setValidateType] = useState<string>("");
   const actionRef = useRef<ActionType>();
 
-  const columns: ProColumns<UserListItem>[] = [
+  const columns: ProColumns<AreaListItem>[] = [
     {
-      title: '番号',
-      dataIndex: 'id',
-      valueType: 'indexBorder',
+      title: '编码',
+      dataIndex: 'code',
+      width: 100,
+      ellipsis: true,
     },
     {
       title: '区域名字',
       dataIndex: 'area_name',
+      width: 100,
+      ellipsis: true,
+    },
+    {
+      title: '开票信息',
+      dataIndex: 'bill_message',
+      key: 'bill_message',
+      hideInSearch: true,
+      render: (text, record) => {
+        return (
+          <div style={{display: 'flex'}}>
+            <div>
+              <Text>公司名称：</Text>
+              <Text style={{color: '#1890FF'}}>
+                {record?.company}
+              </Text>
+            </div>
+            <div>
+              <Text>税号：</Text>
+              <Text style={{color: '#1890FF'}}>
+                {record?.bill_id}
+              </Text>
+            </div>
+            <div>
+              <Text>地址：</Text>
+              <Text style={{color: '#1890FF'}}>
+                {record?.bill_addr}
+              </Text>
+            </div>
+            <div>
+              <Text>电话：</Text>
+              <Text style={{color: '#1890FF'}}>
+                {record?.bill_phone}
+              </Text>
+            </div>
+            <div>
+              <Text>开户行：</Text>
+              <Text style={{color: '#1890FF'}}>
+                {record?.bill_bank}
+              </Text>
+            </div>
+            <div>
+              <Text>账号：</Text>
+              <Text style={{color: '#1890FF'}}>
+                {record?.bill_account}
+              </Text>
+            </div>
+          </div>
+        );
+      },
     },
     {
       title: '操作',
@@ -77,15 +120,15 @@ const AreaList: React.FC<UserListProps> = (props) => {
         <>
           <EditTwoTone
             onClick={() => {
-              handleUpdateModalVisible(true);
-              setEditFormValues(record);
+              setCurrent(record);
+              handleModalVisible(true);
             }}/>
           <Divider type="vertical"/>
           <DeleteTwoTone
             twoToneColor="#eb2f96"
             onClick={() => {
               setValidateType(ValidateType.DELETE_URL);
-              setEditFormValues(record);
+              setCurrent(record);
               setValidateVisible(true);
             }}
           />
@@ -99,8 +142,7 @@ const AreaList: React.FC<UserListProps> = (props) => {
     pageSize?: number;
     current?: number;
     [key: string]: any;
-  }): Promise<RequestData<UserListItem>> => {
-    console.log('request params: ', params)
+  }): Promise<RequestData<AreaListItem>> => {
     const searchParamsType = addIcontains(params);
     const result = await queryAreas({...searchParamsType});
     return Promise.resolve({
@@ -118,7 +160,7 @@ const AreaList: React.FC<UserListProps> = (props) => {
   };
 
   const validatePasswordSuccessToDo = () => {
-    const {id} = editFormValues as UserListItem;
+    const {id} = current as UserListItem;
     if (validateType === ValidateType.DELETE_URL) {
       const hide = () => {
         message.loading('正在删除')
@@ -150,46 +192,21 @@ const AreaList: React.FC<UserListProps> = (props) => {
 
   return (
     <>
-      <ProTable<UserListItem>
-        headerTitle="成员列表"
+      <ProTable<AreaListItem>
         options={{reload: true, fullScreen: true, setting: true, density: false}}
         size="small"
         actionRef={actionRef}
         rowKey={record => record.id}
-        toolBarRender={(action, {selectedRows}) => {
+        toolBarRender={() => {
           return [
-            <Button icon={<PlusOutlined/>} type="primary" onClick={() => handleModalVisible(true)}>
+            <Button icon={<PlusOutlined/>} type="primary" onClick={() => {
+              setCurrent({});
+              handleModalVisible(true);
+            }}>
               新建
-            </Button>,
-            selectedRows && selectedRows.length > 0 && (
-              <Dropdown
-                overlay={
-                  <Menu
-                    onClick={async e => {
-                      if (e.key === 'remove') {
-                        // await handleRemove(selectedRows);
-                        action.reload();
-                      }
-                    }}
-                    selectedKeys={[]}
-                  >
-                    <Menu.Item key="remove">批量删除</Menu.Item>
-                    <Menu.Item key="approval">批量审批</Menu.Item>
-                  </Menu>
-                }
-              >
-                <Button>
-                  批量操作 <DownOutlined/>
-                </Button>
-              </Dropdown>
-            ),
+            </Button>
           ];
         }}
-        tableAlertRender={(selectedRowKeys, selectedRows) => (
-          <div>
-            已选择 <a style={{fontWeight: 600}}>{selectedRowKeys.length}</a> 项&nbsp;&nbsp;
-          </div>
-        )}
         tableAlertOptionRender={false}
         request={request}
         columns={columns}
@@ -198,7 +215,12 @@ const AreaList: React.FC<UserListProps> = (props) => {
       />
       <CreateForm
         onSubmit={async (value, callback) => {
-          const success = await handleAdd(value);
+          let success;
+          if (current?.id) {
+            success = await handleUpdate(value, current);
+          } else {
+            success = await handleAdd(value);
+          }
           if (success) {
             callback(true)
             handleModalVisible(false);
@@ -211,28 +233,8 @@ const AreaList: React.FC<UserListProps> = (props) => {
         }}
         onCancel={() => handleModalVisible(false)}
         modalVisible={createModalVisible}
+        current={current}
       />
-      {editFormValues && Object.keys(editFormValues).length ? (
-        <EditForm
-          onSubmit={async (value, callback) => {
-            const success = await handleUpdate(value, editFormValues);
-            if (success) {
-              callback();
-              handleModalVisible(false);
-              setEditFormValues({});
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
-          }}
-          onCancel={() => {
-            handleUpdateModalVisible(false);
-            setEditFormValues({});
-          }}
-          updateModalVisible={updateModalVisible}
-          values={editFormValues}
-        />
-      ) : null}
       <ValidatePassword
         visible={validateVisible}
         onCreate={async (values) => {

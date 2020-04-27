@@ -28,6 +28,7 @@ const PublishModal: React.FC<PublishModalProps> = props => {
 
 
   useEffect(() => {
+    console.log(formRef);
     if (current && formRef) {
       setTimeout(() => {
         form.setFieldsValue({

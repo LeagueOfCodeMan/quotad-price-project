@@ -1,4 +1,4 @@
-import { PlusOutlined} from '@ant-design/icons';
+import {PlusOutlined} from '@ant-design/icons';
 import {Button, Divider, message, Modal} from 'antd';
 import React, {useEffect, useRef, useState} from 'react';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
@@ -29,7 +29,7 @@ const handleAdd = async (fields: CreateUser) => {
     _.omit(fields, ['re_password']),
     {identity: fields?.identity - 0});
   const result: ResultType | string = await createUser(data as UserListItem);
-  console.log(result);
+
   return new ValidatePwdResult(result).validate(null, null, hide);
 };
 
@@ -61,17 +61,12 @@ enum ValidateType {
 
 const UserList: React.FC<UserListProps> = (props) => {
   const [createModalVisible, handleModalVisible] = useState<boolean>(false);
-  const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
   const [validateVisible, setValidateVisible] = useState(false);
-  const [editFormValues, setEditFormValues] = useState({});
+  const [editFormValues, setEditFormValues] = useState<NotRequired<UserListItem>>({});
   const [validateType, setValidateType] = useState<string>("");
   const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState; }>({
-    addr: {show: false,},
-    email: {show: false},
     ["data_joined"]: {show: false},
     ["last_login"]: {show: false},
-    company: {show: false},
-    duty: {show: false}
   });
   const actionRef = useRef<ActionType>();
   const {dispatch} = props;
@@ -87,52 +82,21 @@ const UserList: React.FC<UserListProps> = (props) => {
 
   const columns: ProColumns<UserListItem>[] = [
     {
-      title: '用户名',
-      dataIndex: 'username',
+      title: '组编码',
+      dataIndex: 'code',
+      width: 100,
+      ellipsis: true,
     },
+    // {
+    //   title: '地区',
+    //   dataIndex: 'area_name',
+    //   width: 100,
+    //   ellipsis: true,
+    // },
     {
-      title: '真实姓名',
-      dataIndex: 'real_name',
-    },
-    {
-      title: '地区',
-      dataIndex: 'area_name',
-    },
-    {
-      title: '公司名',
+      title: '公司名称',
       dataIndex: 'company',
-    },
-    {
-      title: '职务',
-      dataIndex: 'duty',
-      hideInSearch: true,
-    },
-    {
-      title: '地址',
-      dataIndex: 'addr',
-      hideInSearch: true,
-    },
-    {
-      title: '手机号',
-      dataIndex: 'tel',
-    },
-    {
-      title: '邮箱',
-      dataIndex: 'email',
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'data_joined',
-      sorter: true,
-      valueType: 'dateTime',
-      hideInSearch: true,
-    },
-    {
-      title: '最后登录时间',
-      dataIndex: 'last_login',
-      sorter: true,
-      valueType: 'dateTime',
-      hideInSearch: true,
+      width: 100,
     },
     {
       title: '权限',
@@ -143,7 +107,54 @@ const UserList: React.FC<UserListProps> = (props) => {
         3: {text: '一级组员'},
         4: {text: '二级组员'},
       },
+      width: 100,
+      ellipsis: true,
     },
+    {
+      title: '真实姓名',
+      dataIndex: 'real_name',
+      width: 100,
+      ellipsis: true,
+    },
+    {
+      title: '手机号',
+      dataIndex: 'tel',
+      width: 100,
+      ellipsis: true,
+    },
+    {
+      title: '邮箱',
+      dataIndex: 'email',
+      width: 100,
+      ellipsis: true,
+    },
+    {
+      title: '地址',
+      dataIndex: 'addr',
+      width: 100,
+      ellipsis: true,
+    },
+    {
+      title: '登录用户名',
+      dataIndex: 'username',
+    },
+    {
+      title: '创建时间',
+      dataIndex: 'data_joined',
+      valueType: 'dateTime',
+      hideInSearch: true,
+      width: 100,
+      ellipsis: true,
+    },
+    {
+      title: '最后登录时间',
+      dataIndex: 'last_login',
+      valueType: 'dateTime',
+      hideInSearch: true,
+      width: 100,
+      ellipsis: true,
+    },
+
     {
       title: '操作',
       dataIndex: 'option',
@@ -153,8 +164,8 @@ const UserList: React.FC<UserListProps> = (props) => {
           {record.identity !== currentUser?.identity ?
             <EditTwoTone
               onClick={() => {
-                handleUpdateModalVisible(true);
                 setEditFormValues(record);
+                handleModalVisible(true);
               }}/> : null
           }
           <Divider type="vertical"/>
@@ -236,11 +247,17 @@ const UserList: React.FC<UserListProps> = (props) => {
         actionRef={actionRef}
         rowKey={record => record.id}
         toolBarRender={() => {
-          return [
-            <Button icon={<PlusOutlined/>} type="primary" onClick={() => handleModalVisible(true)}>
-              新建
-            </Button>,
-          ];
+          if (currentUser?.identity === 1) {
+            return [
+              <Button icon={<PlusOutlined/>} type="primary" onClick={() => {
+                setEditFormValues({});
+                handleModalVisible(true)
+              }}>
+                新建
+              </Button>,
+            ];
+          }
+          return [];
         }}
         request={request}
         columns={columns}
@@ -250,7 +267,12 @@ const UserList: React.FC<UserListProps> = (props) => {
       />
       <CreateForm
         onSubmit={async (value, callback) => {
-          const success = await handleAdd(value);
+          let success;
+          if (editFormValues?.id) {
+            success = await handleUpdate(value, editFormValues);
+          } else {
+            success = await handleAdd(value as CreateUser);
+          }
           if (success) {
             callback(true)
             handleModalVisible(false);
@@ -265,28 +287,8 @@ const UserList: React.FC<UserListProps> = (props) => {
         areaList={areaList}
         onCancel={() => handleModalVisible(false)}
         modalVisible={createModalVisible}
+        editFormValues={editFormValues}
       />
-      {editFormValues && Object.keys(editFormValues).length ? (
-        <EditUser
-          onSubmit={async (value, callback) => {
-            const success = await handleUpdate(value, editFormValues);
-            if (success) {
-              callback();
-              handleUpdateModalVisible(false);
-              setEditFormValues({});
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
-          }}
-          onCancel={() => {
-            handleUpdateModalVisible(false);
-            setEditFormValues({});
-          }}
-          updateModalVisible={updateModalVisible}
-          values={editFormValues}
-        />
-      ) : null}
       <ValidatePassword
         visible={validateVisible}
         onCreate={async (values) => {

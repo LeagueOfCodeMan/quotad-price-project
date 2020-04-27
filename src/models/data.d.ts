@@ -72,8 +72,16 @@ export interface TableListParams {
 }
 
 export interface AreaListItem {
-  id?: number;
+  id: number;
+  company?: string;
+  code: string;
   area_name: string;
+  bill_id?: string;
+  bill_addr?: string;
+  bill_phone?: string;
+  bill_bank?: string;
+  bill_account?: string;
+  [propNmae: string]: any;
 };
 
 export type AreasInfo = {
@@ -111,6 +119,7 @@ export type LocalStorageShopType = { user: string; shop: ShoppingCartItem[] }[];
 export interface CurrentChild {
   id: number;
   username: string;
+  real_name: string;
   key?: number;
   project_list: { key?: number; id: number; project_name: string; }[];
 }
@@ -124,6 +133,7 @@ export interface CurrentChildren {
       id: number;
       key?: number;
       username: string;
+      real_name: string;
       project_list: { key?: number; id: number; project_name: string; }[];
       one_level: CurrentChild[];
       two_level: CurrentChild[];
@@ -138,6 +148,7 @@ export type CurrentChildrenResults = {
     id: number;
     key?: number;
     username: string;
+    real_name: string;
     project_list: { key?: number; id: number; project_name: string; }[];
     one_level: CurrentChild[];
     two_level: CurrentChild[];

@@ -80,10 +80,10 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
         children3.push({
           title: (
             <span>
-              <b style={{color: '#FF6A00'}}>{d?.username}</b>
+              <b style={{color: '#FF6A00'}}>{d?.real_name}</b>
             </span>
           ),
-          value: 'username' + '-' + d?.username,
+          value: 'real_name' + '-' + d?.real_name,
           children: project,
         });
       });
@@ -104,10 +104,10 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
         children4.push({
           title: (
             <span>
-              <b style={{color: '#FF6A00'}}>{d?.username}</b>
+              <b style={{color: '#FF6A00'}}>{d?.real_name}</b>
             </span>
           ),
-          value: 'username' + '-' + d?.username,
+          value: 'real_name' + '-' + d?.real_name,
           children: project,
         });
       });
@@ -115,7 +115,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       if (children2?.length > 0) {
         children.push({
           title: <span>组长项目</span>,
-          value: 'username' + '-' + v2?.username + '-' + v2?.key,
+          value: 'real_name' + '-' + v2?.real_name + '-' + v2?.key,
           children: children2,
           disabled: true,
         });
@@ -123,7 +123,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       if (children3?.length > 0) {
         children.push({
           title: <span>一级组员</span>,
-          value: 'username' + '-' + v2?.username + '-' + v2?.key + 1,
+          value: 'real_name' + '-' + v2?.real_name + '-' + v2?.key + 1,
           children: children3,
           disabled: true,
         });
@@ -131,7 +131,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       if (children4?.length > 0) {
         children.push({
           title: <span>二级组员</span>,
-          value: 'username' + '-' + v2?.username + '-' + v2?.key + 2,
+          value: 'real_name' + '-' + v2?.real_name + '-' + v2?.key + 2,
           children: children4,
           disabled: true,
         });
@@ -140,10 +140,10 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       return {
         title: (
           <span>
-            组长：<b style={{color: '#08c'}}>{v2?.username}</b>
+            组长：<b style={{color: '#08c'}}>{v2?.real_name}</b>
           </span>
         ),
-        value: 'username' + '-' + v2?.username,
+        value: 'real_name' + '-' + v2?.real_name,
         children,
       };
     });
@@ -162,7 +162,7 @@ interface ListSearchParams {
   pageSize?: number;
   pro_status?: 1 | 2 | 3;
   search?: string;
-  username?: string;
+  real_name?: string;
   project_name?: string;
 
   [propName: string]: any;
@@ -277,7 +277,7 @@ const ProjectList: FC<BasicListProps> = props => {
             const searchKey = splitSearch?.[0];
             const searchValue = splitSearch?.[1];
             setListParams({
-              ..._.omit(listParams, ['project_name', 'username']),
+              ..._.omit(listParams, ['project_name', 'real_name']),
               [searchKey]: searchValue,
             });
           }}
@@ -292,7 +292,7 @@ const ProjectList: FC<BasicListProps> = props => {
         新建
       </Button>
     );
-    if (currentUser?.identity !== 1) {
+    if (currentUser?.identity === 3 || currentUser?.identity === 4) {
       buttons.push(add);
     }
     return buttons;
@@ -327,6 +327,20 @@ const ProjectList: FC<BasicListProps> = props => {
       },
     },
     {
+      title: '组ID',
+      dataIndex: 'real_name',
+      width: 100,
+      ellipsis: true,
+      hideInSearch: true,
+    },
+    {
+      title: '填报人',
+      dataIndex: 'real_name',
+      width: 100,
+      ellipsis: true,
+      hideInSearch: true,
+    },
+    {
       title: '项目名称',
       dataIndex: 'project_name',
       width: 100,
@@ -335,7 +349,7 @@ const ProjectList: FC<BasicListProps> = props => {
     },
     {
       title: '用户',
-      dataIndex: 'username',
+      dataIndex: 'user_name',
       hideInSearch: true,
       render: (text, record) => {
         const {user_name, user_addr, user_iphone, user_contact} = record;

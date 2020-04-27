@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {Form, Input, Modal} from 'antd';
 import styles from '../../yuntai.less';
-import {ProjectListItem} from "../data";
 import {CreateProjectParams} from "@/pages/project/service";
+import {ProjectListItem} from "@/pages/project/data";
 
 const {TextArea} = Input;
 

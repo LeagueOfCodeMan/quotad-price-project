@@ -80,10 +80,10 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
         children3.push({
           title: (
             <span>
-              <b style={{color: '#FF6A00'}}>{d?.username}</b>
+              <b style={{color: '#FF6A00'}}>{d?.real_name}</b>
             </span>
           ),
-          value: 'username' + '-' + d?.username,
+          value: 'real_name' + '-' + d?.real_name,
           children: project,
         });
       });
@@ -104,10 +104,10 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
         children4.push({
           title: (
             <span>
-              <b style={{color: '#FF6A00'}}>{d?.username}</b>
+              <b style={{color: '#FF6A00'}}>{d?.real_name}</b>
             </span>
           ),
-          value: 'username' + '-' + d?.username,
+          value: 'real_name' + '-' + d?.real_name,
           children: project,
         });
       });
@@ -115,7 +115,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       if (children2?.length > 0) {
         children.push({
           title: <span>组长项目</span>,
-          value: 'username' + '-' + v2?.username + '-' + v2?.key,
+          value: 'real_name' + '-' + v2?.real_name + '-' + v2?.key,
           children: children2,
           disabled: true,
         });
@@ -123,7 +123,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       if (children3?.length > 0) {
         children.push({
           title: <span>一级组员</span>,
-          value: 'username' + '-' + v2?.username + '-' + v2?.key + 1,
+          value: 'real_name' + '-' + v2?.real_name + '-' + v2?.key + 1,
           children: children3,
           disabled: true,
         });
@@ -131,7 +131,7 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       if (children4?.length > 0) {
         children.push({
           title: <span>二级组员</span>,
-          value: 'username' + '-' + v2?.username + '-' + v2?.key + 2,
+          value: 'real_name' + '-' + v2?.real_name + '-' + v2?.key + 2,
           children: children4,
           disabled: true,
         });
@@ -140,10 +140,10 @@ export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
       return {
         title: (
           <span>
-            组长：<b style={{color: '#08c'}}>{v2?.username}</b>
+            组长：<b style={{color: '#08c'}}>{v2?.real_name}</b>
           </span>
         ),
-        value: 'username' + '-' + v2?.username,
+        value: 'real_name' + '-' + v2?.real_name,
         children,
       };
     });
@@ -161,7 +161,7 @@ interface ListSearchParams {
   current?: number;
   pageSize?: number;
   search?: string;
-  username?: string;
+  real_name?: string;
   project_name?: string;
 
   [propName: string]: any;
@@ -174,7 +174,11 @@ const OrderList: FC<BasicListProps> = props => {
     currentUser,
   } = props;
   const {identity} = currentUser;
-  const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState }>({});
+  const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState }>({
+    ['delivery_message']: {show: false,},
+    ['bill_message']: {show: false},
+    ['bill_delivery_message']: {show: false},
+  });
   const actionRef = useRef<ActionType>();
   const [visible, setVisible] = useState<boolean>(false);
   const [orderVisible, setOrderVisible] = useState<boolean>(false);
@@ -270,7 +274,7 @@ const OrderList: FC<BasicListProps> = props => {
             const searchKey = splitSearch?.[0];
             const searchValue = splitSearch?.[1];
             setListParams({
-              ..._.omit(listParams, ['project_name', 'username']),
+              ..._.omit(listParams, ['project_name', 'real_name']),
               [searchKey]: searchValue,
             });
           }}
@@ -311,6 +315,7 @@ const OrderList: FC<BasicListProps> = props => {
       {
         title: '状态',
         dataIndex: 'order_status',
+        key: 'order_status',
         width: 100,
         valueEnum: {
           1: {text: '待确认', status: 'Warning'},
@@ -320,31 +325,11 @@ const OrderList: FC<BasicListProps> = props => {
         },
       },
     ]
-    const managerMessage: ProColumns<OrderListItem>[] = [
-      {
-        title: '地区',
-        dataIndex: 'area',
-        width: 100,
-        ellipsis: true,
-      },
-      {
-        title: '组长',
-        dataIndex: 'order_user',
-        width: 100,
-        ellipsis: true,
-        hideInSearch: true,
-      },
-      {
-        title: '组长单位',
-        dataIndex: 'leader_company',
-        width: 100,
-        ellipsis: true,
-      },
-    ]
     const commonMessage: ProColumns<OrderListItem>[] = [
       {
         title: '项目信息',
         dataIndex: 'create_user',
+        key: 'create_user',
         hideInSearch: true,
         render: (text, record) => {
           return (
@@ -385,6 +370,7 @@ const OrderList: FC<BasicListProps> = props => {
       {
         title: '销售总价',
         dataIndex: 'order_leader_quota',
+        key: 'order_leader_quota',
         hideInSearch: true,
         render: (text, record) => {
           return (
@@ -407,6 +393,7 @@ const OrderList: FC<BasicListProps> = props => {
       {
         title: '收货信息',
         dataIndex: 'delivery_message',
+        key: 'delivery_message',
         hideInSearch: true,
         render: (text, record) => {
           return (
@@ -436,6 +423,7 @@ const OrderList: FC<BasicListProps> = props => {
       {
         title: '开票信息',
         dataIndex: 'bill_message',
+        key: 'bill_message',
         hideInSearch: true,
         render: (text, record) => {
           return (
@@ -482,7 +470,8 @@ const OrderList: FC<BasicListProps> = props => {
       },
       {
         title: '合同、发票收件信息',
-        dataIndex: 'delivery_message',
+        dataIndex: 'bill_delivery_message',
+        key: 'bill_delivery_message',
         hideInSearch: true,
         render: (text, record) => {
           return (
@@ -512,6 +501,7 @@ const OrderList: FC<BasicListProps> = props => {
       {
         title: '订单创建时间',
         dataIndex: 'create_time',
+        key: 'create_time',
         valueType: 'dateTime',
         hideInSearch: true,
       },
@@ -598,7 +588,7 @@ const OrderList: FC<BasicListProps> = props => {
       },
     ];
     if (identity === 1) {
-      return template.concat(columns, managerMessage, commonMessage, operation);
+      return template.concat(columns, commonMessage, operation);
     } else {
       return template.concat(columns, commonMessage);
     }
@@ -634,9 +624,12 @@ const OrderList: FC<BasicListProps> = props => {
             }}
             columns={columnsGenerate()}
             columnsStateMap={columnsStateMap}
-            onColumnsStateChange={map => setColumnsStateMap(map)}
+            onColumnsStateChange={map => {
+              setColumnsStateMap(map)
+            }}
             pagination={{pageSize: 5, showQuickJumper: true}}
           />
+
         ),
         key: 'order',
         closable: false,
@@ -655,10 +648,8 @@ const OrderList: FC<BasicListProps> = props => {
   };
 
   const removeItem = (target: string) => {
-    console.log(target);
     const newDetails = details;
     _.remove(newDetails, d => d?.id?.toString() === target);
-    console.log(newDetails);
     setDetails(newDetails);
   };
 
@@ -707,7 +698,6 @@ const OrderList: FC<BasicListProps> = props => {
       {orderVisible ? (
         <CreateOrder
           onSubmit={async value => {
-            console.log(value);
             const response = await createOrder({id: current?.id as number, data: value});
             const success = new ValidatePwdResult(response).validate('创建成功', null, undefined);
             if (success) {

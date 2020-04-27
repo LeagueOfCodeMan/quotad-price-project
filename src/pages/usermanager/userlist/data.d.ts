@@ -8,17 +8,9 @@ export interface CreateUser {
   real_name: string;
   company: string;
   addr: string;
-  duty: string;
   email: string;
   tel: string;
-  area: null | string;
-
-  [propNmae: string]: any;
-}
-
-export interface UpdateUser {
-  email: string;
-  tel: number;
+  area: number;
 
   [propNmae: string]: any;
 }
