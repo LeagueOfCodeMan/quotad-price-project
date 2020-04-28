@@ -7,7 +7,7 @@ import {connect} from 'dva';
 import styles from './BaseView.less';
 import FormItem from "antd/es/form/FormItem";
 import {CurrentUser} from "@/models/user";
-import {identifyUser} from "@/utils/utils";
+import {identifyUser, IdentityType} from "@/utils/utils";
 
 // 头像组件 方便以后独立，增加裁剪之类的功能
 const AvatarView = ({avatar, url, hadUploadImage}: {
@@ -93,48 +93,48 @@ class BaseView extends Component<BaseViewProps> {
             hideRequiredMark
           >
             <FormItem
-              label="真实姓名"
-              name="real_name"
+              label="地区编码"
+              name="code"
               rules={[{required: false}]}
             >
-              <Input placeholder="请输入"/>
+              <Input placeholder="请输入" disabled/>
             </FormItem>
             <FormItem
               label="公司名"
               name="company"
               rules={[{required: false}]}
             >
-              <Input placeholder="请输入"/>
+              <Input placeholder="请输入" disabled/>
             </FormItem>
             <FormItem
-              label="职务"
-              name="duty"
+              label="真实姓名"
+              name="real_name"
               rules={[{required: false}]}
             >
-              <Input placeholder="请输入"/>
+              <Input placeholder="请输入" disabled/>
             </FormItem>
             <FormItem
               label="联系地址"
               name="addr"
               rules={[{required: false}]}
             >
-              <Input placeholder="请输入"/>
+              <Input placeholder="请输入" disabled/>
             </FormItem>
-            <Form.Item>
-              <Button htmlType="submit" type="primary">
-                <FormattedMessage
-                  id="accountandsettings.basic.update"
-                  defaultMessage="Update Information"
-                />
-              </Button>
-            </Form.Item>
+            {/*<Form.Item>*/}
+              {/*<Button htmlType="submit" type="primary">*/}
+                {/*<FormattedMessage*/}
+                  {/*id="accountandsettings.basic.update"*/}
+                  {/*defaultMessage="Update Information"*/}
+                {/*/>*/}
+              {/*</Button>*/}
+            {/*</Form.Item>*/}
           </Form>
         </div>
         <div className={styles.right}>
           <AvatarView avatar={this.getAvatarURL()} url={"/api/user/" + currentUser?.id + "/modify_headimg"}
                       hadUploadImage={this.props.hadUploadImage}/>
           <div style={{marginTop: '30px'}}>
-            <div>当前权限级别：<span style={{color: 'red', marginLeft: '14px'}}>{identifyUser(currentUser?.identity)}</span>
+            <div>当前权限级别：<span style={{color: 'red', marginLeft: '14px'}}>{identifyUser(currentUser?.identity as IdentityType)}</span>
             </div>
             <div>上一次登录时间：<span style={{color: 'red'}}>{currentUser?.last_login || ''}</span></div>
           </div>

@@ -86,16 +86,15 @@ const UserList: React.FC<UserListProps> = (props) => {
       width: 100,
       ellipsis: true,
     },
-    // {
-    //   title: '地区',
-    //   dataIndex: 'area_name',
-    //   width: 100,
-    //   ellipsis: true,
-    // },
+    {
+      title: '地区',
+      dataIndex: 'area_name',
+      width: 60,
+      ellipsis: true,
+    },
     {
       title: '公司名称',
       dataIndex: 'company',
-      width: 100,
     },
     {
       title: '权限',
@@ -107,30 +106,27 @@ const UserList: React.FC<UserListProps> = (props) => {
         4: {text: '二级组员'},
       },
       width: 100,
-      ellipsis: true,
     },
     {
       title: '真实姓名',
       dataIndex: 'real_name',
-      width: 100,
-      ellipsis: true,
     },
     {
       title: '手机号',
       dataIndex: 'tel',
-      width: 100,
+      width: 150,
       ellipsis: true,
     },
     {
       title: '邮箱',
       dataIndex: 'email',
-      width: 100,
+      width: 150,
       ellipsis: true,
     },
     {
       title: '地址',
       dataIndex: 'addr',
-      width: 100,
+      width: 150,
       ellipsis: true,
     },
     {
@@ -142,7 +138,7 @@ const UserList: React.FC<UserListProps> = (props) => {
       dataIndex: 'data_joined',
       valueType: 'dateTime',
       hideInSearch: true,
-      width: 100,
+      width: 150,
       ellipsis: true,
     },
     {
@@ -150,35 +146,32 @@ const UserList: React.FC<UserListProps> = (props) => {
       dataIndex: 'last_login',
       valueType: 'dateTime',
       hideInSearch: true,
-      width: 100,
+      width: 150,
       ellipsis: true,
     },
+  ];
 
+  const operation: ProColumns<UserListItem>[] = [
     {
       title: '操作',
       dataIndex: 'option',
       valueType: 'option',
       render: (_, record) => (
         <>
-          {record.identity !== currentUser?.identity ?
-            <EditTwoTone
-              onClick={() => {
-                setEditFormValues(record);
-                handleModalVisible(true);
-              }}/> : null
-          }
+          <EditTwoTone
+            onClick={() => {
+              setEditFormValues(record);
+              handleModalVisible(true);
+            }}/>
           <Divider type="vertical"/>
-          {
-            record.identity !== currentUser?.identity ?
-              <DeleteTwoTone
-                twoToneColor="#eb2f96"
-                onClick={() => {
-                  setValidateType(ValidateType.DELETE_URL);
-                  setEditFormValues(record);
-                  setValidateVisible(true);
-                }}
-              /> : null
-          }
+          <DeleteTwoTone
+            twoToneColor="#eb2f96"
+            onClick={() => {
+              setValidateType(ValidateType.DELETE_URL);
+              setEditFormValues(record);
+              setValidateVisible(true);
+            }}
+          />
         </>
       ),
     },
@@ -259,7 +252,7 @@ const UserList: React.FC<UserListProps> = (props) => {
           return [];
         }}
         request={request}
-        columns={columns}
+        columns={currentUser?.identity === 1 ? columns.concat(operation) : columns}
         columnsStateMap={columnsStateMap}
         onColumnsStateChange={map => setColumnsStateMap(map)}
         pagination={{pageSize: 5, showQuickJumper: true}}

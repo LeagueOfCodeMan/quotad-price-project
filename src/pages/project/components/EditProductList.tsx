@@ -169,7 +169,7 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
       }, 0) || 0;
       const hPrice = (price + tPrice) * count;
       const fPrice: string = hPrice % 1 !== 0 ? hPrice.toString() : hPrice + '.00';
-      const price2 = _.isNaN(fPrice) ? '部分未定价' : '¥ ' + fPrice;
+      const price2 = _.isNaN(fPrice) || parseFloat(fPrice || '0') <= 0 ? '部分未定价' : '¥ ' + fPrice;
       setPrice(price2);
     }
   };
@@ -436,7 +436,7 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
           <Col span={7}>
               <span style={{color: '#FF6A00', fontSize: '18px'}}>
                 <span style={{fontSize: '14px', color: 'grey'}}>总价：</span>
-                {totalPrice || '0.00'}</span>
+                {totalPrice || '尚未定价'}</span>
           </Col>
           <Col span={6}>
             <Button type="primary" size="small" onClick={() => handleNext(1)}>
@@ -467,7 +467,8 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
             }, 0) || 0;
 
             const fPrice: string = tPrice % 1 !== 0 ? tPrice.toString() : tPrice + '.00';
-            const mes = _.isNaN(fPrice) ? '部分未定价' : '¥ ' + fPrice;
+            const mes = _.isNaN(fPrice) || parseFloat(fPrice || '0') <= 0 ? '部分未定价' : '¥ ' + fPrice;
+
             return (
               <>
                 <tr>
@@ -517,6 +518,7 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
         handleUpdateModalVisible();
       }}
       className={styles.createFormStyle}
+      maskClosable={false}
     >
       <Form
         {...formLayout}

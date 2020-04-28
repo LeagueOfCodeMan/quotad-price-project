@@ -1,4 +1,4 @@
-import React, {FC, useRef, useState} from 'react';
+import React, {FC, useEffect, useRef, useState} from 'react';
 import {Button, Descriptions, Divider, message, Modal, Tooltip, TreeSelect, Typography,} from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
@@ -186,11 +186,14 @@ const ProjectList: FC<BasicListProps> = props => {
   const [validateType, setValidateType] = useState<string>('');
   const [listParams, setListParams] = useState<ListSearchParams>({});
 
-  useEffectOnce(() => {
-    dispatch({
-      type: 'user/queryCurrentUsers',
-    });
-  });
+  useEffect(() => {
+    console.log(currentUser?.identity);
+    if (currentUser?.identity === 1 || currentUser?.identity === 2) {
+      dispatch({
+        type: 'user/queryCurrentUsers',
+      });
+    }
+  }, [currentUser?.id]);
 
   const showModal = () => {
     setVisible(true);
@@ -304,7 +307,6 @@ const ProjectList: FC<BasicListProps> = props => {
     current?: number;
     [key: string]: any;
   }): Promise<RequestData<ProjectListItem>> => {
-    console.log(params, 111);
     const result = await queryProject({...params});
     return Promise.resolve({
       data: result?.results || [],
@@ -327,25 +329,21 @@ const ProjectList: FC<BasicListProps> = props => {
       },
     },
     {
-      title: '组ID',
-      dataIndex: 'real_name',
-      width: 100,
-      ellipsis: true,
-      hideInSearch: true,
+      title: '项目ID',
+      dataIndex: 'project_id',
+      width: 120,
     },
     {
       title: '填报人',
       dataIndex: 'real_name',
       width: 100,
       ellipsis: true,
-      hideInSearch: true,
     },
     {
       title: '项目名称',
       dataIndex: 'project_name',
       width: 100,
       ellipsis: true,
-      hideInSearch: true,
     },
     {
       title: '用户',
@@ -382,6 +380,7 @@ const ProjectList: FC<BasicListProps> = props => {
       title: '项目描述',
       dataIndex: 'project_desc',
       ellipsis: true,
+      hideInSearch: true,
       width: 100,
     },
     {
@@ -393,9 +392,9 @@ const ProjectList: FC<BasicListProps> = props => {
         return (
           <div>
             <ScrollList title="产品详情">
-              {product_list?.map(item => {
+              {product_list?.map((item, index) => {
                 return (
-                  <div key={item?.id + '-' + text}>
+                  <div key={item?.production?.id + '-' + index}>
                     <div>
                       <span>{productType(item?.production?.genre)}：</span>
                       <span>{item?.production?.pro_type}</span>
@@ -437,26 +436,13 @@ const ProjectList: FC<BasicListProps> = props => {
       hideInSearch: true,
       render: (text, record) => {
         const {
-          leader_total_quota,
           sell_total_quota
         } = record;
         return (
           <div>
-            {identity === 1 || identity === 2 ? (
-              <>
-                <Text style={{color: '#1890FF'}}>组长：</Text>
-                <Text style={{color: '#FF6A00'}}>
-                  ¥ {leader_total_quota}
-                </Text>
-                <Divider type="vertical"/>
-              </>
-            ) : null}
-            <>
-              <Text style={{color: '#61C37A'}}>{(identity === 1 || identity === 2) ? '采购人价格：' : ''}</Text>
-              <Text style={{color: '#FF6A00'}}>
-                {sell_total_quota}
-              </Text>
-            </>
+            <Text style={{color: '#FF6A00'}}>
+              {sell_total_quota ? '¥' + sell_total_quota : '部分尚未定价'}
+            </Text>
           </div>
         );
       },

@@ -73,7 +73,7 @@ const EditProject: React.FC<EditProjectProps> = props => {
             </Form.Item>
           </div>
           <div style={{border: '1px dashed #dddddd'}}>
-            <div style={{textAlign: "center", color: '#1890FF', fontWeight: 'bold', margin: '10px 0'}}>用户信息选填</div>
+            <div style={{textAlign: "center", color: '#1890FF', fontWeight: 'bold', margin: '10px 0'}}>用户信息</div>
             <div>
               <Form.Item
                 label="用户名称"

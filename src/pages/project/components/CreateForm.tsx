@@ -352,7 +352,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
                                   <>
                                     <span>{d2?.pro_type}</span>
                                     <Divider type="vertical"/>
-                                    <span style={{color: '#FF6A00'}}>价格：¥{actPrice(d2, identity)}</span>
+                                    <span style={{color: '#FF6A00'}}>{currentPrice(d2, identity)}</span>
                                   </>
                                 </Option>
                               )
@@ -391,7 +391,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
                                         <div>
                                           <span>{conf?.pro_type}</span>
                                           <Divider type="vertical"/>
-                                          <span style={{color: '#FF6A00'}}>价格：¥{actPrice(conf, identity)}</span>
+                                          <span style={{color: '#FF6A00'}}>{currentPrice(conf, identity)}</span>
                                         </div>
                                       </Option>
                                     </Select>
@@ -446,7 +446,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
             <Col span={13}>
               <span style={{color: '#FF6A00', fontSize: '18px'}}>
                 <span style={{fontSize: '14px', color: 'grey'}}>总价：</span>
-                {totalPrice || '0.00'}</span>
+                {totalPrice ? '部分未定价' : '¥ ' + totalPrice}</span>
             </Col>
           </Row>
         </>
@@ -536,7 +536,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
           </Form.Item>
         </div>
         <div style={{border: '1px dashed #dddddd'}}>
-          <div style={{textAlign: "center", color: '#1890FF', fontWeight: 'bold', margin: '10px 0'}}>用户信息选填</div>
+          <div style={{textAlign: "center", color: '#1890FF', fontWeight: 'bold', margin: '10px 0'}}>用户信息</div>
           <Form.Item
             label="用户名称"
             name="user_name"

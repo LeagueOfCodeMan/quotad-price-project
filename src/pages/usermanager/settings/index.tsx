@@ -13,11 +13,11 @@ import AddressInfo from './components/address';
 import styles from './style.less';
 import {CurrentUser, UserModelState} from "@/models/user";
 import {ModifyType, ResultType, ValidatePwdResult} from "@/utils/utils";
-import {UpdateUser} from "@/pages/usermanager/userlist/data";
 import UpdatePassword from "@/components/UpdatePassword";
 import {modifyPassword, updateUser} from "@/pages/usermanager/settings/service";
 import ModifyUserInfo from "@/pages/usermanager/settings/components/modifyUser";
 import {UserListItem} from "@/models/data";
+import {CreateUser} from "@/pages/usermanager/userlist/data";
 
 const {Item} = Menu;
 
@@ -155,7 +155,7 @@ class Settings extends Component<SettingsProps, SettingsState> {
     });
   };
 
-  updateBase = async (values: UpdateUser) => {
+  updateBase = async (values: CreateUser) => {
     const {user: {currentUser}} = this.props;
     const hide = message.loading('正在修改');
     const result: ResultType | string =

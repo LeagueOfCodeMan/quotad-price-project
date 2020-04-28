@@ -37,7 +37,6 @@ export interface UserListItem {
   real_name: string;
   company: string;
   addr: string;
-  duty: string;
   email: string;
   tel: string;
   area: null | string;

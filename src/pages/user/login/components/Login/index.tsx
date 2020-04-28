@@ -65,9 +65,12 @@ const Login: LoginType = props => {
           },
         },
         updateActive: activeItem => {
+          // @ts-ignore
           if (active[type]) {
+            // @ts-ignore
             active[type].push(activeItem);
           } else {
+            // @ts-ignore
             active[type] = [activeItem];
           }
           setActive(active);

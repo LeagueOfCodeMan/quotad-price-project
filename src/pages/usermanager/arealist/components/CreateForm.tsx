@@ -80,7 +80,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
               name="code"
               rules={[{required: true, message: '编码'}]}
             >
-              <Input placeholder="如：GD0001" {...commonProps}/>
+              <Input placeholder="如：GD0001" {...commonProps} disabled={!!current?.id}/>
             </FormItem>
           </Col>
           <Col span={12}>
@@ -89,7 +89,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
               name="area_name"
               rules={[{required: true, message: '地区名称'}]}
             >
-              <Input placeholder="如：广东" {...commonProps}/>
+              <Input placeholder="如：广东" {...commonProps} disabled={!!current?.id}/>
             </FormItem>
           </Col>
         </Row>
