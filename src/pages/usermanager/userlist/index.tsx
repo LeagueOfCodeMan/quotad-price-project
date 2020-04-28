@@ -4,7 +4,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import _ from 'lodash';
 import CreateForm from './components/CreateForm';
-import {CreateUser, UpdateUser} from './data';
+import {CreateUser} from './data';
 import {createUser, deleteUser, queryUsers, updateUser} from './service';
 import {Dispatch} from "redux";
 import {connect} from "react-redux";
@@ -12,7 +12,6 @@ import {UserListModalState} from "src/pages/usermanager/userlist/model";
 import {ColumnsState, RequestData} from "@ant-design/pro-table/es";
 import {UserModelState} from "@/models/user";
 import {DeleteTwoTone, EditTwoTone, ExclamationCircleOutlined} from "@ant-design/icons/lib";
-import EditUser from "@/pages/usermanager/userlist/components/EditUser";
 import ValidatePassword from "@/components/ValidatePassword";
 import {testPassword} from "@/services/user";
 import {addIcontains, ResultType, ValidatePwdResult} from "@/utils/utils";
@@ -38,11 +37,11 @@ const handleAdd = async (fields: CreateUser) => {
  * @param fields
  * @param record
  */
-const handleUpdate = async (fields: UpdateUser, record: UserListItem | {}) => {
+const handleUpdate = async (fields: CreateUser, record: UserListItem | {}) => {
   const hide = message.loading('正在修改');
   const result: ResultType | string =
     await updateUser({
-      id: (record as UserListItem)?.id, data: fields
+      id: (record as CreateUser)?.id, data: fields
     });
   return new ValidatePwdResult(result).validate('修改成功', null, hide);
 };

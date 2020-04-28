@@ -13,11 +13,11 @@ const FormItem = Form.Item;
 
 interface CreateFormProps {
   modalVisible: boolean;
-  onSubmit: (fieldsValue: NotRequired<CreateUser>, callback: Function) => void;
+  onSubmit: (fieldsValue: CreateUser, callback: Function) => void;
   onCancel: () => void;
   currentUser?: CurrentUser;
   areaList?: NotRequired<AreasInfo>;
-  editFormValues?: UserListItem;
+  editFormValues?: NotRequired<UserListItem>;
 }
 
 type IdentityOptionsType = { label: string; value: number; };
@@ -142,7 +142,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
               <FormItem
                 label="地区编码"
                 name="area"
-                rules={[{required: true}]}
+                rules={[{required: true, message: '地区编码!'}]}
               >
                 <Select {...commonProps}>
                   {areaList?.results?.map((item: { id: number; area_name: string; code: string; }) => (
@@ -154,7 +154,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
               <FormItem
                 label="公司名"
                 name="company"
-                rules={[{required: true}]}
+                rules={[{required: true, message: '请输入公司名!'}]}
               >
                 <Input placeholder="请输入" {...commonProps}/>
               </FormItem>
@@ -164,7 +164,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
               <FormItem
                 label="权限级别"
                 name="identity"
-                rules={[{required: true, message: 'Please input your password!'}]}
+                rules={[{required: true, message: '权限级别!'}]}
               >
                 <Select {...commonProps}>
                   {identityOptions.map(item => (
@@ -176,7 +176,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
               <FormItem
                 label="真实姓名"
                 name="real_name"
-                rules={[{required: true}]}
+                rules={[{required: true, message: '真实姓名!'}]}
               >
                 <Input placeholder="请输入" {...commonProps}/>
               </FormItem>
@@ -187,14 +187,14 @@ const CreateForm: React.FC<CreateFormProps> = props => {
               <FormItem
                 label="手机号"
                 name="tel"
-                rules={[{required: true}]}
+                rules={[{required: true, message: '手机号!'}]}
               >
                 <Input placeholder="请输入" {...commonProps}/>
               </FormItem>
               <FormItem
                 label="邮箱"
                 name="email"
-                rules={[{required: true,}, {type: 'email'}]}
+                rules={[{required: true, message: '邮箱!'}, {type: 'email', message: '邮箱!'}]}
               >
                 <Input placeholder="请输入" {...commonProps}/>
               </FormItem>
@@ -204,7 +204,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
               <FormItem
                 label="地址"
                 name="addr"
-                rules={[{required: true}]}
+                rules={[{required: true, message: '地址!'}]}
               >
                 <Input placeholder="请输入" {...commonProps}/>
               </FormItem>
