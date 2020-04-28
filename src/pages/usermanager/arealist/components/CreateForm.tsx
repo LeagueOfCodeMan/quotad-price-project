@@ -100,13 +100,22 @@ const CreateForm: React.FC<CreateFormProps> = props => {
           type="info"
         />
         <Row gutter={[8, 8]}>
-          <Col span={24} style={{marginLeft: '-87px'}}>
+          <Col span={12}>
+            <Form.Item
+              label="公司名"
+              name="company"
+              rules={[{required: true, message: '公司名'}]}
+            >
+              <Input placeholder="一级组员同组长" style={{width: 200}}/>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
             <Form.Item
               label="税号"
               name="bill_id"
               rules={[{required: false, message: '税号'}]}
             >
-              <Input placeholder="税号" style={{width: 500}}/>
+              <Input placeholder="税号" style={{width: 200}}/>
             </Form.Item>
           </Col>
         </Row>

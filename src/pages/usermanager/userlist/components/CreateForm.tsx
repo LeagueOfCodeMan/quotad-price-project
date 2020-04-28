@@ -92,6 +92,8 @@ const CreateForm: React.FC<CreateFormProps> = props => {
         onCancel();
       }}
       forceRender
+      okText="确认"
+      cancelText="取消"
     >
 
       <Form form={form}
@@ -108,7 +110,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
                 name="company"
                 rules={[{required: false}]}
               >
-                <Input placeholder="请输入" {...commonProps}/>
+                <Input placeholder="请输入" {...commonProps} disabled/>
               </FormItem>
               <FormItem
                 label="真实姓名"
@@ -140,23 +142,20 @@ const CreateForm: React.FC<CreateFormProps> = props => {
           <>
             <div className={styles.flexSpaceBetween}>
               <FormItem
-                label="地区编码"
+                label="用户所属"
                 name="area"
                 rules={[{required: true, message: '地区编码!'}]}
               >
-                <Select {...commonProps}>
-                  {areaList?.results?.map((item: { id: number; area_name: string; code: string; }) => (
-                    <Option key={item?.id} value={item?.id as ReactText}>{item?.area_name + '-' + item?.code}</Option>
+                <Select
+                  {...commonProps}
+                  style={{width: '437px'}}
+                >
+                  {areaList?.results?.map((item: { id: number; area_name: string; code: string; company: string }) => (
+                    <Option key={item?.id}
+                            value={item?.id as ReactText}>{item?.area_name + '-' + item?.code + '-' + item?.company}</Option>
                   ))}
 
                 </Select>
-              </FormItem>
-              <FormItem
-                label="公司名"
-                name="company"
-                rules={[{required: true, message: '请输入公司名!'}]}
-              >
-                <Input placeholder="请输入" {...commonProps}/>
               </FormItem>
             </div>
 

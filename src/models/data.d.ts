@@ -31,6 +31,7 @@ export interface UserListItem {
   id: number;
   identity: IdentityType;
   username: string;
+  code: string;
   is_superuser: boolean;
   data_joined: Date;
   last_login: Date;
@@ -50,6 +51,7 @@ export interface UserListItem {
     addr: string;
     duty: string;
   }
+  state: 1 | 2; // 1正常 2 冻结
 
   [propNmae: string]: any;
 }
@@ -80,6 +82,7 @@ export interface AreaListItem {
   bill_phone?: string;
   bill_bank?: string;
   bill_account?: string;
+
   [propNmae: string]: any;
 };
 

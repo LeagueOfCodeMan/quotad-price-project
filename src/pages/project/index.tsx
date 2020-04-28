@@ -359,7 +359,7 @@ const ProjectList: FC<BasicListProps> = props => {
                 <div className={styles.listContentWrapper}>
                   <Descriptions column={4} layout="vertical">
                     <Descriptions.Item label={<span style={{color: '#FFFFFF'}}>用户详细信息：</span>} span={4}>
-                      <span style={{color: '#FFFFFF'}}>用户名称： </span><Text style={{color: '#FFFFFF'}}>{user_name}</Text>
+                      <span style={{color: '#FFFFFF'}}>用户名： </span><Text style={{color: '#FFFFFF'}}>{user_name}</Text>
                       <br/>
                       <span style={{color: '#FFFFFF'}}>地址：</span><Text style={{color: '#FFFFFF'}}>{user_addr}</Text>
                       <br/>

@@ -469,7 +469,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
                 })}
               </Descriptions.Item>
               <Descriptions.Item label="用户信息" span={4}>
-                用户名称： <Text style={{color: '#181818'}}>{user_name}</Text>
+                用户： <Text style={{color: '#181818'}}>{user_name}</Text>
                 <Divider type="vertical"/>
                 地址：<Text style={{color: '#181818'}}>{user_addr}</Text>
                 <br/>
@@ -538,10 +538,10 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
         <div style={{border: '1px dashed #dddddd'}}>
           <div style={{textAlign: "center", color: '#1890FF', fontWeight: 'bold', margin: '10px 0'}}>用户信息</div>
           <Form.Item
-            label="用户名称"
+            label="用户"
             name="user_name"
           >
-            <Input placeholder="用户名称" style={{width: 270}}/>
+            <Input placeholder="用户" style={{width: 270}}/>
           </Form.Item>
           <Form.Item
             label="地址"

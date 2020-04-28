@@ -76,10 +76,10 @@ const EditProject: React.FC<EditProjectProps> = props => {
             <div style={{textAlign: "center", color: '#1890FF', fontWeight: 'bold', margin: '10px 0'}}>用户信息</div>
             <div>
               <Form.Item
-                label="用户名称"
+                label="用户"
                 name="user_name"
               >
-                <Input placeholder="用户名称" style={{width: 270}}/>
+                <Input placeholder="用户" style={{width: 270}}/>
               </Form.Item>
               <Form.Item
                 label="地址"

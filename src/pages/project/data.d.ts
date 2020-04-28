@@ -3,6 +3,8 @@ import {ProductBaseListItem} from "@/pages/product/data";
 export interface ProjectListItem {
   id: number;
   username: string;
+  project_id:string;
+  real_name:string; // 填报人
 
   user_name: string; // 用户单位
   user_addr: string;

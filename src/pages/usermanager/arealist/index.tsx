@@ -1,5 +1,6 @@
 import {PlusOutlined} from '@ant-design/icons';
-import {Button, Divider, message, Modal, Typography} from 'antd';
+// @ts-ignore
+import {Button, Divider, message, Modal, Space, Typography} from 'antd';
 import React, {useRef, useState} from 'react';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {connect} from "react-redux";
@@ -71,7 +72,7 @@ const AreaList: React.FC<AreaListItem> = (props) => {
       hideInSearch: true,
       render: (text, record) => {
         return (
-          <div style={{display: 'flex'}}>
+          <Space>
             <div>
               <Text>公司名称：</Text>
               <Text style={{color: '#1890FF'}}>
@@ -108,7 +109,7 @@ const AreaList: React.FC<AreaListItem> = (props) => {
                 {record?.bill_account}
               </Text>
             </div>
-          </div>
+          </Space>
         );
       },
     },

@@ -3,7 +3,6 @@ import {
   Alert,
   Button,
   Col,
-  Descriptions,
   Divider,
   Form,
   Input,
@@ -71,6 +70,7 @@ export interface CreateOrderParams {
   contract_contact: string;
   contract_phone: string;
   product_list: ProductList;
+  label?: 1 | 2; // 1订单  2 合同
   other_list: { pro_type: string; price: string; count: number; }[];
 }
 
@@ -91,6 +91,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [totalPrice, setPrice] = useState<string>("0.00");
   const [add, toggleAdd] = useToggle(false);
+  const [disabled, toggleDisabled] = useToggle(true);
 
   const [form] = Form.useForm();
   const [formRef, setFormRef] = useState<any>();
@@ -110,7 +111,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
           conf_par.push({id: d?.id, count: d?.is_required ? 1 : 0})
         });
         form.setFieldsValue({
-          conf_par: conf_par
+          conf_par: conf_par,
         });
       }, 0)
     }
@@ -176,8 +177,14 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
     setFormVals({...formVals, ...fieldsValue});
 
     if (currentStep < 2) {
-      if (currentStep === 1) {
 
+      if (currentStep === 0) {
+        console.log(current2?.company, fieldsValue?.company);
+        if (_.isEqual(current2?.company, fieldsValue?.company)) {
+          toggleDisabled(true);
+        } else {
+          toggleDisabled(false);
+        }
       }
       forward();
     } else {
@@ -192,10 +199,11 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
           {production: o?.id, count: o?.count, conf_par: _.map(o?.conf_par, d => ({id: d?.id, count: d?.count}))}
         )
       });
+      const label = disabled ? 1 : 2;
       const payload = {
         company, addr, contact, phone,
         bill_id, bill_addr, bill_phone, bill_bank, bill_account,
-        contract_addr, contract_contact, contract_phone, product_list, other_list
+        contract_addr, contract_contact, contract_phone, product_list, other_list, label
       };
       handleUpdate(payload as CreateOrderParams);
     }
@@ -348,8 +356,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
   };
 
   const renderContent = () => {
-    const {project_name, project_desc, user_name, user_addr, user_iphone, user_contact}
-      = current2 as ProjectListItem;
+
     if (currentStep === 1) {
       return (
         <>
@@ -645,18 +652,6 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
       return (
         <>
           <div>
-            <Row gutter={[8, 8]}>
-              <Col span={24} style={{marginLeft: '-28px'}}>
-                <Form.Item
-                  label="甲方单位或公司"
-                  name="company"
-                  rules={[{required: true, message: '甲方单位或公司'}]}
-                >
-                  <Input placeholder="项目名称" style={{width: 425}}/>
-                </Form.Item>
-              </Col>
-            </Row>
-
             <Alert
               message="收货信息"
               type="info"
@@ -666,7 +661,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
                 <Form.Item
                   label="交货地址"
                   name="addr"
-                  rules={[{required: true, message: '交货地址'}]}
+                  rules={[{required: false, message: '交货地址'}]}
                 >
                   <Input placeholder="交货地址" style={{width: 467}}/>
                 </Form.Item>
@@ -677,7 +672,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
                 <Form.Item
                   label="联系人"
                   name="contact"
-                  rules={[{required: true, message: '联系人'}]}
+                  rules={[{required: false, message: '联系人'}]}
                 >
                   <Input placeholder="联系人" style={{width: 200}}/>
                 </Form.Item>
@@ -686,7 +681,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
                 <Form.Item
                   label="电话"
                   name="phone"
-                  rules={[{required: true, message: '电话'}]}
+                  rules={[{required: false, message: '电话'}]}
                 >
                   <Input placeholder="电话" style={{width: 200}}/>
                 </Form.Item>
@@ -701,9 +696,9 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
                 <Form.Item
                   label="税号"
                   name="bill_id"
-                  rules={[{required: true, message: '税号'}]}
+                  rules={[{required: false, message: '税号'}]}
                 >
-                  <Input placeholder="税号" style={{width: 481}}/>
+                  <Input placeholder="税号" style={{width: 481}} disabled={disabled}/>
                 </Form.Item>
               </Col>
             </Row>
@@ -712,18 +707,18 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
                 <Form.Item
                   label="地址"
                   name="bill_addr"
-                  rules={[{required: true, message: '地址'}]}
+                  rules={[{required: false, message: '地址'}]}
                 >
-                  <Input placeholder="地址" style={{width: 200}}/>
+                  <Input placeholder="地址" style={{width: 200}} disabled={disabled}/>
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
                   label="电话"
                   name="bill_phone"
-                  rules={[{required: true, message: '电话'}]}
+                  rules={[{required: false, message: '电话'}]}
                 >
-                  <Input placeholder="电话" style={{width: 200}}/>
+                  <Input placeholder="电话" style={{width: 200}} disabled={disabled}/>
                 </Form.Item>
               </Col>
             </Row>
@@ -732,9 +727,9 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
                 <Form.Item
                   label="开户行"
                   name="bill_bank"
-                  rules={[{required: true, message: '开户行'}]}
+                  rules={[{required: false, message: '开户行'}]}
                 >
-                  <Input placeholder="开户行" style={{width: 200}}/>
+                  <Input placeholder="开户行" style={{width: 200}} disabled={disabled}/>
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -742,9 +737,9 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
                 <Form.Item
                   label="账号"
                   name="bill_account"
-                  rules={[{required: true, message: '账号'}]}
+                  rules={[{required: false, message: '账号'}]}
                 >
-                  <Input placeholder="账号" style={{width: 200}}/>
+                  <Input placeholder="账号" style={{width: 200}} disabled={disabled}/>
                 </Form.Item>
               </Col>
             </Row>
@@ -757,7 +752,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
                 <Form.Item
                   label="地址"
                   name="contract_addr"
-                  rules={[{required: true, message: '地址'}]}
+                  rules={[{required: false, message: '地址'}]}
                 >
                   <Input placeholder="地址" style={{width: 480}}/>
                 </Form.Item>
@@ -769,7 +764,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
                 <Form.Item
                   label="联系人"
                   name="contract_contact"
-                  rules={[{required: true, message: '联系人'}]}
+                  rules={[{required: false, message: '联系人'}]}
                 >
                   <Input placeholder="联系人" style={{width: 200}}/>
                 </Form.Item>
@@ -778,7 +773,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
                 <Form.Item
                   label="电话"
                   name="contract_phone"
-                  rules={[{required: true, message: '电话'}]}
+                  rules={[{required: false, message: '电话'}]}
                 >
                   <Input placeholder="电话" style={{width: 200}}/>
                 </Form.Item>
@@ -790,30 +785,54 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
     }
     return (
       <>
-        <Alert message="项目信息" type="info" style={{marginBottom: '10px'}}/>
-        <div className={styles.listContentWrapper}>
-          <Descriptions column={4} layout="vertical">
-            <Descriptions.Item label="项目名称" span={2}>
-              <Text style={{color: '#181818'}}>{project_name}</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="项目描述" span={2}>
-              {project_desc?.split("\n")?.map((o, i) => {
-                return (
-                  <div key={i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
-                )
-              })}
-            </Descriptions.Item>
-            <Descriptions.Item label="用户信息" span={4}>
-              用户名称： <Text style={{color: '#181818'}}>{user_name || ''}</Text>
-              <Divider type="vertical"/>
-              地址：<Text style={{color: '#181818'}}>{user_addr || ''}</Text>
-              <br/>
-              电话：<Text style={{color: '#181818'}}>{user_iphone || ''}</Text>
-              <Divider type="vertical"/>
-              联系人：<Text style={{color: '#181818'}}>{user_contact || ''}</Text>
-            </Descriptions.Item>
-          </Descriptions>
-        </div>
+        <>
+          <div>
+            <Alert
+              message="项目基础信息(修改公司名称将走合同形式)"
+              type="info"
+            />
+            <Row gutter={[8, 8]}>
+              <Col span={12}>
+                <Form.Item
+                  label="项目ID"
+                  name="project_id"
+                  rules={[{required: true, message: '项目ID'}]}
+                >
+                  <Input placeholder="项目名称" disabled style={{width: '180px'}}/>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label="填报人"
+                  name="real_name"
+                  rules={[{required: true, message: '填报人'}]}
+                >
+                  <Input placeholder="项目名称" disabled style={{width: '180px'}}/>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={[8, 8]}>
+              <Col span={12}>
+                <Form.Item
+                  label="项目名称"
+                  name="project_name"
+                  rules={[{required: true, message: '项目名称'}]}
+                >
+                  <Input placeholder="项目名称" disabled style={{width: '180px'}}/>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label="公司名称"
+                  name="company"
+                  rules={[{required: true, message: '公司名称'}]}
+                >
+                  <Input placeholder="公司名称" style={{width: '180px'}}/>
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+        </>
       </>
     );
   };
@@ -892,6 +911,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
         {...formLayout}
         form={form}
         ref={(ref) => setFormRef(ref)}
+        initialValues={{...current2}}
       >
         {renderContent()}
       </Form>

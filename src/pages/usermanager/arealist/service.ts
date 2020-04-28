@@ -30,3 +30,4 @@ export async function deleteArea(params?: { id: number }) {
 
 
 
+

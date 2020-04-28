@@ -1,5 +1,5 @@
 import {PlusOutlined} from '@ant-design/icons';
-import {Button, Divider, message, Modal} from 'antd';
+import {Button, Divider, message, Modal, Switch} from 'antd';
 import React, {useEffect, useRef, useState} from 'react';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import _ from 'lodash';
@@ -11,7 +11,7 @@ import {connect} from "react-redux";
 import {UserListModalState} from "src/pages/usermanager/userlist/model";
 import {ColumnsState, RequestData} from "@ant-design/pro-table/es";
 import {UserModelState} from "@/models/user";
-import {DeleteTwoTone, EditTwoTone, ExclamationCircleOutlined} from "@ant-design/icons/lib";
+import {EditTwoTone, ExclamationCircleOutlined} from "@ant-design/icons/lib";
 import ValidatePassword from "@/components/ValidatePassword";
 import {testPassword} from "@/services/user";
 import {addIcontains, ResultType, ValidatePwdResult} from "@/utils/utils";
@@ -55,7 +55,8 @@ interface UserListProps {
 }
 
 enum ValidateType {
-  DELETE_URL = 'DELETE_URL',
+  DELETE = 'DELETE',
+  RECOVER = 'RECOVER',
 }
 
 const UserList: React.FC<UserListProps> = (props) => {
@@ -164,13 +165,20 @@ const UserList: React.FC<UserListProps> = (props) => {
               handleModalVisible(true);
             }}/>
           <Divider type="vertical"/>
-          <DeleteTwoTone
-            twoToneColor="#eb2f96"
-            onClick={() => {
-              setValidateType(ValidateType.DELETE_URL);
-              setEditFormValues(record);
-              setValidateVisible(true);
-            }}
+          <Switch
+            checkedChildren="正常"
+            unCheckedChildren="冻结"
+            checked={record?.state === 1}
+            onClick={
+              (checked) => {
+                if (checked) {
+                  setValidateType(ValidateType.RECOVER);
+                } else {
+                  setValidateType(ValidateType.DELETE);
+                }
+                setEditFormValues(record);
+                setValidateVisible(true);
+              }}
           />
         </>
       ),
@@ -201,24 +209,23 @@ const UserList: React.FC<UserListProps> = (props) => {
 
   const validatePasswordSuccessToDo = () => {
     const {id} = editFormValues as UserListItem;
-    if (validateType === ValidateType.DELETE_URL) {
-      const hide = () => {
-        message.loading('正在删除')
-      };
+    let state = validateType === ValidateType.DELETE;
+    if (state || validateType === ValidateType.RECOVER) {
+      const titleContent = state ? '冻结用户' : '解封用户';
       confirm({
-        title: '删除用户',
+        title: titleContent,
         icon: <ExclamationCircleOutlined/>,
-        content: '请确认是否删除用户',
+        content: `请确认是否${titleContent}`,
         okText: '确认',
         okType: 'danger',
         cancelText: '取消',
         onOk: async () => {
           const result: ResultType | string = await deleteUser({id});
-          const success: boolean = new ValidatePwdResult(result).validate('删除成功', null, hide);
+          const success: boolean = new ValidatePwdResult(result).validate('操作成功', null, undefined);
           // 刷新数据
           if (actionRef.current && success) {
-            console.log(actionRef);
-            actionRef.current.reset();
+            console.log('刷新')
+            actionRef.current.reload();
           }
         },
         onCancel() {

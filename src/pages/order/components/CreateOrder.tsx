@@ -722,7 +722,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
               })}
             </Descriptions.Item>
             <Descriptions.Item label="用户信息" span={4}>
-              用户名称： <Text style={{color: '#181818'}}>{user_name || ''}</Text>
+              用户： <Text style={{color: '#181818'}}>{user_name || ''}</Text>
               <Divider type="vertical"/>
               地址：<Text style={{color: '#181818'}}>{user_addr || ''}</Text>
               <br/>
