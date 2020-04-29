@@ -788,7 +788,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
         <>
           <div>
             <Alert
-              message="项目基础信息(修改公司名称将走合同形式)"
+              message="项目基础信息(默认订单模式，修改公司名称将走合同形式)"
               type="info"
             />
             <Row gutter={[8, 8]}>
