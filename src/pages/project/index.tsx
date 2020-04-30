@@ -8,7 +8,6 @@ import styles from './style.less';
 import ValidatePassword from '../../components/ValidatePassword/index';
 import {ExclamationCircleOutlined, PlusOutlined,} from '@ant-design/icons/lib';
 import _ from 'lodash';
-import {useEffectOnce} from 'react-use';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
 import {CurrentChildren, CurrentChildrenResults} from "@/models/data";
@@ -233,7 +232,7 @@ const ProjectList: FC<BasicListProps> = props => {
               项目描述：
               {project_desc?.split("\n")?.map((o, i) => {
                 return (
-                  <div key={i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+                  <div key={id + '-' + i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
                 )
               })}
             </span>

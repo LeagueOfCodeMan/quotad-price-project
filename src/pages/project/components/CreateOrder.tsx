@@ -188,12 +188,14 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
       }
       forward();
     } else {
+      const {company} = formVals;
       const {
-        company, addr, contact, phone,
+         addr, contact, phone,
         bill_id, bill_addr, bill_phone, bill_bank, bill_account,
         contract_addr, contract_contact, contract_phone,
       } = fieldsValue;
       const {other_list} = formVals;
+
       const product_list = _.map(dataSource, o => {
         return (
           {production: o?.id, count: o?.count, conf_par: _.map(o?.conf_par, d => ({id: d?.id, count: d?.count}))}

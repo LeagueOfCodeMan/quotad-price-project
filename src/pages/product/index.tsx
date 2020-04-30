@@ -1,22 +1,6 @@
-import React, {FC, useEffect, useRef, useState} from 'react';
-import {DownOutlined, PlusOutlined} from '@ant-design/icons';
-import {
-  Avatar,
-  Button,
-  Card,
-  Col,
-  Descriptions,
-  Dropdown,
-  Input,
-  List,
-  Menu,
-  message,
-  Modal,
-  Row,
-  Typography,
-} from 'antd';
-
-import {findDOMNode} from 'react-dom';
+import React, {FC, useEffect, useState} from 'react';
+import {PlusOutlined} from '@ant-design/icons';
+import {Avatar, Button, Card, Col, Descriptions, Input, List, message, Modal, Row, Typography,} from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import OperationModal from './components/OperationModal';
@@ -24,7 +8,8 @@ import styles from './style.less';
 import {
   addProduct,
   deleteProduct,
-  modifyProductSecondPrice, queryProductList,
+  modifyProductSecondPrice,
+  queryProductList,
   queryUsersByProduct,
   updateProduct
 } from "./service";
@@ -67,19 +52,24 @@ const Info: FC<{
   title: React.ReactNode;
   value: React.ReactNode;
   bordered?: boolean;
-}> = ({title, value, bordered}) => (
-  <div className={styles.headerInfo}>
-    <span>{title}</span>
-    <p>{value}</p>
-    {bordered && <em/>}
-  </div>
-);
+  reloadList: (value: number) => void;
+  active: number;
+  id: number;
+}> = ({title, value, bordered, reloadList, active, id}) => {
+  return (
+    <div className={styles.headerInfo}>
+      <span>{title}</span>
+      <p style={{color: active === id ? "#f7ba42" : "#1890FF",cursor:'pointer'}} onClick={() => reloadList(id)}>{value}</p>
+      {bordered && <em/>}
+    </div>
+  );
+}
 
 const ListContent = ({
                        data: {
                          desc, leader_price, second_price, member_price,
                          genre, id
-                       }, currentUser: {identity}
+                       },
                      }: {
   data: ProductBaseListItem; currentUser: CurrentUser;
 }) => {
@@ -118,7 +108,6 @@ interface ListSearchParams {
 }
 
 export const Product: FC<BasicListProps> = props => {
-  const addBtn = useRef(null);
   const {
     loading,
     dispatch,
@@ -135,6 +124,7 @@ export const Product: FC<BasicListProps> = props => {
   });
   const [list, setList] = useState<UsersByProductType[]>([]);
   const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
+  const [active, changeActive] = useState<number>(0);
 
   const {results = [], count = 0} = productList;
   const {identity} = currentUser;
@@ -159,6 +149,7 @@ export const Product: FC<BasicListProps> = props => {
     showQuickJumper: true,
     pageSize: 5,
     total: count,
+    current: listParams?.current,
     onChange: (page: number, pageSize: number) => {
       setListParams({...listParams, current: page, pageSize});
     }
@@ -177,14 +168,6 @@ export const Product: FC<BasicListProps> = props => {
     setVisible(true);
   };
 
-  const editAndDelete = (key: string, currentItem: ProductBaseListItem) => {
-    if (key === 'delete') {
-      setValidateType(ValidateType.DELETE_CONFIG);
-    }
-    setCurrent(currentItem);
-    setValidateVisible(true);
-  };
-
   // TODO 只要组长才需要发布
   const extraContent = (
     <div className={styles.extraContent}>
@@ -194,39 +177,13 @@ export const Product: FC<BasicListProps> = props => {
     </div>
   );
 
-  const MoreBtn: React.FC<{
-    item: ProductBaseListItem;
-  }> = ({item}) => (
-    <Dropdown
-      overlay={
-        <Menu onClick={({key}) => editAndDelete(key, item)}>
-          <Menu.Item key="delete">删除</Menu.Item>
-        </Menu>
-      }
-    >
-      <a>
-        更多 <DownOutlined/>
-      </a>
-    </Dropdown>
-  );
-
-  const setAddBtnblur = () => {
-    if (addBtn.current) {
-      // eslint-disable-next-line react/no-find-dom-node
-      const addBtnDom = findDOMNode(addBtn.current) as HTMLButtonElement;
-      setTimeout(() => addBtnDom.blur(), 0);
-    }
-  };
-
   const handleDone = () => {
-    setAddBtnblur();
     setDone(false);
     setVisible(false);
     setCurrent({});
   };
 
   const handleCancel = () => {
-    setAddBtnblur();
     setVisible(false);
     setCurrent({});
   };
@@ -242,7 +199,6 @@ export const Product: FC<BasicListProps> = props => {
     }
     // 成功则回调
     if (promise?.id) {
-      setAddBtnblur();
       setDone(true);
       callback(promise);
       reloadList();
@@ -314,7 +270,18 @@ export const Product: FC<BasicListProps> = props => {
           >
             编辑
           </a>,
-          <MoreBtn key="more" item={item}/>,
+          <a
+            key="delete"
+            style={{color: 'red'}}
+            onClick={e => {
+              e.preventDefault();
+              setValidateType(ValidateType.DELETE_CONFIG);
+              setCurrent(item);
+              setValidateVisible(true);
+            }}
+          >
+            删除
+          </a>,
         ];
       case 2:
         return [
@@ -333,15 +300,39 @@ export const Product: FC<BasicListProps> = props => {
     return [];
   };
 
+  const product = [
+    {label: '全部', key: 0},
+    {label: '一体机', key: 1},
+    {label: '云桶', key: 2},
+    {label: '公有云部署', key: 3},
+    {label: '私有云部署', key: 4},
+    {label: '传统环境部署', key: 5},
+    {label: '一体机配件', key: 6},
+    {label: '服务', key: 7},
+    {label: '其他', key: 8},
+  ];
+
   return (
     <div>
       <div className={styles.standardList}>
         <Card bordered={false}>
           <Row>
-            {(productType(0) as ProductType[]).map(d => {
+            {product.map(d => {
               return (
                 <Col flex={80} key={d.key}>
-                  <Info title={d.label} value={countStatistics?.[d.key] || 0} bordered/>
+                  <Info
+                    id={d.key}
+                    active={active}
+                    reloadList={(index: number) => {
+                      changeActive(index);
+                      if (index === 0) {
+                        setListParams({..._.omit(listParams, 'genre__icontains'),})
+                      } else {
+                        setListParams({...listParams, genre__icontains: index})
+                      }
+                    }}
+                    title={d.label}
+                    value={countStatistics?.[d.key] || 0} bordered/>
                 </Col>
               )
             })}
@@ -360,7 +351,6 @@ export const Product: FC<BasicListProps> = props => {
               type="dashed"
               style={{width: '100%', marginBottom: 8}}
               onClick={showModal}
-              ref={addBtn}
             >
               <PlusOutlined/>
               添加

@@ -311,7 +311,7 @@ const OrderList: FC<BasicListProps> = props => {
 
   const columnsGenerate = () => {
     const template: ProColumns<OrderListItem>[] = [];
-    const columns: ProColumns<OrderListItem>[] = [
+    const commonMessage: ProColumns<OrderListItem>[] = [
       {
         title: '状态',
         dataIndex: 'order_status',
@@ -324,44 +324,44 @@ const OrderList: FC<BasicListProps> = props => {
           4: {text: '已完成', status: 'Success'},
         },
       },
-    ]
-    const commonMessage: ProColumns<OrderListItem>[] = [
       {
-        title: '项目信息',
-        dataIndex: 'create_user',
-        key: 'create_user',
+        title: '订单ID',
+        dataIndex: 'id',
+        key: 'id',
+        width: 70,
         hideInSearch: true,
+        render: (text) => {
+          return (
+            <div style={{textAlign: 'center'}}>
+              {text}
+            </div>
+
+          )
+        }
+      },
+      {
+        title: '订单类型',
+        dataIndex: 'label',
+        key: 'label',
+        width: 100,
+        valueEnum: {
+          1: {text: '订单形式'},
+          2: {text: '合同形式'},
+        },
+      },
+      {
+        title: '项目编号',
+        dataIndex: 'order_number',
+        key: 'order_number',
         render: (text, record) => {
           return (
-            <div>
-              <Tooltip title={
-                record?.project_desc?.split("\n")?.map((o, i) => {
-                  return (
-                    <div key={i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
-                  )
-                })
-              }>
-                <div>
-                  <div>
-                    <Text>项目创建人：</Text>
-                    <Text style={{color: '#1890FF'}}>
-                      {text}
-                    </Text>
-                  </div>
-                  <div>
-                    <Text>项目名称：</Text>
-                    <Text style={{color: '#1890FF'}}>
-                      {record?.project_name}
-                    </Text>
-                  </div>
-                  <Button type="link" onClick={() => {
-                    setDetails([...details, record])
-                  }}>
-                    更多详情
-                  </Button>
-                </div>
-              </Tooltip>
-
+            <div style={{display: "flex"}}>
+              <span style={{margin: 'auto 0'}}>{text}</span>
+              <Button type="link" onClick={() => {
+                setDetails([...details, record])
+              }}>
+                点击更多详情
+              </Button>
             </div>
 
           )
@@ -580,7 +580,7 @@ const OrderList: FC<BasicListProps> = props => {
             template2.push(print, upload);
           }
           return (
-            <div style={{display: 'flex', flexDirection: 'column'}}>
+            <div style={{display: 'flex'}}>
               {template2}
             </div>
           );
@@ -588,9 +588,9 @@ const OrderList: FC<BasicListProps> = props => {
       },
     ];
     if (identity === 1) {
-      return template.concat(columns, commonMessage, operation);
+      return template.concat(commonMessage, operation);
     } else {
-      return template.concat(columns, commonMessage);
+      return template.concat(commonMessage);
     }
   }
 

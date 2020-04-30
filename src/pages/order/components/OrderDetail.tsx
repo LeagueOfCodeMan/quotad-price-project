@@ -400,16 +400,6 @@ const OrderDetail: FC<BasicListProps> = props => {
   const [listParams, setListParams] = useState<ListSearchParams>({
     current: 1, pageSize: 1
   });
-  console.log(current);
-  const paginationProps = {
-    showQuickJumper: true,
-    pageSize: 1,
-    total: 1,
-    size: 'small',
-    onChange: (page: number, pageSize: number) => {
-      setListParams({...listParams, current: page, pageSize});
-    }
-  };
 
   return (
     <div>

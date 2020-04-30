@@ -5,11 +5,11 @@ export interface OrderListItem {
   area: string;
   create_user: string;
   order_user: string;
-  leader_company: string;
+  order_number: string; // 项目编号
   project_name: string;
   project_desc: string;
   create_time: string;
-
+  label: 1 | 2; // 1 订单 2 合同
   company?: string;
   addr?: string;
   contact?: string;
