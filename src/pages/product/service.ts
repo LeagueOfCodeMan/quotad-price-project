@@ -29,8 +29,8 @@ export async function addProduct(params: ProductBaseListItem) {
 }
 
 export async function updateProduct(params: { id: number, data: ParamsType }) {
-  return request('/api/product/' + params.id, {
-    method: 'PUT',
+  return request('/api/product/' + params.id+'/conf_list', {
+    method: 'POST',
     data: params.data,
   });
 }

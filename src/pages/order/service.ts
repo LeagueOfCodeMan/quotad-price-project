@@ -28,6 +28,7 @@ export async function queryOrder(params: ParamsType) {
   });
 }
 
+
 export async function createProject(params: CreateProjectParams) {
   return request('/api/project', {
     method: 'POST',
@@ -35,16 +36,10 @@ export async function createProject(params: CreateProjectParams) {
   });
 }
 
-export async function modifyProductList(params: { id: number; data: { product_list: ProductList; } }) {
-  return request('/api/project/' + params.id + '/mod_porduct_list', {
+// oper_code 1 同意  2 拒绝 3 完成
+export async function changeOrderStatus(params: { id: number; data: { oper_code: number } }) {
+  return request('/api/order/' + params?.id + '/oper_order', {
     method: 'POST',
-    data: params.data,
-  });
-}
-
-export async function modifyProject(params: { id: number; data: CreateProjectParams }) {
-  return request('/api/project/' + params.id, {
-    method: 'PUT',
     data: params.data,
   });
 }

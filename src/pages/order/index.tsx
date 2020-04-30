@@ -1,5 +1,5 @@
 import React, {FC, useRef, useState} from 'react';
-import {Button, Divider, message, Modal, Tooltip, TreeSelect, Typography,} from 'antd';
+import {Button, Divider, message, Modal, TreeSelect, Typography, Descriptions} from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import {ProjectStateType} from './model';
@@ -8,22 +8,16 @@ import styles from './style.less';
 import ValidatePassword from '../../components/ValidatePassword/index';
 import {ExclamationCircleOutlined, PlusOutlined,} from '@ant-design/icons/lib';
 import _ from 'lodash';
-import {deleteProduct} from '../product/service';
 import {useEffectOnce} from 'react-use';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
 import {CurrentChildren, CurrentChildrenResults} from "@/models/data";
 import {ProjectListItem} from "@/pages/project/data";
-import {createOrder, createProject, modifyProductList, modifyProject} from "@/pages/project/service";
-import CreateForm from "@/pages/project/components/CreateForm";
-import EditProject from "@/pages/project/components/EditProject";
 import {CurrentUser, UserModelState} from "@/models/user";
 import {addKeyToEachArray, ResultType, ValidatePwdResult} from "@/utils/utils";
 import {testPassword} from "@/services/user";
-import EditProductList from "@/pages/project/components/EditProductList";
-import CreateOrder from "@/pages/project/components/CreateOrder";
 import {OrderListItem} from "@/pages/order/data";
-import {queryOrder} from "@/pages/order/service";
+import {changeOrderStatus, queryOrder} from "@/pages/order/service";
 import {PaneDetail, TabsList} from "@/pages/order/components/TabsList";
 import OrderDetail from "@/pages/order/components/OrderDetail";
 
@@ -41,7 +35,6 @@ interface BasicListProps {
 
 enum ValidateType {
   CONFIRM = 'CONFIRM',
-  REFUSE = 'REFUSE',
   TERMINATION = 'TERMINATION',
   COMPLETE = 'COMPLETE',
 }
@@ -184,7 +177,7 @@ const OrderList: FC<BasicListProps> = props => {
   const [orderVisible, setOrderVisible] = useState<boolean>(false);
   const [editVisible, setEditVisible] = useState<boolean>(false);
   const [editVisible2, setEditVisible2] = useState<boolean>(false);
-  const [current, setCurrent] = useState<NotRequired<ProjectListItem>>({});
+  const [current, setCurrent] = useState<NotRequired<OrderListItem>>({});
   const [details, setDetails] = useState<OrderListItem[]>([]);
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>('');
@@ -214,36 +207,85 @@ const OrderList: FC<BasicListProps> = props => {
   };
 
   const validatePasswordSuccessToDo = () => {
-    const {id, pro_type, desc, mark} = current as ProjectListItem;
-    if (validateType === ValidateType.REFUSE) {
-      const hide = () => {
-        message.loading('正在删除');
-      };
+    const {id, create_user, order_leader_quota, order_leader_price, company, order_number, project_name, order_user} = current as OrderListItem;
+    let oper_code: number = 0;
+    let operation: string = '';
+    switch (validateType) {
+      case ValidateType.CONFIRM:
+        oper_code = 1;
+        operation = '同意操作';
+        break;
+      case ValidateType.TERMINATION:
+        oper_code = 2;
+        operation = '终止操作';
+        break;
+      case ValidateType.COMPLETE:
+        oper_code = 3;
+        operation = '完成操作';
+        break;
+    }
+    if (!!oper_code) {
       confirm({
-        title: '删除产品',
+        title: `订单-${operation}`,
         icon: <ExclamationCircleOutlined/>,
         content: (
-          <div style={{display: 'flex', flexDirection: 'column'}}>
-            <span>
-              产品名：<span>{pro_type}</span>
-            </span>
-            <span>
-              备注：<span>{mark}</span>
-            </span>
-            <span>
-              描述：<span>{desc}</span>
-            </span>
+          <div>
+            <Descriptions bordered column={4} size="small">
+              <Descriptions.Item label="订单ID" span={1}>
+                <Text style={{color: '#FF6A00'}}>{id}</Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="订单总价" span={3}>
+                <>
+                  <Text style={{color: '#1890FF'}}>销售总价：</Text>
+                  <Text style={{color: '#FF6A00'}}>{'¥' + order_leader_quota}</Text>
+                  <br/>
+                  {
+                    order_leader_price ?
+                      <>
+                        <Text style={{color: '#1890FF'}}>成交总价：</Text>
+                        <Text style={{color: '#FF6A00'}}>{'¥' + order_leader_price}</Text>
+                      </> : null
+                  }
+                </>
+              </Descriptions.Item>
+              <Descriptions.Item label="项目基础信息" span={4}>
+                <div>
+                  <Text>合同方：</Text>
+                  <Text style={{color: '#FF6A00'}}>{company}</Text>
+                </div>
+                <div style={{display: 'flex'}}>
+                  <div style={{marginRight: '5px'}}>
+                    <Text>项目名称：</Text>
+                    <Text>{project_name}</Text>
+                    <br/>
+                    <Text>项目编号：</Text>
+                    <Text>{order_number}</Text>
+                  </div>
+                  <div>
+                    <Text>下单人：</Text>
+                    <Text>{order_user}</Text>
+                    <br/>
+                    <Text>填报人：</Text>
+                    <Text>{create_user}</Text>
+                  </div>
+                </div>
+              </Descriptions.Item>
+            </Descriptions>
           </div>
+
         ),
         okText: '确认',
         okType: 'danger',
         cancelText: '取消',
+        width: 620,
         onOk: async () => {
-          const result: ResultType | string = await deleteProduct({id});
-          const success: boolean = new ValidatePwdResult(result).validate('删除成功', null, hide);
+          const result: ResultType | string = await changeOrderStatus({id, data: {oper_code}});
+          const success: boolean = new ValidatePwdResult(result).validate('操作成功', null, undefined);
           // 刷新数据
           if (success) {
-            setListParams({...listParams, current: 1});
+            if (actionRef.current) {
+              actionRef.current.reload();
+            }
             setCurrent({});
           }
         },
@@ -519,31 +561,14 @@ const OrderList: FC<BasicListProps> = props => {
           const confirm = (<Button
             type="link"
             key="confirm"
-            onClick={() => {
-              setValidateType(ValidateType.CONFIRM);
-              setValidateVisible(true);
-            }}
+            onClick={() => operationClick(record, ValidateType.CONFIRM)}
           >
             同意
-          </Button>);
-          const refuse = (<Button
-            type="link"
-            key="refuse"
-            danger
-            onClick={() => {
-              setValidateType(ValidateType.REFUSE);
-              setValidateVisible(true);
-            }}
-          >
-            拒绝
           </Button>);
           const complete = (<Button
             key="remove"
             type="link"
-            onClick={() => {
-              setValidateType(ValidateType.COMPLETE);
-              setValidateVisible(true);
-            }}
+            onClick={() => operationClick(record, ValidateType.COMPLETE)}
           >
             完成
           </Button>);
@@ -551,10 +576,7 @@ const OrderList: FC<BasicListProps> = props => {
             type="link"
             danger
             key="termination"
-            onClick={() => {
-              setValidateType(ValidateType.TERMINATION);
-              setValidateVisible(true);
-            }}
+            onClick={() => operationClick(record, ValidateType.TERMINATION)}
           >
             终止
           </Button>);
@@ -575,7 +597,7 @@ const OrderList: FC<BasicListProps> = props => {
             上传合同
           </Button>);
           if (record?.order_status === 1) {
-            template2.push(confirm, refuse, complete, termination);
+            template2.push(confirm, termination, complete);
           } else if (record?.order_status === 3) {
             template2.push(print, upload);
           }
@@ -594,14 +616,10 @@ const OrderList: FC<BasicListProps> = props => {
     }
   }
 
-
-  const addDividerToActions = (template: JSX.Element[]) => {
-    return template?.map((item, index) => {
-      if (index === template?.length - 1) {
-        return (<>{item}</>);
-      }
-      return (<>{item}<Divider type="vertical"/></>);
-    });
+  const operationClick = (item: OrderListItem, type: ValidateType) => {
+    setCurrent(item);
+    setValidateType(type);
+    setValidateVisible(true);
   };
 
   const panesGenerate = () => {
@@ -676,82 +694,6 @@ const OrderList: FC<BasicListProps> = props => {
           setValidateVisible(false);
         }}
       />
-      {visible ? (
-        <CreateForm
-          onSubmit={async value => {
-            const response = await createProject(value);
-            const success = new ValidatePwdResult(response).validate('创建成功', null, undefined);
-            if (success) {
-              setVisible(false);
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
-          }}
-          onCancel={() => {
-            setVisible(false);
-          }}
-          updateModalVisible={visible}
-          currentUser={currentUser}
-        />
-      ) : null}
-      {orderVisible ? (
-        <CreateOrder
-          onSubmit={async value => {
-            const response = await createOrder({id: current?.id as number, data: value});
-            const success = new ValidatePwdResult(response).validate('创建成功', null, undefined);
-            if (success) {
-              setOrderVisible(false);
-            }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }}
-          onCancel={() => {
-            setOrderVisible(false);
-          }}
-          updateModalVisible={orderVisible}
-          current={current}
-          currentUser={currentUser}
-        />
-      ) : null}
-      <EditProject
-        onSubmit={async value => {
-          const response = await modifyProject({id: current?.id as number, data: value});
-          const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
-          if (success) {
-            setEditVisible(false);
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          setEditVisible(false);
-        }}
-        updateModalVisible={editVisible}
-        current={current}
-      />
-      {editVisible2 ? (
-        <EditProductList
-          onSubmit={async value => {
-            const response = await modifyProductList({id: current?.id as number, data: {product_list: value}});
-            const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
-            if (success) {
-              setEditVisible2(false);
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
-          }}
-          onCancel={() => {
-            setEditVisible2(false);
-          }}
-          updateModalVisible={editVisible2}
-          current={current}
-          currentUser={currentUser}
-        />
-      ) : null}
     </div>
   );
 };

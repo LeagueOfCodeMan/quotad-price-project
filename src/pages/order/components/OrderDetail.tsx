@@ -1,7 +1,6 @@
 import React, {FC, useRef, useState} from 'react';
-import {Alert, Avatar, Card, Descriptions, Input, Modal, Table, Tag, Typography, List} from 'antd';
+import {Alert, Avatar, Card, Descriptions, Input, Modal, Table, Tag, Typography, List, Divider} from 'antd';
 import {CurrentUser} from "@/models/user";
-
 import {productType} from "@/utils/utils";
 import _ from 'lodash';
 import {OrderListItem, OtherListItem} from "@/pages/order/data";
@@ -9,10 +8,9 @@ import styles from '../style.less';
 import {ProductBaseListItem} from "@/pages/product/data";
 import {ColumnsType} from "antd/lib/table";
 import {ProjectProductionInfoItem} from "@/pages/project/data";
-import {PaginationConfig} from "antd/lib/pagination";
+import Ellipsis from "@/components/Ellipsis";
 
-const {Search} = Input;
-const {confirm} = Modal;
+const {Paragraph} = Typography;
 const {Text} = Typography;
 
 interface BasicListProps {
@@ -24,10 +22,21 @@ enum ValidateType {
   DELETE_CONFIG = 'DELETE_CONFIG',
 }
 
-const ListContentWrapper = ({item}: { item: ProjectProductionInfoItem }) => {
-  const {} = item;
+const ListContentWrapper = ({item, order_status}: { item: ProjectProductionInfoItem; order_status: 1 | 2 | 3 | 4 }) => {
+  const onChangeSN = (str) => {
+    console.log('Content change:', str);
+  };
+  const projectDesc = (
+    <p style={{marginBottom: '0'}}>
+      {item?.production?.desc?.split("\n")?.map((o, i) => {
+        return (
+          <span key={i}>{o}<br/></span>
+        )
+      })}
+    </p>
+  );
   return (
-    <Descriptions bordered column={4} size="small">
+    <Descriptions bordered column={5} size="small">
       <Descriptions.Item label="产品图" span={1}>
         <Avatar src={item?.production?.avatar || ''} shape="square"
                 size="large"/>
@@ -41,22 +50,27 @@ const ListContentWrapper = ({item}: { item: ProjectProductionInfoItem }) => {
       <Descriptions.Item label="备注" span={1}>
         <Text style={{color: '#181818'}}>{item?.production?.mark}</Text>
       </Descriptions.Item>
+      <Descriptions.Item label="SN码" span={1}>
+        <Paragraph editable={{onChange: onChangeSN}}>{item?.production?.mark}</Paragraph>
+      </Descriptions.Item>
       <Descriptions.Item label="数量" span={1}>
         <Text style={{color: '#181818'}}>{item?.count}</Text>
       </Descriptions.Item>
       <Descriptions.Item label="采购总价" span={1}>
-        <Text style={{color: '#181818'}}>{item?.leader_quota}</Text>
+        <Text style={{color: '#FF6A00'}}>{'¥ ' + item?.leader_quota}</Text>
       </Descriptions.Item>
-      <Descriptions.Item label="项目描述" span={2}>
-        {item?.production?.desc?.split("\n")?.map((o, i) => {
-          return (
-            <div key={i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
-          )
-        })}
+      <Descriptions.Item label="项目描述" span={3}>
+
+        <Ellipsis tooltip lines={1}>
+          {projectDesc}
+        </Ellipsis>
       </Descriptions.Item>
-      <Descriptions.Item label="附件清单" span={4}>
-        <ListContent conf_par={item?.conf_par}/>
-      </Descriptions.Item>
+      {_.head(item?.conf_par) ?
+        <Descriptions.Item label="附件清单" span={5}>
+          <ListContent conf_par={item?.conf_par}/>
+        </Descriptions.Item> : null
+      }
+
     </Descriptions>
   )
 }
@@ -67,12 +81,11 @@ const ListContent = ({
   conf_par: ProductBaseListItem[];
 }) => {
   const columns: ColumnsType<ProductBaseListItem> = [
-
     {
       title: '产品图',
       dataIndex: 'avatar',
       key: 'avatar',
-      width: 100,
+      width: 50,
       render: (text) => {
         return (
           <div>
@@ -109,7 +122,12 @@ const ListContent = ({
       },
     },
     {
-      title: '采购价格',
+      title: '数量',
+      dataIndex: 'count',
+      key: 'count',
+    },
+    {
+      title: '采购总价',
       dataIndex: 'leader_price',
       key: 'leader_price',
       width: 120,
@@ -152,7 +170,8 @@ const ListContent = ({
   return (
     <div className={styles.listContentWrapper}>
       <Table
-        bordered size="small"
+        showHeader={false}
+        bordered={false} size="small"
         rowKey={record => record?.id}
         columns={columns}
         pagination={false}
@@ -166,8 +185,8 @@ const Content = ({data, currentUser}: {
   data: OrderListItem; currentUser: CurrentUser;
 }) => {
   const {
-    create_user, order_user, area, leader_company,
-    project_name, project_desc, company, order_status,
+    create_user, order_user, id, company, order_number,
+    project_name, project_desc, order_status,
     addr, contact, phone, create_time,
     bill_id, bill_addr, bill_phone, bill_bank, bill_account,
     contract_addr, contract_contact, contract_phone,
@@ -179,13 +198,13 @@ const Content = ({data, currentUser}: {
   let state: JSX.Element;
   switch (order_status) {
     case 1:
-      state = <Tag>待确认</Tag>;
+      state = <Tag color="cyan">待确认</Tag>;
       break;
     case 2:
-      state = <Tag>已确认</Tag>;
+      state = <Tag color="blue">已确认</Tag>;
       break;
     case 3:
-      state = <Tag>已终止</Tag>;
+      state = <Tag color="red">已终止</Tag>;
       break;
     default:
       state = <Tag>已完成</Tag>;
@@ -254,13 +273,13 @@ const Content = ({data, currentUser}: {
         <Descriptions.Item label="订单总价" span={1}>
           <>
             <Text style={{color: '#1890FF'}}>销售总价：</Text>
-            <Text style={{color: '#FF6A00'}}>{order_leader_quota}</Text>
+            <Text style={{color: '#FF6A00'}}>{'¥' + order_leader_quota}</Text>
             <br/>
             {
               order_leader_price ?
                 <>
                   <Text style={{color: '#1890FF'}}>成交总价：</Text>
-                  <Text style={{color: '#FF6A00'}}>{order_leader_price}</Text>
+                  <Text style={{color: '#FF6A00'}}>{'¥' + order_leader_price}</Text>
                 </> : null
             }
           </>
@@ -272,73 +291,75 @@ const Content = ({data, currentUser}: {
           <Text style={{color: '#181818'}}>{state}</Text>
         </Descriptions.Item>
         <Descriptions.Item label="项目基础信息" span={2}>
-          <>
-            <Text style={{color: '#1890FF'}}>项目名称：</Text>
-            <Text style={{color: '#FF6A00'}}>{project_name}</Text>
-            <br/>
-            <Text style={{color: '#1890FF'}}>项目创建人：</Text>
-            <Text style={{color: '#FF6A00'}}>{create_user}</Text>
-            <br/>
-            <Text style={{color: '#1890FF'}}>地区：</Text>
-            <Text style={{color: '#FF6A00'}}>{area}</Text>
-            <br/>
-            <Text style={{color: '#1890FF'}}>组长：</Text>
-            <Text style={{color: '#FF6A00'}}>{order_user}</Text>
-            <br/>
-            <Text style={{color: '#1890FF'}}>组长单位：</Text>
-            <Text style={{color: '#FF6A00'}}>{leader_company}</Text>
-          </>
+          <div style={{display: 'flex'}}>
+            <div style={{marginRight: '5px'}}>
+              <Text>项目名称：</Text>
+              <Text>{project_name}</Text>
+              <br/>
+              <Text>项目编号：</Text>
+              <Text>{order_number}</Text>
+            </div>
+            <div>
+              <Text>下单人：</Text>
+              <Text>{order_user}</Text>
+              <br/>
+              <Text>填报人：</Text>
+              <Text>{create_user}</Text>
+            </div>
+          </div>
         </Descriptions.Item>
         <Descriptions.Item label="项目描述" span={2}>
           {project_desc?.split("\n")?.map((o, i) => {
             return (
-              <div key={i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
+              <div key={id + '-' + i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
             )
           })}
         </Descriptions.Item>
         <Descriptions.Item label="收货信息" span={2}>
           <>
-            <Text style={{color: '#1890FF'}}>收货地址：</Text>
-            <Text style={{color: '#FF6A00'}}>{addr}</Text>
+            <Text>收货地址：</Text>
+            <Text>{addr}</Text>
             <br/>
-            <Text style={{color: '#1890FF'}}>联系人：</Text>
-            <Text style={{color: '#FF6A00'}}>{contact}</Text>
+            <Text>联系人：</Text>
+            <Text>{contact}</Text>
             <br/>
-            <Text style={{color: '#1890FF'}}>联系电话：</Text>
-            <Text style={{color: '#FF6A00'}}>{phone}</Text>
+            <Text>联系电话：</Text>
+            <Text>{phone}</Text>
           </>
         </Descriptions.Item>
         <Descriptions.Item label="开票信息" span={2}>
-          <>
-            <Text style={{color: '#1890FF'}}>名称：</Text>
-            <Text style={{color: '#FF6A00'}}>{company}</Text>
-            <br/>
-            <Text style={{color: '#1890FF'}}>税号：</Text>
-            <Text style={{color: '#FF6A00'}}>{bill_id}</Text>
-            <br/>
-            <Text style={{color: '#1890FF'}}>地址：</Text>
-            <Text style={{color: '#FF6A00'}}>{bill_addr}</Text>
-            <br/>
-            <Text style={{color: '#1890FF'}}>电话：</Text>
-            <Text style={{color: '#FF6A00'}}>{bill_phone}</Text>
-            <br/>
-            <Text style={{color: '#1890FF'}}>开户行：</Text>
-            <Text style={{color: '#FF6A00'}}>{bill_bank}</Text>
-            <br/>
-            <Text style={{color: '#1890FF'}}>账号：</Text>
-            <Text style={{color: '#FF6A00'}}>{bill_account}</Text>
-          </>
+          <div>
+            <Text>税号：</Text>
+            <Text>{bill_id}</Text>
+          </div>
+          <div style={{display: 'flex'}}>
+            <div style={{marginRight: '5px'}}>
+              <Text>地址：</Text>
+              <Text>{bill_addr}</Text>
+              <br/>
+              <Text>电话：</Text>
+              <Text>{bill_phone}</Text>
+              <br/>
+            </div>
+            <div>
+              <Text>开户行：</Text>
+              <Text>{bill_bank}</Text>
+              <br/>
+              <Text>账号：</Text>
+              <Text>{bill_account}</Text>
+            </div>
+          </div>
         </Descriptions.Item>
         <Descriptions.Item label="发票、合同收件信息" span={2}>
           <>
-            <Text style={{color: '#1890FF'}}>收件地址：</Text>
-            <Text style={{color: '#FF6A00'}}>{contract_addr}</Text>
-            <br/>
-            <Text style={{color: '#1890FF'}}>联系人：</Text>
-            <Text style={{color: '#FF6A00'}}>{contract_contact}</Text>
-            <br/>
-            <Text style={{color: '#1890FF'}}>电话：</Text>
-            <Text style={{color: '#FF6A00'}}>{contract_phone}</Text>
+            <Text>收件地址：</Text>
+            <Text>{contract_addr}</Text>
+            <Divider type="vertical"/>
+            <Text>联系人：</Text>
+            <Text>{contract_contact}</Text>
+            <Divider type="vertical"/>
+            <Text>电话：</Text>
+            <Text>{contract_phone}</Text>
           </>
         </Descriptions.Item>
 
@@ -359,7 +380,7 @@ const Content = ({data, currentUser}: {
           <List.Item
           >
             <div>
-              <ListContentWrapper item={item}/>
+              <ListContentWrapper item={item} order_status={order_status}/>
             </div>
           </List.Item>
         )}

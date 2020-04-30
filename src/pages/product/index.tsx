@@ -20,7 +20,7 @@ import {ProductBaseListItem} from "src/pages/product/data";
 import {ProductBaseStateType} from "src/pages/product/model";
 import _ from "lodash";
 import {CurrentUser, UserModelState} from "@/models/user";
-import {isNormalResponseBody, ProductType, productType, ResultType, ValidatePwdResult} from "@/utils/utils";
+import {isNormalResponseBody, productType, ResultType, ValidatePwdResult} from "@/utils/utils";
 import {testPassword} from "@/services/user";
 import PublishModal, {PublishType} from "@/pages/product/components/PublishModal";
 
