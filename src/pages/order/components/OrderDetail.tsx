@@ -27,7 +27,7 @@ const ListContentWrapper = ({item, order_status}: { item: ProjectProductionInfoI
     console.log('Content change:', str);
   };
   const projectDesc = (
-    <p style={{marginBottom: '0'}}>
+    <p style={{marginBottom: '0px'}}>
       {item?.production?.desc?.split("\n")?.map((o, i) => {
         return (
           <span key={i}>{o}<br/></span>
