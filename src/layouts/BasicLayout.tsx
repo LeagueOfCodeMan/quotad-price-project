@@ -71,23 +71,23 @@ const menuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] =>
 
 const defaultFooterDom = (
   <DefaultFooter
-    copyright="2019  北京东方德康软件有限公司"
+    copyright="2019  "
     links={[
       {
         key: '/base',
         title: '官网',
-        href: 'http://www.silvanware.com',
+        href: '',
         blankTarget: true,
       },
       {
         key: '/phone',
-        title: <div><PhoneOutlined/> 400-161-0188</div>,
-        href: 'http://www.silvanware.com',
+        title: <div><PhoneOutlined/> </div>,
+        href: '',
         blankTarget: true,
       },
       {
         key: '地址',
-        title: '地址: 北京市海淀区农大南路1号硅谷亮城5号楼507',
+        title: '',
         href: '#',
         blankTarget: true,
       },
@@ -171,7 +171,7 @@ const BasicLayout: React.FC<BasicLayoutProps> = props => {
   return (
     <>
       <ProLayout
-        logo={logo}
+        // logo={logo}
         formatMessage={formatMessage}
         menuHeaderRender={(logoDom, titleDom) => (
           <Link to="/">

@@ -1,7 +1,7 @@
 export default {
-  'yuntai.company': '东方德康',
-  'yuntai.login.top.title': '东方德康',
-  'yuntai.login.top.message': '东方德康产品报价平台',
+  'yuntai.company': '报价平台',
+  'yuntai.login.top.title': '报价平台',
+  'yuntai.login.top.message': '报价平台产品报价平台',
   'yuntai.usermanager.settings.parent.username': '管理员',
   'yuntai.usermanager.settings.parent.tel': '联系方式',
   'yuntai.usermanager.settings.parent.addr': '联系地址',

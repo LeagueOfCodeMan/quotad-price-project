@@ -1,12 +1,12 @@
 import React from 'react';
 import {Form, Input, Modal} from 'antd';
 import FormItem from "antd/es/form/FormItem";
-import {UpdateUser} from "@/pages/usermanager/userlist/data";
+import {CreateUser} from "@/pages/usermanager/userlist/data";
 import {getModifyUserComponentProps, ModifyType} from "@/utils/utils";
 
 interface ModifyUserInfoValuesProps {
   visible: boolean;
-  onCreate: (values: UpdateUser) => void;
+  onCreate: (values: CreateUser) => void;
   onCancel: () => void;
   modifyType: ModifyType;
 }
@@ -22,7 +22,7 @@ const ModifyUserInfo: React.FC<ModifyUserInfoValuesProps> =
         .validateFields()
         .then(values => {
           form.resetFields();
-          onCreate(values as UpdateUser);
+          onCreate(values as CreateUser);
         })
         .catch(info => {
           console.log('Validate Failed:', info);

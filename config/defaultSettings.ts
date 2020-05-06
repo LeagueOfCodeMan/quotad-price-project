@@ -55,7 +55,7 @@ export default {
   menu: {
     locale: true,
   },
-  title: '东方德康',
+  title: '报价平台',
   pwa: false,
   iconfontUrl: '',
 } as DefaultSettings;

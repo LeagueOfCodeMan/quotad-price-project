@@ -1,6 +1,6 @@
 {
-  "name": "东方德康",
-  "short_name": "东方德康",
+  "name": "报价平台",
+  "short_name": "报价平台",
   "display": "standalone",
   "start_url": "./?utm_source=homescreen",
   "theme_color": "#002140",
