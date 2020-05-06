@@ -4,10 +4,10 @@ import React, {useState} from 'react';
 import {AnyAction, Dispatch} from 'redux';
 // import { Link } from 'umi';
 import {connect} from 'dva';
-import {StateType} from './model';
 import styles from './style.less';
 import {LoginParamsType} from './service';
 import LoginFrom from './components/Login';
+import {UserModelState} from "@/models/user";
 
 const {
   Tab, UserName, Password,
@@ -17,7 +17,7 @@ const {
 
 interface LoginProps {
   dispatch: Dispatch<AnyAction>;
-  userAndlogin: StateType;
+  user: UserModelState;
   submitting?: boolean;
 }
 
@@ -35,15 +35,15 @@ const LoginMessage: React.FC<{
 );
 
 const Login: React.FC<LoginProps> = props => {
-  const {userAndlogin = {}, submitting} = props;
-  const {status, type: loginType} = userAndlogin;
+  const {user, submitting} = props;
+  const {status, type: loginType} = user;
   const [autoLogin, setAutoLogin] = useState(true);
   const [type, setType] = useState<string>('account');
 
   const handleSubmit = (values: LoginParamsType) => {
     const {dispatch} = props;
     dispatch({
-      type: 'userAndlogin/login',
+      type: 'user/login',
       payload: {
         ...values,
         type,
@@ -108,17 +108,17 @@ const Login: React.FC<LoginProps> = props => {
 
 export default connect(
   ({
-     userAndlogin,
+     user,
      loading,
    }: {
-    userAndlogin: StateType;
+    user: UserModelState;
     loading: {
       effects: {
         [key: string]: boolean;
       };
     };
   }) => ({
-    userAndlogin,
-    submitting: loading.effects['userAndlogin/login'],
+    user,
+    submitting: loading.effects['user/login'],
   }),
 )(Login);

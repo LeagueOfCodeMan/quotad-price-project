@@ -1,12 +1,11 @@
 import {AnyAction, Reducer} from 'redux';
 import {EffectsCommandMap} from 'dva';
 import {ProductBaseList} from "@/pages/product/data";
-import {countStatistics, queryProduct, queryStandardProduct} from "@/pages/product/service";
+import {countStatistics, queryProduct} from "@/pages/product/service";
 import {isNormalResponseBody} from "@/utils/utils";
 
 export interface ProductBaseStateType {
   productList: NotRequired<ProductBaseList>;
-  products: NotRequired<ProductBaseList>;
   countStatistics: any;
 }
 
@@ -20,12 +19,10 @@ export interface ProductBaseModelType {
   state: ProductBaseStateType;
   effects: {
     fetch: Effect;
-    fetchStandardProduct: Effect;
     countStatistics: Effect;
   };
   reducers: {
     save: Reducer<NotRequired<ProductBaseList>>;
-    saveProducts: Reducer<NotRequired<ProductBaseList>>;
     saveCountStatistics: Reducer<any>;
   };
 }
@@ -38,10 +35,6 @@ const Model: ProductBaseModelType = {
       results: [],
       count: undefined
     },
-    products: {
-      results: [],
-      count: undefined
-    },
     countStatistics: {},
   },
 
@@ -51,15 +44,6 @@ const Model: ProductBaseModelType = {
       if (isNormalResponseBody(response)) {
         yield put({
           type: 'save',
-          payload: response,
-        });
-      }
-    },
-    * fetchStandardProduct({payload}, {call, put}) {
-      const response = yield call(queryStandardProduct, payload);
-      if (isNormalResponseBody(response)) {
-        yield put({
-          type: 'saveProducts',
           payload: response,
         });
       }
@@ -80,12 +64,6 @@ const Model: ProductBaseModelType = {
       return {
         ...state,
         productList: action.payload,
-      };
-    },
-    saveProducts(state, action) {
-      return {
-        ...state,
-        products: action.payload,
       };
     },
     saveCountStatistics(state, action) {

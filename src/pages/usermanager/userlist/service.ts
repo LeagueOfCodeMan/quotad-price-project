@@ -10,10 +10,6 @@ export async function createUser(params: UserListItem): Promise<any> {
   }, {noticeUndefined: false,});
 }
 
-export async function queryCurrent(): Promise<any> {
-  return request('/api/user/current_user');
-}
-
 export async function queryUsers(params?: TableListParams) {
   return request('/api/user', {
     params,

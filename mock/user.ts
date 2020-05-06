@@ -1,117 +1,274 @@
-import { Request, Response } from 'express';
+import {Request, Response} from 'express';
 
-function getFakeCaptcha(req: Request, res: Response) {
-  return res.json('captcha-xxx');
-}
+const getUserDetailList =
+  {
+    "count": 2,
+    "next": null,
+    "previous": null,
+    "results": [
+      {
+        "area": "上海",
+        "users": [
+          {
+            "id": 2,
+            "username": "leader",
+            "real_name": "cssdcsdcsdc",
+            "project_list": [],
+            "one_level": [
+              {
+                "id": 3,
+                "username": "cdp",
+                "real_name": "",
+                "project_list": []
+              }
+            ],
+            "two_level": []
+          }
+        ]
+      },
+      {
+        "area": "江西",
+        "users": [
+          {
+            "id": 5,
+            "username": "jiangxi",
+            "real_name": "江西老表",
+            "project_list": [],
+            "one_level": [
+              {
+                "id": 6,
+                "username": "jiangxi1",
+                "real_name": "老表1号",
+                "project_list": [
+                  {
+                    "id": 14,
+                    "project_name": "xiangmu"
+                  },
+                  {
+                    "id": 15,
+                    "project_name": "xiangmu2"
+                  }
+                ]
+              }
+            ],
+            "two_level": []
+          }
+        ]
+      }
+    ]
+  };
+
+const getUsers = {
+  "count": 7,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "url": "http://192.168.1.188:9099/api/user/7",
+      "id": 7,
+      "username": "beijing1",
+      "avatar": "http://192.168.1.188:9099/media/img/1.jpeg",
+      "is_superuser": false,
+      "date_joined": "2020-04-28 16:29:43",
+      "last_login": null,
+      "real_name": "大萨达所多所所多多所",
+      "company": "北京北京休息休息",
+      "addr": "asdsddfsdcs",
+      "email": "111@qq.xsd",
+      "tel": "111",
+      "area": 1,
+      "area_name": "北京",
+      "code": "GD001",
+      "identity": 3,
+      "state": 0
+    },
+    {
+      "url": "http://192.168.1.188:9099/api/user/6",
+      "id": 6,
+      "username": "jiangxi1",
+      "avatar": "http://192.168.1.188:9099/media/img/1.jpeg",
+      "is_superuser": false,
+      "date_joined": "2020-04-28 10:55:53",
+      "last_login": "2020-04-30 15:09:52",
+      "real_name": "老表1号",
+      "company": "刘佳琪科技有限公司",
+      "addr": "大萨达所多",
+      "email": "111@qq.com",
+      "tel": "111",
+      "area": 4,
+      "area_name": "江西",
+      "code": "JX0001",
+      "identity": 3,
+      "state": 1
+    },
+    {
+      "url": "http://192.168.1.188:9099/api/user/5",
+      "id": 5,
+      "username": "jiangxi",
+      "avatar": "http://192.168.1.188:9099/media/img/1.jpeg",
+      "is_superuser": false,
+      "date_joined": "2020-04-28 10:53:06",
+      "last_login": "2020-04-30 17:08:00",
+      "real_name": "江西老表",
+      "company": "刘佳琪科技有限公司",
+      "addr": "sdfsdf",
+      "email": "110@qq.com",
+      "tel": "110",
+      "area": 4,
+      "area_name": "江西",
+      "code": "JX0001",
+      "identity": 2,
+      "state": 1
+    },
+    {
+      "url": "http://192.168.1.188:9099/api/user/4",
+      "id": 4,
+      "username": "zhengbigbig",
+      "avatar": "http://192.168.1.188:9099/media/img/1.jpeg",
+      "is_superuser": false,
+      "date_joined": "2020-04-28 10:35:06",
+      "last_login": null,
+      "real_name": "dasdasdass",
+      "company": "北京北京休息休息",
+      "addr": "dsdsd",
+      "email": "asdasdasdas@qq.csdsd",
+      "tel": "dasdasd",
+      "area": 1,
+      "area_name": "北京",
+      "code": "GD001",
+      "identity": 3,
+      "state": 1
+    },
+    {
+      "url": "http://192.168.1.188:9099/api/user/3",
+      "id": 3,
+      "username": "cdp",
+      "avatar": "http://192.168.1.188:9099/media/img/1.jpeg",
+      "is_superuser": false,
+      "date_joined": "2020-04-26 10:09:52",
+      "last_login": "2020-04-28 18:33:03",
+      "real_name": "",
+      "company": "东方德康",
+      "addr": "",
+      "email": "",
+      "tel": "",
+      "area": 2,
+      "area_name": "上海",
+      "code": "SH2001",
+      "identity": 3,
+      "state": 0
+    },
+    {
+      "url": "http://192.168.1.188:9099/api/user/2",
+      "id": 2,
+      "username": "leader",
+      "avatar": "http://192.168.1.188:9099/media/img/1.jpeg",
+      "is_superuser": false,
+      "date_joined": "2020-04-21 10:53:19",
+      "last_login": "2020-04-29 13:38:11",
+      "real_name": "cssdcsdcsdc",
+      "company": "东方德康",
+      "addr": "",
+      "email": "",
+      "tel": "",
+      "area": 2,
+      "area_name": "上海",
+      "code": "SH2001",
+      "identity": 2,
+      "state": 1
+    },
+    {
+      "url": "http://192.168.1.188:9099/api/user/1",
+      "id": 1,
+      "username": "admin",
+      "avatar": "http://192.168.1.188:9099/media/img/1.jpeg",
+      "is_superuser": true,
+      "date_joined": "2020-04-20 13:52:42",
+      "last_login": "2020-05-06 13:31:54",
+      "real_name": "皮皮虾",
+      "company": "",
+      "addr": "硅谷亮城",
+      "email": "",
+      "tel": "",
+      "area": null,
+      "code": "",
+      "identity": 1,
+      "state": 1
+    }
+  ]
+};
+
+const mockAdmin = {
+  "url": "http://192.168.1.188:9099/api/user/1",
+  "id": 1,
+  "username": "admin",
+  "avatar": "http://192.168.1.188:9099/media/img/1.jpeg",
+  "is_superuser": true,
+  "date_joined": "2020-04-20 13:52:42",
+  "last_login": "2020-05-06 16:45:02",
+  "real_name": "皮皮虾",
+  "company": "",
+  "addr": "硅谷亮城",
+  "email": "",
+  "tel": "",
+  "area": null,
+  "code": "",
+  "identity": 1,
+  "state": 1
+};
+const mockLeader = {
+  "url": "http://192.168.1.188:9099/api/user/5",
+  "id": 5,
+  "username": "jiangxi",
+  "avatar": "http://192.168.1.188:9099/media/img/1.jpeg",
+  "is_superuser": false,
+  "date_joined": "2020-04-28 10:53:06",
+  "last_login": "2020-05-06 16:46:22",
+  "real_name": "江西老表",
+  "company": "刘佳琪科技有限公司",
+  "addr": "sdfsdf",
+  "email": "110@qq.com",
+  "tel": "110",
+  "area": 4,
+  "area_name": "江西",
+  "code": "JX0001",
+  "identity": 2,
+  "state": 1
+};
+
+let current:any;
+
 // 代码中会兼容本地 service mock 以及部署站点的静态数据
 export default {
   // 支持值为 Object 和 Array
-  'GET /api/currentUser': {
-    name: 'Serati Ma',
-    avatar: 'https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png',
-    userid: '00000001',
-    email: 'antdesign@alipay.com',
-    signature: '海纳百川，有容乃大',
-    title: '交互专家',
-    group: '蚂蚁金服－某某某事业群－某某平台部－某某技术部－UED',
-    tags: [
-      {
-        key: '0',
-        label: '很有想法的',
-      },
-      {
-        key: '1',
-        label: '专注设计',
-      },
-      {
-        key: '2',
-        label: '辣~',
-      },
-      {
-        key: '3',
-        label: '大长腿',
-      },
-      {
-        key: '4',
-        label: '川妹子',
-      },
-      {
-        key: '5',
-        label: '海纳百川',
-      },
-    ],
-    notifyCount: 12,
-    unreadCount: 11,
-    country: 'China',
-    geographic: {
-      province: {
-        label: '浙江省',
-        key: '330000',
-      },
-      city: {
-        label: '杭州市',
-        key: '330100',
-      },
-    },
-    address: '西湖区工专路 77 号',
-    phone: '0752-268888888',
+  'GET /api/user/current_user': (req: Request, res: Response) => {
+    res.send(current)
   },
   // GET POST 可省略
-  'GET /api/users': [
-    {
-      key: '1',
-      name: 'John Brown',
-      age: 32,
-      address: 'New York No. 1 Lake Park',
-    },
-    {
-      key: '2',
-      name: 'Jim Green',
-      age: 42,
-      address: 'London No. 1 Lake Park',
-    },
-    {
-      key: '3',
-      name: 'Joe Black',
-      age: 32,
-      address: 'Sidney No. 1 Lake Park',
-    },
-  ],
-  'POST /api/login/account': (req: Request, res: Response) => {
-    const { password, userName, type } = req.body;
-    if (password === 'ant.design' && userName === 'admin') {
-      res.send({
-        status: 'ok',
-        type,
-        currentAuthority: 'admin',
-      });
-      return;
-    }
-    if (password === 'ant.design' && userName === 'user') {
-      res.send({
-        status: 'ok',
-        type,
-        currentAuthority: 'user',
-      });
-      return;
-    }
-    if (type === 'mobile') {
-      res.send({
-        status: 'ok',
-        type,
-        currentAuthority: 'admin',
-      });
-      return;
-    }
+  'GET /api/user':
+    getUsers,
+  'POST  /api/login/account': (req: Request, res: Response) => {
+    const {password, username, type} = req.body;
+    console.log(1111)
+    if (password === '123456' && username === 'admin') {
+      current = mockAdmin;
+      res.send(mockAdmin);
 
+      return;
+    }
+    if (password === '123456' && username === 'user') {
+      current = mockLeader;
+      res.send(mockLeader);
+      return;
+    }
     res.send({
       status: 'error',
       type,
       currentAuthority: 'guest',
     });
   },
-  'POST /api/register': (req: Request, res: Response) => {
-    res.send({ status: 'ok', currentAuthority: 'user' });
+  'POST /api/user/test_password': (req: Request, res: Response) => {
+    res.send({"code": 200, "msg": "验证成功"});
   },
   'GET /api/500': (req: Request, res: Response) => {
     res.status(500).send({
@@ -150,5 +307,5 @@ export default {
     });
   },
 
-  'GET  /api/login/captcha': getFakeCaptcha,
+  'GET  /api/user/user_detail_list': getUserDetailList,
 };

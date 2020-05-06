@@ -1,9 +1,9 @@
 import request from '@/utils/request';
-import {UpdateUser} from "@/pages/usermanager/userlist/data";
 import {UpdatePasswordValues} from "@/components/UpdatePassword";
 import {AddressListItem} from "@/pages/usermanager/settings/data";
+import {CreateUser} from "@/pages/usermanager/userlist/data";
 
-export async function updateUser(params?: { id: number, data: UpdateUser }) {
+export async function updateUser(params?: { id: number, data: CreateUser }) {
   return request('/api/user/' + params?.id, {
     method: 'PUT',
     data: params?.data,

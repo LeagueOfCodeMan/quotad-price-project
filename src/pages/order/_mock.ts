@@ -1,124 +1,507 @@
 import { Request, Response } from 'express';
-import { BasicListItemDataType } from './data';
 
-const titles = [
-  'Alipay',
-  'Angular',
-  'Ant Design',
-  'Ant Design Pro',
-  'Bootstrap',
-  'React',
-  'Vue',
-  'Webpack',
-];
-const avatars = [
-  'https://gw.alipayobjects.com/zos/rmsportal/WdGqmHpayyMjiEhcKoVE.png', // Alipay
-  'https://gw.alipayobjects.com/zos/rmsportal/zOsKZmFRdUtvpqCImOVY.png', // Angular
-  'https://gw.alipayobjects.com/zos/rmsportal/dURIMkkrRFpPgTuzkwnB.png', // Ant Design
-  'https://gw.alipayobjects.com/zos/rmsportal/sfjbOqnsXXJgNCjCzDBL.png', // Ant Design Pro
-  'https://gw.alipayobjects.com/zos/rmsportal/siCrBXXhmvTQGWPNLBow.png', // Bootstrap
-  'https://gw.alipayobjects.com/zos/rmsportal/kZzEzemZyKLKFsojXItE.png', // React
-  'https://gw.alipayobjects.com/zos/rmsportal/ComBAopevLwENQdKWiIn.png', // Vue
-  'https://gw.alipayobjects.com/zos/rmsportal/nxkuOJlFJuAUhzlMTCEe.png', // Webpack
-];
-
-const covers = [
-  'https://gw.alipayobjects.com/zos/rmsportal/uMfMFlvUuceEyPpotzlq.png',
-  'https://gw.alipayobjects.com/zos/rmsportal/iZBVOIhGJiAnhplqjvZW.png',
-  'https://gw.alipayobjects.com/zos/rmsportal/iXjVmWVHbCJAyqvDxdtx.png',
-  'https://gw.alipayobjects.com/zos/rmsportal/gLaIAoVWTtLbBWZNYEMg.png',
-];
-const desc = [
-  '那是一种内在的东西， 他们到达不了，也无法触及的',
-  '希望是一个好东西，也许是最好的，好东西是不会消亡的',
-  '生命就像一盒巧克力，结果往往出人意料',
-  '城镇中有那么多的酒馆，她却偏偏走进了我的酒馆',
-  '那时候我只会想自己想要什么，从不想自己拥有什么',
-];
-
-const user = [
-  '付小小',
-  '曲丽丽',
-  '林东东',
-  '周星星',
-  '吴加好',
-  '朱偏右',
-  '鱼酱',
-  '乐哥',
-  '谭小仪',
-  '仲尼',
-];
-
-function fakeList(count: number): BasicListItemDataType[] {
-  const list = [];
-  for (let i = 0; i < count; i += 1) {
-    list.push({
-      id: `fake-list-${i}`,
-      owner: user[i % 10],
-      title: titles[i % 8],
-      avatar: avatars[i % 8],
-      cover: parseInt(`${i / 4}`, 10) % 2 === 0 ? covers[i % 4] : covers[3 - (i % 4)],
-      status: ['active', 'exception', 'normal'][i % 3] as
-        | 'normal'
-        | 'exception'
-        | 'active'
-        | 'success',
-      percent: Math.ceil(Math.random() * 50) + 50,
-      logo: avatars[i % 8],
-      href: 'https://ant.design',
-      updatedAt: new Date(new Date().getTime() - 1000 * 60 * 60 * 2 * i).getTime(),
-      createdAt: new Date(new Date().getTime() - 1000 * 60 * 60 * 2 * i).getTime(),
-      subDescription: desc[i % 5],
-      description:
-        '在中台产品的研发过程中，会出现不同的设计规范和实现方式，但其中往往存在很多类似的页面和组件，这些类似的组件会被抽离成一套标准规范。',
-      activeUser: Math.ceil(Math.random() * 100000) + 100000,
-      newUser: Math.ceil(Math.random() * 1000) + 1000,
-      star: Math.ceil(Math.random() * 100) + 100,
-      like: Math.ceil(Math.random() * 100) + 100,
-      message: Math.ceil(Math.random() * 10) + 10,
-      content:
-        '段落示意：蚂蚁金服设计平台 ant.design，用最小的工作量，无缝接入蚂蚁金服生态，提供跨越设计与开发的体验解决方案。蚂蚁金服设计平台 ant.design，用最小的工作量，无缝接入蚂蚁金服生态，提供跨越设计与开发的体验解决方案。',
-      members: [
+const orderList = {
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "url": "http://192.168.1.188:9099/api/order/9",
+      "label": 2,
+      "create_time": "2020-04-30 16:32:57",
+      "create_user": "老表1号",
+      "order_user": "江西老表",
+      "project_name": "xiangmu",
+      "project_desc": "xiangmu",
+      "area": "江西",
+      "order_number": "JX00010014",
+      "order_status": 1,
+      "addr": "111112121212",
+      "company": "刘佳琪科技有限公司2",
+      "bill_account": "11112121212",
+      "bill_addr": "12121212",
+      "bill_bank": "11112121212",
+      "bill_id": "11112121212",
+      "bill_phone": "11112121212",
+      "contact": "11112121212",
+      "contract_addr": "11112121212",
+      "contract_contact": "11112121212",
+      "contract_phone": "11112121212",
+      "phone": "11112121212",
+      "order_leader_price": "2.00",
+      "order_leader_quota": "6.00",
+      "order_sell_price": null,
+      "order_sell_quota": null,
+      "project": [
         {
-          avatar: 'https://gw.alipayobjects.com/zos/rmsportal/ZiESqWwCXBRQoaPONSJe.png',
-          name: '曲丽丽',
-          id: 'member1',
-        },
-        {
-          avatar: 'https://gw.alipayobjects.com/zos/rmsportal/tBOxZPlITHqwlGjsJWaF.png',
-          name: '王昭君',
-          id: 'member2',
-        },
-        {
-          avatar: 'https://gw.alipayobjects.com/zos/rmsportal/sBxjgqiuHMGRkIjqlQCd.png',
-          name: '董娜娜',
-          id: 'member3',
-        },
+          "url": "http://192.168.1.188:9099/api/project/14",
+          "id": 14,
+          "project_id": "JX00010014",
+          "company": "科技有限公司",
+          "bill_id": "11112121212",
+          "bill_addr": "12121212",
+          "bill_phone": "11112121212",
+          "bill_bank": "11112121212",
+          "bill_account": "11112121212",
+          "username": "jiangxi1",
+          "real_name": "老表1号",
+          "user_name": "xiangmu",
+          "create_time": "2020-04-30 15:10:13",
+          "project_name": "xiangmu",
+          "project_desc": "xiangmu",
+          "user_addr": "",
+          "user_iphone": "",
+          "user_contact": "",
+          "leader_total_quota": "4.00",
+          "sell_total_quota": null,
+          "leader_total_price": null,
+          "sell_total_price": null,
+          "pro_status": 4,
+          "product_list": [
+            {
+              "id": 54,
+              "sn": "5422222221",
+              "create_time": "2020-04-30 16:32:57",
+              "production": {
+                "url": "http://192.168.1.188:9099/api/product/2",
+                "id": 2,
+                "avatar": "http://192.168.1.188:9099/media/product/zhiyun_SRguDjm.png",
+                "genre": 1,
+                "pro_type": "YT-5000",
+                "desc": "* 2U机架式存储设备；550W（1+1）冗余电源；两颗64六核处理器；64GB内存；12个热插拔盘位；内含8块4TB 7200转企业级磁盘；4个千兆以太网接口。\n--------------------------------------------------------------------------------\n* 内嵌云态业务保护系统；持续数据保护功能主模块；应急接管主模块；含智能数据同步，重复数据删除，数据库一致性代理，自动快照、I/O记录等功能；\n* 内含无数量限制Linux、Windows（含桌面版）客户端数量授权，无限数量客户端应急接管授权，32TB数据保护容量授权；\n* 远程容灾复制模块可另行购买；",
+                "leader_price": "1.00",
+                "member_price": null,
+                "second_price": null,
+                "mark": "666666"
+              },
+              "count": 1,
+              "leader_quota": "1.00",
+              "sell_quota": null,
+              "leader_price": null,
+              "sell_price": null,
+              "user": 6,
+              "conf_par": []
+            },
+            {
+              "id": 55,
+              "sn": "dsasdasdasdasd",
+              "create_time": "2020-04-30 16:32:57",
+              "production": {
+                "url": "http://192.168.1.188:9099/api/product/2",
+                "id": 2,
+                "avatar": "http://192.168.1.188:9099/media/product/zhiyun_SRguDjm.png",
+                "genre": 1,
+                "pro_type": "YT-5000",
+                "desc": "* 2U机架式存储设备；550W（1+1）冗余电源；两颗64六核处理器；64GB内存；12个热插拔盘位；内含8块4TB 7200转企业级磁盘；4个千兆以太网接口。\n--------------------------------------------------------------------------------\n* 内嵌云态业务保护系统；持续数据保护功能主模块；应急接管主模块；含智能数据同步，重复数据删除，数据库一致性代理，自动快照、I/O记录等功能；\n* 内含无数量限制Linux、Windows（含桌面版）客户端数量授权，无限数量客户端应急接管授权，32TB数据保护容量授权；\n* 远程容灾复制模块可另行购买；",
+                "leader_price": "1.00",
+                "member_price": null,
+                "second_price": null,
+                "mark": "666666"
+              },
+              "count": 1,
+              "leader_quota": "3.00",
+              "sell_quota": null,
+              "leader_price": null,
+              "sell_price": null,
+              "user": 6,
+              "conf_par": [
+                {
+                  "url": "http://192.168.1.188:9099/api/product/4",
+                  "id": 4,
+                  "avatar": "http://192.168.1.188:9099/media/product/1.jpeg",
+                  "genre": 6,
+                  "pro_type": "YT-HDD4",
+                  "desc": "扩展4TB容量授权（含磁盘）",
+                  "leader_price": "1.00",
+                  "member_price": null,
+                  "second_price": null,
+                  "mark": "扩展4TB容量授权（含磁盘）",
+                  "count": 1
+                },
+                {
+                  "url": "http://192.168.1.188:9099/api/product/20",
+                  "id": 20,
+                  "avatar": "http://192.168.1.188:9099/media/product/1.jpeg",
+                  "genre": 7,
+                  "pro_type": "YT-SEV-001",
+                  "desc": "基础服务( 7 x 24 三年 )\n -故障硬件更换服务（配件先行）\n -电话、邮件等非现场技术支持",
+                  "leader_price": "1.00",
+                  "member_price": null,
+                  "second_price": null,
+                  "mark": "sadsdfsdf",
+                  "count": 1
+                }
+              ]
+            }
+          ]
+        }
       ],
-    });
-  }
+      "other_list": [
+        {
+          "id": 9,
+          "pro_type": "1",
+          "price": "1.00",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "url": "http://192.168.1.188:9099/api/order/8",
+      "label": 1,
+      "create_time": "2020-04-30 15:11:13",
+      "create_user": "老表1号",
+      "order_user": "江西老表",
+      "project_name": "xiangmu2",
+      "project_desc": "xiangmu",
+      "area": "江西",
+      "order_number": "JX00010015",
+      "order_status": 2,
+      "addr": "xiangmuxiangmuxiangmu",
+      "company": null,
+      "bill_account": "11112121212",
+      "bill_addr": "12121212",
+      "bill_bank": "11112121212",
+      "bill_id": "11112121212",
+      "bill_phone": "11112121212",
+      "contact": "xiangmu",
+      "contract_addr": "xiangmuxiangmuxiangmu",
+      "contract_contact": "xiangmu",
+      "contract_phone": "xiangmu",
+      "phone": "xiangmu",
+      "order_leader_price": "4.00",
+      "order_leader_quota": "6.00",
+      "order_sell_price": null,
+      "order_sell_quota": null,
+      "project": [
+        {
+          "url": "http://192.168.1.188:9099/api/project/15",
+          "id": 15,
+          "project_id": "JX00010015",
+          "company": "刘佳琪科技有限公司",
+          "bill_id": "11112121212",
+          "bill_addr": "12121212",
+          "bill_phone": "11112121212",
+          "bill_bank": "11112121212",
+          "bill_account": "11112121212",
+          "username": "jiangxi1",
+          "real_name": "老表1号",
+          "user_name": "xiangmu",
+          "create_time": "2020-04-30 15:10:34",
+          "project_name": "xiangmu2",
+          "project_desc": "xiangmu",
+          "user_addr": "",
+          "user_iphone": "",
+          "user_contact": "",
+          "leader_total_quota": "4.00",
+          "sell_total_quota": null,
+          "leader_total_price": null,
+          "sell_total_price": null,
+          "pro_status": 4,
+          "product_list": [
+            {
+              "id": 52,
+              "sn": "523",
+              "create_time": "2020-04-30 15:11:13",
+              "production": {
+                "url": "http://192.168.1.188:9099/api/product/19",
+                "id": 19,
+                "avatar": "http://192.168.1.188:9099/media/product/1.jpeg",
+                "genre": 2,
+                "pro_type": "YT-1004",
+                "desc": "* 全铝合金定制超小机箱；300W电源；64位八核16线程处理器；16GB内存；128G高速缓存；内含2块4TB SATA磁盘（RAID 1）；1个千兆以太网接口；4个USB3.0接口。\n--------------------------------------------------------------------------------\n* 内嵌云态业务保护系统；内含全局统一管理平台；持续数据保护功能主模块；应急接管主模块；含智能数据同步、数据精简、重复数据删除；含断点续备、AES256传输数据加密，数据库及文件一致性代理，自动快照、副本归档、I/O记录等功能；\n* 内含Linux、Windows（含桌面版）客户端授权，客户端应急接管授权；4TB数据保护容量授权；\n* 远程容灾复制模块可另行购买；",
+                "leader_price": "3.00",
+                "member_price": null,
+                "second_price": null,
+                "mark": "sadqsdasd"
+              },
+              "count": 1,
+              "leader_quota": "3.00",
+              "sell_quota": null,
+              "leader_price": null,
+              "sell_price": null,
+              "user": 6,
+              "conf_par": []
+            },
+            {
+              "id": 53,
+              "sn": null,
+              "create_time": "2020-04-30 15:11:13",
+              "production": {
+                "url": "http://192.168.1.188:9099/api/product/3",
+                "id": 3,
+                "avatar": "http://192.168.1.188:9099/media/product/zhiyun_qgC59UO.png",
+                "genre": 1,
+                "pro_type": "YT-8000",
+                "desc": "* 2U机架式存储设备；550W（1+1）冗余电源；两颗64六核处理器；128GB内存；12个热插拔盘位；内含12块6TB 7200转企业级磁盘；4个千兆以太网接口。\n--------------------------------------------------------------------------------\n* 内嵌云态业务保护系统；持续数据保护功能主模块；应急接管主模块；含智能数据同步，重复数据删除，数据库一致性代理，自动快照、I/O记录等功能；\n* 内含无数量限制Linux、Windows（含桌面版）客户端数量授权，无限数量客户端应急接管授权，72TB数据保护容量授权；\n* 远程容灾复制模块可另行购买；",
+                "leader_price": "1.00",
+                "member_price": null,
+                "second_price": null,
+                "mark": "66666"
+              },
+              "count": 1,
+              "leader_quota": "1.00",
+              "sell_quota": null,
+              "leader_price": null,
+              "sell_price": null,
+              "user": 6,
+              "conf_par": []
+            }
+          ]
+        }
+      ],
+      "other_list": [
+        {
+          "id": 8,
+          "pro_type": "1",
+          "price": "1.00",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "url": "http://192.168.1.188:9099/api/order/8",
+      "label": 1,
+      "create_time": "2020-04-30 15:11:13",
+      "create_user": "老表1号",
+      "order_user": "江西老表",
+      "project_name": "xiangmu2",
+      "project_desc": "xiangmu",
+      "area": "江西",
+      "order_number": "JX00010015",
+      "order_status": 3,
+      "addr": "xiangmuxiangmuxiangmu",
+      "company": null,
+      "bill_account": "11112121212",
+      "bill_addr": "12121212",
+      "bill_bank": "11112121212",
+      "bill_id": "11112121212",
+      "bill_phone": "11112121212",
+      "contact": "xiangmu",
+      "contract_addr": "xiangmuxiangmuxiangmu",
+      "contract_contact": "xiangmu",
+      "contract_phone": "xiangmu",
+      "phone": "xiangmu",
+      "order_leader_price": "4.00",
+      "order_leader_quota": "6.00",
+      "order_sell_price": null,
+      "order_sell_quota": null,
+      "project": [
+        {
+          "url": "http://192.168.1.188:9099/api/project/15",
+          "id": 15,
+          "project_id": "JX00010015",
+          "company": "刘佳琪科技有限公司",
+          "bill_id": "11112121212",
+          "bill_addr": "12121212",
+          "bill_phone": "11112121212",
+          "bill_bank": "11112121212",
+          "bill_account": "11112121212",
+          "username": "jiangxi1",
+          "real_name": "老表1号",
+          "user_name": "xiangmu",
+          "create_time": "2020-04-30 15:10:34",
+          "project_name": "xiangmu2",
+          "project_desc": "xiangmu",
+          "user_addr": "",
+          "user_iphone": "",
+          "user_contact": "",
+          "leader_total_quota": "4.00",
+          "sell_total_quota": null,
+          "leader_total_price": null,
+          "sell_total_price": null,
+          "pro_status": 4,
+          "product_list": [
+            {
+              "id": 52,
+              "sn": "523",
+              "create_time": "2020-04-30 15:11:13",
+              "production": {
+                "url": "http://192.168.1.188:9099/api/product/19",
+                "id": 19,
+                "avatar": "http://192.168.1.188:9099/media/product/1.jpeg",
+                "genre": 2,
+                "pro_type": "YT-1004",
+                "desc": "* 全铝合金定制超小机箱；300W电源；64位八核16线程处理器；16GB内存；128G高速缓存；内含2块4TB SATA磁盘（RAID 1）；1个千兆以太网接口；4个USB3.0接口。\n--------------------------------------------------------------------------------\n* 内嵌云态业务保护系统；内含全局统一管理平台；持续数据保护功能主模块；应急接管主模块；含智能数据同步、数据精简、重复数据删除；含断点续备、AES256传输数据加密，数据库及文件一致性代理，自动快照、副本归档、I/O记录等功能；\n* 内含Linux、Windows（含桌面版）客户端授权，客户端应急接管授权；4TB数据保护容量授权；\n* 远程容灾复制模块可另行购买；",
+                "leader_price": "3.00",
+                "member_price": null,
+                "second_price": null,
+                "mark": "sadqsdasd"
+              },
+              "count": 1,
+              "leader_quota": "3.00",
+              "sell_quota": null,
+              "leader_price": null,
+              "sell_price": null,
+              "user": 6,
+              "conf_par": []
+            },
+            {
+              "id": 53,
+              "sn": null,
+              "create_time": "2020-04-30 15:11:13",
+              "production": {
+                "url": "http://192.168.1.188:9099/api/product/3",
+                "id": 3,
+                "avatar": "http://192.168.1.188:9099/media/product/zhiyun_qgC59UO.png",
+                "genre": 1,
+                "pro_type": "YT-8000",
+                "desc": "* 2U机架式存储设备；550W（1+1）冗余电源；两颗64六核处理器；128GB内存；12个热插拔盘位；内含12块6TB 7200转企业级磁盘；4个千兆以太网接口。\n--------------------------------------------------------------------------------\n* 内嵌云态业务保护系统；持续数据保护功能主模块；应急接管主模块；含智能数据同步，重复数据删除，数据库一致性代理，自动快照、I/O记录等功能；\n* 内含无数量限制Linux、Windows（含桌面版）客户端数量授权，无限数量客户端应急接管授权，72TB数据保护容量授权；\n* 远程容灾复制模块可另行购买；",
+                "leader_price": "1.00",
+                "member_price": null,
+                "second_price": null,
+                "mark": "66666"
+              },
+              "count": 1,
+              "leader_quota": "1.00",
+              "sell_quota": null,
+              "leader_price": null,
+              "sell_price": null,
+              "user": 6,
+              "conf_par": []
+            }
+          ]
+        }
+      ],
+      "other_list": [
+        {
+          "id": 8,
+          "pro_type": "1",
+          "price": "1.00",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "url": "http://192.168.1.188:9099/api/order/8",
+      "label": 1,
+      "create_time": "2020-04-30 15:11:13",
+      "create_user": "老表1号",
+      "order_user": "江西老表",
+      "project_name": "xiangmu2",
+      "project_desc": "xiangmu",
+      "area": "江西",
+      "order_number": "JX00010015",
+      "order_status": 4,
+      "addr": "xiangmuxiangmuxiangmu",
+      "company": null,
+      "bill_account": "11112121212",
+      "bill_addr": "12121212",
+      "bill_bank": "11112121212",
+      "bill_id": "11112121212",
+      "bill_phone": "11112121212",
+      "contact": "xiangmu",
+      "contract_addr": "xiangmuxiangmuxiangmu",
+      "contract_contact": "xiangmu",
+      "contract_phone": "xiangmu",
+      "phone": "xiangmu",
+      "order_leader_price": "4.00",
+      "order_leader_quota": "6.00",
+      "order_sell_price": null,
+      "order_sell_quota": null,
+      "project": [
+        {
+          "url": "http://192.168.1.188:9099/api/project/15",
+          "id": 15,
+          "project_id": "JX00010015",
+          "company": "刘佳琪科技有限公司",
+          "bill_id": "11112121212",
+          "bill_addr": "12121212",
+          "bill_phone": "11112121212",
+          "bill_bank": "11112121212",
+          "bill_account": "11112121212",
+          "username": "jiangxi1",
+          "real_name": "老表1号",
+          "user_name": "xiangmu",
+          "create_time": "2020-04-30 15:10:34",
+          "project_name": "xiangmu2",
+          "project_desc": "xiangmu",
+          "user_addr": "",
+          "user_iphone": "",
+          "user_contact": "",
+          "leader_total_quota": "4.00",
+          "sell_total_quota": null,
+          "leader_total_price": null,
+          "sell_total_price": null,
+          "pro_status": 4,
+          "product_list": [
+            {
+              "id": 52,
+              "sn": "523",
+              "create_time": "2020-04-30 15:11:13",
+              "production": {
+                "url": "http://192.168.1.188:9099/api/product/19",
+                "id": 19,
+                "avatar": "http://192.168.1.188:9099/media/product/1.jpeg",
+                "genre": 2,
+                "pro_type": "YT-1004",
+                "desc": "* 全铝合金定制超小机箱；300W电源；64位八核16线程处理器；16GB内存；128G高速缓存；内含2块4TB SATA磁盘（RAID 1）；1个千兆以太网接口；4个USB3.0接口。\n--------------------------------------------------------------------------------\n* 内嵌云态业务保护系统；内含全局统一管理平台；持续数据保护功能主模块；应急接管主模块；含智能数据同步、数据精简、重复数据删除；含断点续备、AES256传输数据加密，数据库及文件一致性代理，自动快照、副本归档、I/O记录等功能；\n* 内含Linux、Windows（含桌面版）客户端授权，客户端应急接管授权；4TB数据保护容量授权；\n* 远程容灾复制模块可另行购买；",
+                "leader_price": "3.00",
+                "member_price": null,
+                "second_price": null,
+                "mark": "sadqsdasd"
+              },
+              "count": 1,
+              "leader_quota": "3.00",
+              "sell_quota": null,
+              "leader_price": null,
+              "sell_price": null,
+              "user": 6,
+              "conf_par": []
+            },
+            {
+              "id": 53,
+              "sn": null,
+              "create_time": "2020-04-30 15:11:13",
+              "production": {
+                "url": "http://192.168.1.188:9099/api/product/3",
+                "id": 3,
+                "avatar": "http://192.168.1.188:9099/media/product/zhiyun_qgC59UO.png",
+                "genre": 1,
+                "pro_type": "YT-8000",
+                "desc": "* 2U机架式存储设备；550W（1+1）冗余电源；两颗64六核处理器；128GB内存；12个热插拔盘位；内含12块6TB 7200转企业级磁盘；4个千兆以太网接口。\n--------------------------------------------------------------------------------\n* 内嵌云态业务保护系统；持续数据保护功能主模块；应急接管主模块；含智能数据同步，重复数据删除，数据库一致性代理，自动快照、I/O记录等功能；\n* 内含无数量限制Linux、Windows（含桌面版）客户端数量授权，无限数量客户端应急接管授权，72TB数据保护容量授权；\n* 远程容灾复制模块可另行购买；",
+                "leader_price": "1.00",
+                "member_price": null,
+                "second_price": null,
+                "mark": "66666"
+              },
+              "count": 1,
+              "leader_quota": "1.00",
+              "sell_quota": null,
+              "leader_price": null,
+              "sell_price": null,
+              "user": 6,
+              "conf_par": []
+            }
+          ]
+        }
+      ],
+      "other_list": [
+        {
+          "id": 8,
+          "pro_type": "1",
+          "price": "1.00",
+          "count": 1
+        }
+      ]
+    }
+  ]
+};
 
-  return list;
+function getOrderList(req: Request, res: Response) {
+  return res.json(orderList);
 }
 
-let sourceData: BasicListItemDataType[] = [];
 
-function getFakeList(req: Request, res: Response) {
-  const params = req.query;
-
-  const count = params.count * 1 || 20;
-
-  const result = fakeList(count);
-  sourceData = result;
-  return res.json(result);
-}
-
-function postFakeList(req: Request, res: Response) {
+function postOrderList(req: Request, res: Response) {
   const { /* url = '', */ body } = req;
   // const params = getUrlParams(url);
   const { method, id } = body;
   // const count = (params.count * 1) || 20;
-  let result = sourceData || [];
+  let result = orderList?.results;
 
   switch (method) {
     case 'delete':
@@ -146,6 +529,14 @@ function postFakeList(req: Request, res: Response) {
 }
 
 export default {
-  'GET  /api/fake_list': getFakeList,
-  'POST  /api/fake_list': postFakeList,
+  'GET  /api/order': getOrderList,
+  'POST  /api/order/*/oper_order': (req: Request, res: Response) => {
+    res.send("Mock环境无法操作");
+  },
+  'POST  /api/order/*/modify_sn': (req: Request, res: Response) => {
+    res.send("Mock环境无法操作");
+  },
+  'POST  /api/order/*/modify_price': (req: Request, res: Response) => {
+    res.send("Mock环境无法修改");
+  },
 };

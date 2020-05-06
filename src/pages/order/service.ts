@@ -28,14 +28,6 @@ export async function queryOrder(params: ParamsType) {
   });
 }
 
-
-export async function createProject(params: CreateProjectParams) {
-  return request('/api/project', {
-    method: 'POST',
-    data: params,
-  });
-}
-
 // oper_code 1 同意  2 拒绝 3 完成
 export async function changeOrderStatus(params: { id: number; data: { oper_code: number } }) {
   return request('/api/order/' + params?.id + '/oper_order', {
