@@ -21,7 +21,7 @@ import RightContent from '@/components/GlobalHeader/RightContent';
 import {ConnectState} from '@/models/connect';
 import {getAuthorityFromRouter, isAntDesignPro} from '@/utils/utils';
 // import logo from '../assets/logo.svg';
-import logo from '../assets/yuntai.svg';
+// import logo from '../assets/yuntai.svg';
 import {PhoneOutlined} from "@ant-design/icons/lib";
 import {CurrentUser} from "@/models/user";
 import _ from "lodash";
