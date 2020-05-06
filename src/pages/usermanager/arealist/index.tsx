@@ -23,7 +23,6 @@ const {Text} = Typography;
 const handleAdd = async (fields: AreaListItem) => {
   const hide = message.loading('正在添加');
   const result: ResultType | string = await createArea(fields as AreaListItem);
-  console.log(result);
   return new ValidatePwdResult(result).validate(null, null, hide);
 };
 
@@ -183,7 +182,6 @@ const AreaList: React.FC<AreaListItem> = (props) => {
           }
         },
         onCancel() {
-          console.log('Cancel');
         },
       });
 

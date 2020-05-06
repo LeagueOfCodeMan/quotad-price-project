@@ -43,3 +43,18 @@ export async function changeOrderStatus(params: { id: number; data: { oper_code:
     data: params.data,
   });
 }
+
+// 编辑每个产品的SN码
+export async function modifyProductSN(params: { id: number; data: { id: number; sn: string; } }) {
+  return request('/api/order/' + params?.id + '/modify_sn', {
+    method: 'POST',
+    data: params.data,
+  });
+}
+// 编辑订单成交总价
+export async function modifyTotalPrice(params: { id: number; data: { order_leader_price: number; } }) {
+  return request('/api/order/' + params?.id + '/modify_price', {
+    method: 'POST',
+    data: params.data,
+  });
+}

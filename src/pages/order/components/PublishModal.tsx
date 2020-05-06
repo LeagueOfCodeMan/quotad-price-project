@@ -2,15 +2,15 @@ import React, {useEffect, useState} from 'react';
 import {Form, InputNumber, Modal} from 'antd';
 import {SizeType} from "antd/es/config-provider/SizeContext";
 import styles from '../../yuntai.less';
-import {ProductBaseListItem} from "@/pages/product/data";
+import {OrderListItem} from "@/pages/order/data";
 
 const FormItem = Form.Item;
 
 interface PublishModalProps {
   updateModalVisible: boolean;
-  onSubmit: (fieldsValue: ProductBaseListItem, callback: Function) => void;
+  onSubmit: (fieldsValue: { order_leader_price: number }, callback: Function) => void;
   onCancel: () => void;
-  current?: NotRequired<ProductBaseListItem>;
+  current?: NotRequired<OrderListItem>;
 }
 
 const PublishModal: React.FC<PublishModalProps> = props => {
@@ -28,7 +28,6 @@ const PublishModal: React.FC<PublishModalProps> = props => {
 
 
   useEffect(() => {
-    console.log(formRef);
     if (current && formRef) {
       setTimeout(() => {
         form.setFieldsValue({
@@ -42,7 +41,7 @@ const PublishModal: React.FC<PublishModalProps> = props => {
   const okHandle = async () => {
     const fieldsValue = await form.validateFields();
 
-    handleAdd(fieldsValue as ProductBaseListItem, (callback: boolean) => {
+    handleAdd(fieldsValue as { order_leader_price: number }, (callback: boolean) => {
       if (callback) {
         form.resetFields();
       }
@@ -52,9 +51,10 @@ const PublishModal: React.FC<PublishModalProps> = props => {
   const commonProps = {
     style: {width: '200px'}, size: 'middle' as SizeType,
   };
+  console.log(current);
   return (
     <Modal
-      title="编辑组员价格"
+      title="编辑成交总价"
       visible={visible}
       onOk={okHandle}
       onCancel={() => onCancel()}
@@ -70,25 +70,15 @@ const PublishModal: React.FC<PublishModalProps> = props => {
       >
         <div className={styles.flexSpaceBetween}>
           <FormItem
-            label="组员价格"
-            name="member_price"
-            rules={[{required: true, message: '请输入组员价格'},
-              {
-                validator: (rule, value) => {
-                  console.log(value);
-                  if (value < (parseFloat(current?.leader_price as string || '') || 0)) {
-                    return Promise.reject('组员价格不能低于组长价格')
-                  }
-                  return Promise.resolve();
-                }
-              }
+            label="成交总价"
+            name="order_leader_price"
+            rules={[{required: true, message: '请输入组员价格'}
             ]}
           >
             <InputNumber
               formatter={value => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={value => (value as string).replace(/¥\s?|(,*)/g, '')}
               {...commonProps}
-              min={parseFloat(current?.leader_price as string || '') || 0}
             />
           </FormItem>
         </div>

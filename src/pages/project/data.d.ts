@@ -45,6 +45,7 @@ export type ProjectProductionInfoItem = {
   uuid?: string;
   conf_par: ProductBaseListItem[];
   conf_list?: ProductBaseListItem[];
+  sn?:string;
 };
 
 export type ProjectProductionInfo = ProjectProductionInfoItem[];

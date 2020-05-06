@@ -17,7 +17,6 @@ const CreateForm: React.FC<CreateFormProps> = props => {
   const formRef = useRef<any>(null);
 
   const {modalVisible: visible, onSubmit: handleAdd, onCancel, current} = props;
-  // console.log(currentUser, areaList);
   const okHandle = async () => {
     const fieldsValue = await form.validateFields();
 

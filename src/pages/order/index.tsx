@@ -1,25 +1,25 @@
 import React, {FC, useRef, useState} from 'react';
-import {Button, Divider, message, Modal, TreeSelect, Typography, Descriptions} from 'antd';
+import {Button, Divider, message, Modal, TreeSelect, Typography, Descriptions, Dropdown, Menu} from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import {ProjectStateType} from './model';
 import styles from './style.less';
 
 import ValidatePassword from '../../components/ValidatePassword/index';
-import {ExclamationCircleOutlined, PlusOutlined,} from '@ant-design/icons/lib';
+import {DownOutlined, ExclamationCircleOutlined, PlusOutlined,} from '@ant-design/icons/lib';
 import _ from 'lodash';
 import {useEffectOnce} from 'react-use';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
 import {CurrentChildren, CurrentChildrenResults} from "@/models/data";
-import {ProjectListItem} from "@/pages/project/data";
 import {CurrentUser, UserModelState} from "@/models/user";
 import {addKeyToEachArray, ResultType, ValidatePwdResult} from "@/utils/utils";
 import {testPassword} from "@/services/user";
 import {OrderListItem} from "@/pages/order/data";
-import {changeOrderStatus, queryOrder} from "@/pages/order/service";
+import {changeOrderStatus, modifyTotalPrice, queryOrder} from "@/pages/order/service";
 import {PaneDetail, TabsList} from "@/pages/order/components/TabsList";
 import OrderDetail from "@/pages/order/components/OrderDetail";
+import PublishModal from "@/pages/order/components/PublishModal";
 
 const {confirm} = Modal;
 const {Text} = Typography;
@@ -37,6 +37,7 @@ enum ValidateType {
   CONFIRM = 'CONFIRM',
   TERMINATION = 'TERMINATION',
   COMPLETE = 'COMPLETE',
+  PRICE = 'PRICE',
 }
 
 type TreeDataItem = { title: JSX.Element; value: string; children?: TreeDataItem }[];
@@ -174,9 +175,6 @@ const OrderList: FC<BasicListProps> = props => {
   });
   const actionRef = useRef<ActionType>();
   const [visible, setVisible] = useState<boolean>(false);
-  const [orderVisible, setOrderVisible] = useState<boolean>(false);
-  const [editVisible, setEditVisible] = useState<boolean>(false);
-  const [editVisible2, setEditVisible2] = useState<boolean>(false);
   const [current, setCurrent] = useState<NotRequired<OrderListItem>>({});
   const [details, setDetails] = useState<OrderListItem[]>([]);
   const [validateVisible, setValidateVisible] = useState(false);
@@ -208,6 +206,9 @@ const OrderList: FC<BasicListProps> = props => {
 
   const validatePasswordSuccessToDo = () => {
     const {id, create_user, order_leader_quota, order_leader_price, company, order_number, project_name, order_user} = current as OrderListItem;
+    if (validateType === ValidateType.PRICE) {
+      setVisible(true);
+    }
     let oper_code: number = 0;
     let operation: string = '';
     switch (validateType) {
@@ -344,12 +345,25 @@ const OrderList: FC<BasicListProps> = props => {
     [key: string]: any;
   }): Promise<RequestData<OrderListItem>> => {
     const result = await queryOrder({...params});
+    // 刷新当前current
+    result?.results && refreshData(result?.results);
     return Promise.resolve({
       data: result?.results || [],
       success: true,
       total: result?.count || 0,
     });
   };
+
+  const refreshData = (data: OrderListItem[]) => {
+    const newArr: OrderListItem[] = [];
+    details?.forEach(item => {
+      const item2 = _.find(data, d => d?.id === item?.id);
+      if (item2?.id) {
+        newArr.push(item2 as OrderListItem)
+      }
+    })
+    setDetails(newArr);
+  }
 
   const columnsGenerate = () => {
     const template: ProColumns<OrderListItem>[] = [];
@@ -399,9 +413,7 @@ const OrderList: FC<BasicListProps> = props => {
           return (
             <div style={{display: "flex"}}>
               <span style={{margin: 'auto 0'}}>{text}</span>
-              <Button type="link" onClick={() => {
-                setDetails([...details, record])
-              }}>
+              <Button type="link" onClick={() => showMoreDetail(record)}>
                 点击更多详情
               </Button>
             </div>
@@ -417,17 +429,16 @@ const OrderList: FC<BasicListProps> = props => {
         render: (text, record) => {
           return (
             <div>
-              <Text style={{color: '#FF6A00'}}>
-                ¥ {text}
-              </Text>
-              {record?.order_leader_price ?
-                <div>
-                  <Text style={{color: '#FF6A00'}}>
-                    ¥ {record?.order_leader_price}
-                  </Text>
-                </div> : null
+              <Text style={{color: '#1890FF'}}>销售总价：</Text>
+              <Text style={{color: '#FF6A00'}}>{'¥' + record?.order_leader_quota}</Text>
+              {
+                record?.order_leader_price ?
+                  <>
+                    <Divider type="vertical"/>
+                    <Text style={{color: '#1890FF'}}>成交总价：</Text>
+                    <Text style={{color: '#FF6A00'}}>{'¥' + record?.order_leader_price}</Text>
+                  </> : null
               }
-
             </div>
           );
         },
@@ -554,56 +565,9 @@ const OrderList: FC<BasicListProps> = props => {
         dataIndex: 'option',
         valueType: 'option',
         render: (text, record) => {
-          const template2: JSX.Element[] = [];
-          // order_status 1 ： 可终止，同意，拒绝
-          // 2：无操作
-          // 3：已完成，打印合同，上传合同
-          const confirm = (<Button
-            type="link"
-            key="confirm"
-            onClick={() => operationClick(record, ValidateType.CONFIRM)}
-          >
-            同意
-          </Button>);
-          const complete = (<Button
-            key="remove"
-            type="link"
-            onClick={() => operationClick(record, ValidateType.COMPLETE)}
-          >
-            完成
-          </Button>);
-          const termination = (<Button
-            type="link"
-            danger
-            key="termination"
-            onClick={() => operationClick(record, ValidateType.TERMINATION)}
-          >
-            终止
-          </Button>);
-          const print = (<Button
-            type="link"
-            key="print"
-            onClick={() => {
-            }}
-          >
-            打印合同
-          </Button>);
-          const upload = (<Button
-            type="link"
-            key="upload"
-            onClick={() => {
-            }}
-          >
-            上传合同
-          </Button>);
-          if (record?.order_status === 1) {
-            template2.push(confirm, termination, complete);
-          } else if (record?.order_status === 3) {
-            template2.push(print, upload);
-          }
           return (
             <div style={{display: 'flex'}}>
-              {template2}
+              {operationButtons(record)}
             </div>
           );
         },
@@ -614,6 +578,79 @@ const OrderList: FC<BasicListProps> = props => {
     } else {
       return template.concat(commonMessage);
     }
+  };
+
+  /**
+   * 操作项
+   * @param record
+   */
+  const showMoreDetail = (record: OrderListItem) => {
+    const newDetails = [...details];
+    _.remove(newDetails, d => d?.id?.toString() === record?.id?.toString());
+    setDetails([...newDetails, record]);
+  }
+
+  const handleMenuClick = (e: { key: string; }) => {
+    if (e?.key === '1') {
+      console.log('打印合同')
+    } else if (e?.key === '2') {
+      console.log('上传合同');
+    }
+  }
+
+  const operationButtons = (record: OrderListItem) => {
+    const template2: JSX.Element[] = [];
+    // order_status 1 ： 可终止，同意，拒绝
+    // 2：无操作
+    // 3：已完成，打印合同，上传合同
+    const confirm = (<Button
+      type="link"
+      key="confirm"
+      onClick={() => operationClick(record, ValidateType.CONFIRM)}
+    >
+      同意
+    </Button>);
+    const complete = (<Button
+      key="remove"
+      type="link"
+      onClick={() => operationClick(record, ValidateType.COMPLETE)}
+    >
+      完成
+    </Button>);
+    const modifyPrice = (<Button
+      key="price"
+      type="link"
+      onClick={() => operationClick(record, ValidateType.PRICE)}
+    >
+      编辑总价
+    </Button>);
+    const termination = (<Button
+      type="link"
+      danger
+      key="termination"
+      onClick={() => operationClick(record, ValidateType.TERMINATION)}
+    >
+      终止
+    </Button>);
+    const menu = (
+      <Menu onClick={handleMenuClick}>
+        <Menu.Item key="1">打印合同</Menu.Item>
+        <Menu.Item key="2">上传合同</Menu.Item>
+      </Menu>
+    );
+    const more = (
+      <Dropdown overlay={menu}>
+        <Button type="link">
+          更多 <DownOutlined/>
+        </Button>
+      </Dropdown>
+    );
+    if (record?.order_status === 1) {
+      template2.push(confirm, termination, modifyPrice);
+    } else if (record?.order_status === 2) {
+      template2.push(complete, termination, modifyPrice, more);
+    }
+    return template2;
   }
 
   const operationClick = (item: OrderListItem, type: ValidateType) => {
@@ -656,17 +693,21 @@ const OrderList: FC<BasicListProps> = props => {
     details?.forEach(d => {
       panes.push({
         title: `${d?.create_user + '-' + d?.project_name}`,
-        content: <OrderDetail current={d} currentUser={currentUser}/>,
+        content: <OrderDetail current={d} currentUser={currentUser} reload={() => {
+          if (actionRef.current) {
+            actionRef.current.reload();
+          }
+        }}/>,
         key: d?.id?.toString(),
         closable: true,
       })
-    })
+    });
 
     return panes;
   };
 
   const removeItem = (target: string) => {
-    const newDetails = details;
+    const newDetails = [...details];
     _.remove(newDetails, d => d?.id?.toString() === target);
     setDetails(newDetails);
   };
@@ -680,6 +721,26 @@ const OrderList: FC<BasicListProps> = props => {
         />
 
       </div>
+      <PublishModal
+        onSubmit={async (value, callback) => {
+          const response = await modifyTotalPrice({id: current?.id as number, data: value});
+          const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
+          if (success) {
+            if (actionRef.current) {
+              actionRef.current.reload();
+            }
+            callback();
+            setVisible(false);
+            setCurrent({});
+          }
+        }}
+        onCancel={() => {
+          setVisible(false);
+          setCurrent({});
+        }}
+        updateModalVisible={visible}
+        current={current}
+      />
       <ValidatePassword
         visible={validateVisible}
         onCreate={async values => {

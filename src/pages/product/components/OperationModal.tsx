@@ -44,7 +44,6 @@ const OperationModal: FC<OperationModalProps> = props => {
 
   useEffect(() => {
     if (current) {
-      console.log(current);
       const {conf_list, genre} = current;
       const belong: { label: string; value: number; }[] = [];
       const belong2: { label: string; value: number; }[] = [];
@@ -205,7 +204,6 @@ const OperationModal: FC<OperationModalProps> = props => {
             formData.append(item, payload?.[item]?.[0]?.originFileObj || current?.avatar);
           }
         } else if (item === 'conf_list') {
-          console.log(payload?.[item], 111);
           formData.append(`conf_list`, JSON.stringify(payload?.[item]));
 
         }

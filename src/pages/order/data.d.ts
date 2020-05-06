@@ -22,6 +22,7 @@ export interface OrderListItem {
   contract_addr?: string;
   contract_contact?: string;
   contract_phone?: string;
+  sn?:string;
   // 1 待确认 2  已确认 3 已终止 4 已完成
   order_status?: 1 | 2 | 3 | 4;
 

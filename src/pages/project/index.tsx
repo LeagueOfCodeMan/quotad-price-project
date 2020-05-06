@@ -186,7 +186,6 @@ const ProjectList: FC<BasicListProps> = props => {
   const [listParams, setListParams] = useState<ListSearchParams>({});
 
   useEffect(() => {
-    console.log(currentUser?.identity);
     if (currentUser?.identity === 1 || currentUser?.identity === 2) {
       dispatch({
         type: 'user/queryCurrentUsers',
@@ -620,7 +619,6 @@ const ProjectList: FC<BasicListProps> = props => {
       ) : null}
       <EditProject
         onSubmit={async value => {
-          console.log(value);
           const response = await modifyProject({id: current?.id as number, data: value});
           const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
           if (success) {

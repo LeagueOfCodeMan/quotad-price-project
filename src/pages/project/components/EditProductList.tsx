@@ -120,7 +120,6 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
         uuid: uuidv4(),
       } as ProductBaseListItem]);
     } else {
-      console.log(dataSource);
       const product_list = _.map(dataSource, o => {
         return (
           {production: o?.id, count: o?.count, conf_par: _.map(o?.conf_par, d => ({id: d?.id, count: d?.count}))}

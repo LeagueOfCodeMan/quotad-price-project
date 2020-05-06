@@ -17,7 +17,6 @@ const AvatarView = ({avatar, url, hadUploadImage}: {
     action: url,
     onChange(info: any) {
       if (info.file.status !== 'uploading') {
-        console.log(info.file, info.fileList);
       }
       if (info.file.status === 'done') {
         hadUploadImage && hadUploadImage();

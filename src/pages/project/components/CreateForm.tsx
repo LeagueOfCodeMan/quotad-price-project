@@ -74,7 +74,6 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
   } = props;
 
   useEffect(() => {
-    console.log(current)
     if (current && formRef) {
       setTimeout(() => {
         const conf_par: { id: number; count: number; }[] = [];

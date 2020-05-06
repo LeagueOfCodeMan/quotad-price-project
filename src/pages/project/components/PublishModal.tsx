@@ -74,7 +74,6 @@ const PublishModal: React.FC<PublishModalProps> = props => {
             rules={[{required: true, message: '请输入组员价格'},
               {
                 validator: (rule, value) => {
-                  console.log(value);
                   if (value < (parseFloat(current?.leader_price as string || '') || 0)) {
                     return Promise.reject('组员价格不能低于组长价格')
                   }

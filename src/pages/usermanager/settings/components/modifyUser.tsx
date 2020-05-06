@@ -17,7 +17,6 @@ const ModifyUserInfo: React.FC<ModifyUserInfoValuesProps> =
     const [form] = Form.useForm();
 
     const initProps = getModifyUserComponentProps(modifyType);
-    console.log(modifyType);
     const handleSubmit = () => {
       form
         .validateFields()

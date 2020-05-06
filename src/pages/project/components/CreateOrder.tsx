@@ -173,7 +173,6 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
 
   const handleNext = async () => {
     const fieldsValue = await form.validateFields();
-    console.log(fieldsValue);
     setFormVals({...formVals, ...fieldsValue});
 
     if (currentStep < 2) {

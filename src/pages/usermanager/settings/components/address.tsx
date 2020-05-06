@@ -122,7 +122,6 @@ const AddressInfo: FC<AddressViewProps> = props => {
         visible={validateVisible}
         onCreate={async (values) => {
           const success = await onCreate(values)
-          console.log(success);
           if (success) {
             setValidateVisible(false);
             // TODO something

@@ -120,7 +120,7 @@ const PublishModal: React.FC<PublishModalProps> = props => {
       ),
   });
 
-  const columnsUser = [
+  const columnsUser:any = [
     {
       title: '二级组员',
       dataIndex: 'username',

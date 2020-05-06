@@ -46,7 +46,6 @@ const UpdatePassword: React.FC<UpdatePasswordPasswordFormProps> =
           onCreate(values as UpdatePasswordValues);
         })
         .catch(info => {
-          console.log('Validate Failed:', info);
         });
     };
     const commonProps = {

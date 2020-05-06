@@ -1,7 +1,7 @@
-import React, {FC, useRef, useState} from 'react';
-import {Alert, Avatar, Card, Descriptions, Input, Modal, Table, Tag, Typography, List, Divider} from 'antd';
+import React, {FC} from 'react';
+import {Alert, Avatar, Card, Descriptions, Divider, List, Table, Tag, Typography} from 'antd';
 import {CurrentUser} from "@/models/user";
-import {productType} from "@/utils/utils";
+import {IdentityType, productType, ValidatePwdResult} from "@/utils/utils";
 import _ from 'lodash';
 import {OrderListItem, OtherListItem} from "@/pages/order/data";
 import styles from '../style.less';
@@ -9,6 +9,7 @@ import {ProductBaseListItem} from "@/pages/product/data";
 import {ColumnsType} from "antd/lib/table";
 import {ProjectProductionInfoItem} from "@/pages/project/data";
 import Ellipsis from "@/components/Ellipsis";
+import {modifyProductSN} from "@/pages/order/service";
 
 const {Paragraph} = Typography;
 const {Text} = Typography;
@@ -16,15 +17,21 @@ const {Text} = Typography;
 interface BasicListProps {
   current: OrderListItem;
   currentUser: CurrentUser;
+  reload: () => void;
 }
 
-enum ValidateType {
-  DELETE_CONFIG = 'DELETE_CONFIG',
-}
-
-const ListContentWrapper = ({item, order_status}: { item: ProjectProductionInfoItem; order_status: 1 | 2 | 3 | 4 }) => {
-  const onChangeSN = (str) => {
-    console.log('Content change:', str);
+const ListContentWrapper = ({item, order_status, identity, id, reload}:
+                              {
+                                item: ProjectProductionInfoItem; identity: IdentityType;
+                                id: number; order_status: 1 | 2 | 3 | 4 | undefined;
+                                reload: () => void;
+                              }) => {
+  const onChangeSN = async (str: string) => {
+    const response = await modifyProductSN({id, data: {id: item?.id, sn: str}});
+    const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
+    if (success) {
+      reload();
+    }
   };
   const projectDesc = (
     <p style={{marginBottom: '0px'}}>
@@ -51,7 +58,8 @@ const ListContentWrapper = ({item, order_status}: { item: ProjectProductionInfoI
         <Text style={{color: '#181818'}}>{item?.production?.mark}</Text>
       </Descriptions.Item>
       <Descriptions.Item label="SN码" span={1}>
-        <Paragraph editable={{onChange: onChangeSN}}>{item?.production?.mark}</Paragraph>
+        <Paragraph
+          editable={identity === 1 && (order_status === 2 || order_status === 4) ? {onChange: onChangeSN} : false}>{item?.sn || ''}</Paragraph>
       </Descriptions.Item>
       <Descriptions.Item label="数量" span={1}>
         <Text style={{color: '#181818'}}>{item?.count}</Text>
@@ -181,8 +189,8 @@ const ListContent = ({
   )
 };
 
-const Content = ({data, currentUser}: {
-  data: OrderListItem; currentUser: CurrentUser;
+const Content = ({data, currentUser, reload}: {
+  data: OrderListItem; currentUser: CurrentUser; reload: () => void;
 }) => {
   const {
     create_user, order_user, id, company, order_number,
@@ -274,7 +282,7 @@ const Content = ({data, currentUser}: {
           <>
             <Text style={{color: '#1890FF'}}>销售总价：</Text>
             <Text style={{color: '#FF6A00'}}>{'¥' + order_leader_quota}</Text>
-            <br/>
+            <Divider type="vertical"/>
             {
               order_leader_price ?
                 <>
@@ -373,14 +381,15 @@ const Content = ({data, currentUser}: {
       </div>
       <List
         size="large"
-        rowKey={record => record.id}
+        rowKey={record => record.id?.toString()}
         pagination={false}
         dataSource={product_list || []}
         renderItem={(item: ProjectProductionInfoItem) => (
           <List.Item
           >
             <div>
-              <ListContentWrapper item={item} order_status={order_status}/>
+              <ListContentWrapper item={item} order_status={order_status} identity={identity as IdentityType} id={id}
+                                  reload={reload}/>
             </div>
           </List.Item>
         )}
@@ -404,23 +413,12 @@ const Content = ({data, currentUser}: {
   )
 };
 
-interface ListSearchParams {
-  current?: number;
-  pageSize?: number;
-  mem_state?: 1 | 2;
-  conf_name?: string;
-
-  [propName: string]: any;
-}
-
 const OrderDetail: FC<BasicListProps> = props => {
   const {
     current,
     currentUser,
+    reload
   } = props;
-  const [listParams, setListParams] = useState<ListSearchParams>({
-    current: 1, pageSize: 1
-  });
 
   return (
     <div>
@@ -431,7 +429,7 @@ const OrderDetail: FC<BasicListProps> = props => {
           style={{marginTop: 24}}
           bodyStyle={{padding: '0 32px 40px 32px'}}
         >
-          <Content data={current} currentUser={currentUser}/>
+          <Content data={current} currentUser={currentUser} reload={reload}/>
         </Card>
       </div>
 

@@ -27,7 +27,6 @@ const CreateForm: React.FC<CreateFormProps> = props => {
   const formRef = useRef<any>(null);
 
   const {modalVisible, editFormValues: current, onSubmit: handleAdd, onCancel, areaList} = props;
-  // console.log(currentUser, areaList);
   // 初始化可分配权限
   const identityOptions: IdentityOptionsType[] = [{label: '组长', value: 2}, {
     label: '二级组员',

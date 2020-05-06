@@ -224,7 +224,6 @@ const UserList: React.FC<UserListProps> = (props) => {
           const success: boolean = new ValidatePwdResult(result).validate('操作成功', null, undefined);
           // 刷新数据
           if (actionRef.current && success) {
-            console.log('刷新')
             actionRef.current.reload();
           }
         },
@@ -292,7 +291,6 @@ const UserList: React.FC<UserListProps> = (props) => {
         visible={validateVisible}
         onCreate={async (values) => {
           const success = await onCreate(values)
-          console.log(success);
           if (success) {
             setValidateVisible(false);
             // TODO something

@@ -31,7 +31,6 @@ const ValidatePassword: React.FC<ValidatePasswordFormProps> =
           onCreate(values as Values);
         })
         .catch(info => {
-          console.log('Validate Failed:', info);
         });
     };
     return (
