@@ -12,7 +12,7 @@ import {
   Row,
   Select,
   Steps,
-  Table,
+  Table, Tooltip,
   Typography
 } from 'antd';
 import {v4 as uuidv4} from 'uuid';
@@ -165,6 +165,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
       const hPrice = (price + tPrice) * count;
       const fPrice: string = hPrice % 1 !== 0 ? hPrice.toString() : hPrice + '.00';
       const price2 = _.isNaN(fPrice) ? '部分未定价' : '¥ ' + fPrice;
+      console.log(hPrice, fPrice, price2);
       setPrice(price2);
     }
   };
@@ -445,7 +446,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
             <Col span={13}>
               <span style={{color: '#FF6A00', fontSize: '18px'}}>
                 <span style={{fontSize: '14px', color: 'grey'}}>总价：</span>
-                {totalPrice ? '部分未定价' : '¥ ' + totalPrice}</span>
+                {totalPrice ? totalPrice : '部分未定价'}</span>
             </Col>
           </Row>
         </>
@@ -456,16 +457,24 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
         <>
           <Alert message="项目信息" type="info" closable style={{marginBottom: '10px'}}/>
           <div className={styles.listContentWrapper}>
-            <Descriptions column={4} layout="vertical">
+            <Descriptions column={4} bordered>
               <Descriptions.Item label="项目名称" span={2}>
                 <Text style={{color: '#181818'}}>{project_name}</Text>
               </Descriptions.Item>
               <Descriptions.Item label="项目描述" span={2}>
-                {project_desc?.split("\n")?.map((o, i) => {
-                  return (
-                    <div key={i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
-                  )
-                })}
+
+                <Tooltip
+                  placement="top"
+                  title={<div>
+                    {project_desc?.split("\n")?.map((o, i) => {
+                      return (
+                        <div key={i}><Text style={{color: 'white'}} key={i}>{o}</Text><br/></div>
+                      )
+                    })}
+                  </div>}
+                >
+                  <Text style={{color: '#181818'}}>{project_desc?.split("\n")?.[0]?.substring(5, 0)}</Text>
+                </Tooltip>
               </Descriptions.Item>
               <Descriptions.Item label="用户信息" span={4}>
                 用户： <Text style={{color: '#181818'}}>{user_name}</Text>

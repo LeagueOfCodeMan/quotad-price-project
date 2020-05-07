@@ -16,10 +16,11 @@ import {CurrentUser, UserModelState} from "@/models/user";
 import {addKeyToEachArray, ResultType, ValidatePwdResult} from "@/utils/utils";
 import {testPassword} from "@/services/user";
 import {OrderListItem} from "@/pages/order/data";
-import {changeOrderStatus, modifyTotalPrice, queryOrder} from "@/pages/order/service";
+import {changeOrderStatus, modifyOrder, modifyTotalPrice, queryOrder} from "@/pages/order/service";
 import {PaneDetail, TabsList} from "@/pages/order/components/TabsList";
 import OrderDetail from "@/pages/order/components/OrderDetail";
 import PublishModal from "@/pages/order/components/PublishModal";
+import ModifyProjectDetail from "@/pages/order/components/ModifyProjectDetail";
 
 const {confirm} = Modal;
 const {Text} = Typography;
@@ -38,6 +39,7 @@ enum ValidateType {
   TERMINATION = 'TERMINATION',
   COMPLETE = 'COMPLETE',
   PRICE = 'PRICE',
+  PROJECT = 'PROJECT',
 }
 
 type TreeDataItem = { title: JSX.Element; value: string; children?: TreeDataItem }[];
@@ -175,6 +177,7 @@ const OrderList: FC<BasicListProps> = props => {
   });
   const actionRef = useRef<ActionType>();
   const [visible, setVisible] = useState<boolean>(false);
+  const [modifyVisible, setModifyVisible] = useState<boolean>(false);
   const [current, setCurrent] = useState<NotRequired<OrderListItem>>({});
   const [details, setDetails] = useState<OrderListItem[]>([]);
   const [validateVisible, setValidateVisible] = useState(false);
@@ -208,6 +211,8 @@ const OrderList: FC<BasicListProps> = props => {
     const {id, create_user, order_leader_quota, order_leader_price, company, order_number, project_name, order_user} = current as OrderListItem;
     if (validateType === ValidateType.PRICE) {
       setVisible(true);
+    } else if (validateType === ValidateType.PROJECT) {
+      setModifyVisible(true);
     }
     let oper_code: number = 0;
     let operation: string = '';
@@ -276,6 +281,7 @@ const OrderList: FC<BasicListProps> = props => {
 
         ),
         okText: '确认',
+        // @ts-ignore
         okType: 'danger',
         cancelText: '取消',
         width: 620,
@@ -431,14 +437,9 @@ const OrderList: FC<BasicListProps> = props => {
             <div>
               <Text style={{color: '#1890FF'}}>销售总价：</Text>
               <Text style={{color: '#FF6A00'}}>{'¥' + record?.order_leader_quota}</Text>
-              {
-                record?.order_leader_price ?
-                  <>
-                    <Divider type="vertical"/>
-                    <Text style={{color: '#1890FF'}}>成交总价：</Text>
-                    <Text style={{color: '#FF6A00'}}>{'¥' + record?.order_leader_price}</Text>
-                  </> : null
-              }
+              <Divider type="vertical"/>
+              <Text style={{color: '#1890FF'}}>成交总价：</Text>
+              <Text style={{color: '#FF6A00'}}>{'¥' + (record?.order_leader_price || record?.order_leader_quota)}</Text>
             </div>
           );
         },
@@ -624,6 +625,11 @@ const OrderList: FC<BasicListProps> = props => {
     >
       编辑总价
     </Button>);
+    const modifyProject = (<Button
+      key="project"
+      type="link"
+      onClick={() => operationClick(record, ValidateType.PROJECT)}
+    >编辑订单信息</Button>);
     const termination = (<Button
       type="link"
       danger
@@ -646,9 +652,9 @@ const OrderList: FC<BasicListProps> = props => {
       </Dropdown>
     );
     if (record?.order_status === 1) {
-      template2.push(confirm, termination, modifyPrice);
+      template2.push(confirm, termination, modifyPrice, modifyProject);
     } else if (record?.order_status === 2) {
-      template2.push(complete, termination, modifyPrice, more);
+      template2.push(complete, termination, modifyPrice, modifyProject, more);
     }
     return template2;
   }
@@ -739,6 +745,26 @@ const OrderList: FC<BasicListProps> = props => {
           setCurrent({});
         }}
         updateModalVisible={visible}
+        current={current}
+      />
+      <ModifyProjectDetail
+        onSubmit={async (value, callback) => {
+          const response = await modifyOrder({id: current?.id as number, data: value});
+          const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
+          if (success) {
+            if (actionRef.current) {
+              actionRef.current.reload();
+            }
+            callback();
+            setModifyVisible(false);
+            setCurrent({});
+          }
+        }}
+        onCancel={() => {
+          setModifyVisible(false);
+          setCurrent({});
+        }}
+        updateModalVisible={modifyVisible}
         current={current}
       />
       <ValidatePassword

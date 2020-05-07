@@ -497,6 +497,9 @@ function getOrderList(req: Request, res: Response) {
 
 export default {
   'GET  /api/order': getOrderList,
+  'PUT  /api/order/*': (req: Request, res: Response) => {
+    res.send("Mock环境无法操作");
+  },
   'POST  /api/order/*/oper_order': (req: Request, res: Response) => {
     res.send("Mock环境无法操作");
   },

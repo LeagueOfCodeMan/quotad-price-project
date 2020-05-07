@@ -88,7 +88,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
               name="area_name"
               rules={[{required: true, message: '地区名称'}]}
             >
-              <Input placeholder="如：广东" {...commonProps} disabled={!!current?.id}/>
+              <Input placeholder="如：广东" {...commonProps}/>
             </FormItem>
           </Col>
         </Row>

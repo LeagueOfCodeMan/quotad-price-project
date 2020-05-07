@@ -3,6 +3,7 @@ import {ProjectListItem} from "@/pages/project/data";
 export interface OrderListItem {
   id: number;
   area: string;
+  mark: string;
   create_user: string;
   order_user: string;
   order_number: string; // 项目编号

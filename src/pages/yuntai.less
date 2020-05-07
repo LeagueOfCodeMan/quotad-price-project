@@ -24,3 +24,39 @@
     width: 200px;
   }
 }
+
+
+.createOrderStyle {
+  font-family: PingFangSC, helvetica neue, hiragino sans gb, arial, microsoft yahei ui, microsoft yahei, simsun, sans-serif !important;
+  :global {
+    .ant-table-cell {
+      font-size: 12px;
+    }
+    .ant-alert.ant-alert-no-icon {
+      margin-bottom: 10px;
+      padding: 1px 15px;
+    }
+    .dynamic-delete-button {
+      position: relative;
+      top: 4px;
+      color: #999;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .dynamic-delete-button:hover {
+      color: #777;
+    }
+    .dynamic-delete-button[disabled] {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    [data-theme="dark"] .dynamic-delete-button {
+      color: rgba(255,255,255,.45);
+    }
+    [data-theme="dark"] .dynamic-delete-button:hover {
+      color: rgba(255,255,255,.65);
+    }
+
+  }
+}

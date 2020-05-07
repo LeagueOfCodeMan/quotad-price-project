@@ -9,7 +9,7 @@ import {ProductBaseListItem} from "@/pages/product/data";
 import {ColumnsType} from "antd/lib/table";
 import {ProjectProductionInfoItem} from "@/pages/project/data";
 import Ellipsis from "@/components/Ellipsis";
-import {modifyProductSN} from "@/pages/order/service";
+import {modifyOrder, modifyProductSN} from "@/pages/order/service";
 
 const {Paragraph} = Typography;
 const {Text} = Typography;
@@ -59,7 +59,7 @@ const ListContentWrapper = ({item, order_status, identity, id, reload}:
       </Descriptions.Item>
       <Descriptions.Item label="SN码" span={1}>
         <Paragraph
-          editable={identity === 1 && (order_status === 2 || order_status === 4) ? {onChange: onChangeSN} : false}>{item?.sn || ''}</Paragraph>
+          editable={identity === 1 && order_status === 2 ? {onChange: onChangeSN} : false}>{item?.sn || ''}</Paragraph>
       </Descriptions.Item>
       <Descriptions.Item label="数量" span={1}>
         <Text style={{color: '#181818'}}>{item?.count}</Text>
@@ -199,7 +199,7 @@ const Content = ({data, currentUser, reload}: {
     bill_id, bill_addr, bill_phone, bill_bank, bill_account,
     contract_addr, contract_contact, contract_phone,
     order_leader_price,
-    order_leader_quota, project, other_list
+    order_leader_quota, project, other_list, mark,
   } = data;
   const {identity} = currentUser;
   const product_list = _.result(_.head(project), 'product_list') as ProjectProductionInfoItem[];
@@ -263,9 +263,31 @@ const Content = ({data, currentUser, reload}: {
    * 项目产品信息(产品库中)
    * 项目其他附加购买产品信息
    */
-
+  const onChangeMark = async (str: string) => {
+    const response = await modifyOrder({id, data: {mark: str}});
+    const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
+    if (success) {
+      reload();
+    }
+  };
   return (
     <div className={styles.listContentWrapper}>
+      {
+        identity === 1 ?
+
+          <div style={{margin: '10px 0'}}>
+            <Alert
+              message={
+                <div style={{display: 'flex'}}>
+                  <div>订单备注：</div>
+                  <Paragraph
+                    editable={order_status === 2 ? {onChange: onChangeMark} : false}>{mark || ''}</Paragraph></div>}
+              type="info"
+              closable
+            />
+          </div>
+          : null
+      }
       <div style={{margin: '10px 0'}}>
         <Alert
           message="基本信息"
@@ -395,20 +417,26 @@ const Content = ({data, currentUser, reload}: {
         )}
       >
       </List>
-      <div style={{margin: '10px 0'}}>
-        <Alert
-          message="自定义采购清单"
-          type="info"
-          closable
-        />
-      </div>
-      <Table
-        bordered size="small"
-        rowKey={record => record?.id}
-        columns={columns}
-        pagination={false}
-        dataSource={other_list || []}
-      />
+      {_.head(other_list) ?
+        <>
+          <div style={{margin: '10px 0'}}>
+            <Alert
+              message="自定义采购清单"
+              type="info"
+              closable
+            />
+          </div>
+          <Table
+            bordered size="small"
+            rowKey={record => record?.id}
+            columns={columns}
+            pagination={false}
+            dataSource={other_list || []}
+          />
+        </> : null
+      }
+
+
     </div>
   )
 };

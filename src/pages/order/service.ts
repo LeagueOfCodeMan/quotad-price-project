@@ -28,6 +28,14 @@ export async function queryOrder(params: ParamsType) {
   });
 }
 
+// 修改订单信息
+export async function modifyOrder(params: { id: number; data: NotRequired<OrderListItem> }) {
+  return request('/api/order/' + params?.id, {
+      method: 'PUT',
+    data: params.data,
+  });
+}
+
 // oper_code 1 同意  2 拒绝 3 完成
 export async function changeOrderStatus(params: { id: number; data: { oper_code: number } }) {
   return request('/api/order/' + params?.id + '/oper_order', {
@@ -43,6 +51,7 @@ export async function modifyProductSN(params: { id: number; data: { id: number; 
     data: params.data,
   });
 }
+
 // 编辑订单成交总价
 export async function modifyTotalPrice(params: { id: number; data: { order_leader_price: number; } }) {
   return request('/api/order/' + params?.id + '/modify_price', {
