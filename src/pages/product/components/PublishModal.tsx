@@ -4,7 +4,8 @@ import styles from '../../yuntai.less';
 import _ from 'lodash';
 import Highlighter from 'react-highlight-words';
 import {SearchOutlined} from '@ant-design/icons';
-import {UsersByProductType} from "@/pages/product";
+import {UsersByProductType} from '@/pages/product';
+import {ProductBaseListItem} from '@/pages/product/data';
 
 const {Text} = Typography;
 
@@ -13,9 +14,10 @@ interface PublishModalProps {
   onSubmit: (fieldsValue: PublishType, callback: Function) => void;
   onCancel: () => void;
   list?: UsersByProductType[];
+  current?: NotRequired<ProductBaseListItem>;
 }
 
-export type PublishType = { second_price: string | number, user_list?: number[]; };
+export type PublishType = { member_price: string | number; second_price: string | number, user_list?: number[]; };
 
 const formLayout = {
   labelCol: {span: 7},
@@ -32,9 +34,9 @@ const PublishModal: React.FC<PublishModalProps> = props => {
 
   const {
     updateModalVisible: visible,
-    onSubmit: handleAdd, onCancel, list,
+    onSubmit: handleAdd, onCancel, list, current,
   } = props;
-  const leader_price = _.head(list)?.leader_price;
+  const leader_price = current?.leader_price;
 
   useEffect(() => {
     if (form && !visible && formRef) {
@@ -50,6 +52,7 @@ const PublishModal: React.FC<PublishModalProps> = props => {
     const payload = {
       second_price: fieldsValue?.second_price,
       user_list: selectedRowKeys,
+      member_price: fieldsValue?.member_price,
     };
     handleAdd(payload as PublishType, (callback: boolean) => {
       if (callback) {
@@ -120,7 +123,7 @@ const PublishModal: React.FC<PublishModalProps> = props => {
       ),
   });
 
-  const columnsUser:any = [
+  const columnsUser: any = [
     {
       title: '二级组员',
       dataIndex: 'username',
@@ -159,7 +162,7 @@ const PublishModal: React.FC<PublishModalProps> = props => {
     clearFilters();
     setSearchText('');
   };
-
+  console.log(list);
   return (
     <Modal
       title="编辑组员价格"
@@ -171,7 +174,10 @@ const PublishModal: React.FC<PublishModalProps> = props => {
       destroyOnClose={true}
     >
       <div className={styles.formStyleCommon}>
-        <Form ref={(ref) => setFormRef(ref)} form={form} {...formLayout} style={{marginTop: '10px'}}>
+        <Form
+          ref={(ref) => setFormRef(ref)} form={form} {...formLayout} style={{marginTop: '10px'}}
+          initialValues={{member_price: current?.member_price}}
+        >
           <div style={{margin: '0 0 10px 0'}}>
             <Alert
               message="一级组员统一价格"
@@ -189,7 +195,7 @@ const PublishModal: React.FC<PublishModalProps> = props => {
                     return Promise.resolve();
                   }
                   if (value < (parseFloat(leader_price as string || '') || 0)) {
-                    return Promise.reject('组员价格不能低于组长价格')
+                    return Promise.reject('组员价格不能低于组长价格');
                   }
                   return Promise.resolve();
                 }
@@ -220,6 +226,7 @@ const PublishModal: React.FC<PublishModalProps> = props => {
           />
           <Form.Item
             name="second_price"
+            style={{marginTop: '10px'}}
             label="二级组员价格"
             rules={[{required: !!_.head(selectedRowKeys), message: '请输入二级组员价格'},
               {
@@ -228,7 +235,7 @@ const PublishModal: React.FC<PublishModalProps> = props => {
                     return Promise.resolve();
                   }
                   if (value < (parseFloat(leader_price as string || '') || 0)) {
-                    return Promise.reject('组员价格不能低于组长价格')
+                    return Promise.reject('组员价格不能低于组长价格');
                   }
                   return Promise.resolve();
                 }

@@ -7,22 +7,22 @@ import OperationModal from './components/OperationModal';
 import styles from './style.less';
 import {
   addProduct,
-  deleteProduct,
+  deleteProduct, modifyProductMemberPrice,
   modifyProductSecondPrice,
   queryProductList,
   queryUsersByProduct,
   updateProduct
-} from "./service";
-import ValidatePassword from "../../components/ValidatePassword/index";
-import {ExclamationCircleOutlined} from "@ant-design/icons/lib";
-import {PaginationConfig} from "antd/lib/pagination";
-import {ProductBaseListItem} from "src/pages/product/data";
-import {ProductBaseStateType} from "src/pages/product/model";
-import _ from "lodash";
-import {CurrentUser, UserModelState} from "@/models/user";
-import {isNormalResponseBody, productType, ResultType, ValidatePwdResult} from "@/utils/utils";
-import {testPassword} from "@/services/user";
-import PublishModal, {PublishType} from "@/pages/product/components/PublishModal";
+} from './service';
+import ValidatePassword from '../../components/ValidatePassword/index';
+import {ExclamationCircleOutlined} from '@ant-design/icons/lib';
+import {PaginationConfig} from 'antd/lib/pagination';
+import {ProductBaseListItem} from 'src/pages/product/data';
+import {ProductBaseStateType} from 'src/pages/product/model';
+import _ from 'lodash';
+import {CurrentUser, UserModelState} from '@/models/user';
+import {currentPrice, isNormalResponseBody, productType, ResultType, ValidatePwdResult} from '@/utils/utils';
+import {testPassword} from '@/services/user';
+import PublishModal, {PublishType} from '@/pages/product/components/PublishModal';
 
 const {Search} = Input;
 const {confirm} = Modal;
@@ -59,20 +59,22 @@ const Info: FC<{
   return (
     <div className={styles.headerInfo}>
       <span>{title}</span>
-      <p style={{color: active === id ? "#f7ba42" : "#1890FF",cursor:'pointer'}} onClick={() => reloadList(id)}>{value}</p>
+      <p style={{color: active === id ? '#f7ba42' : '#1890FF', cursor: 'pointer'}}
+         onClick={() => reloadList(id)}>{value}</p>
       {bordered && <em/>}
     </div>
   );
-}
+};
 
 const ListContent = ({
-                       data: {
-                         desc, leader_price, second_price, member_price,
-                         genre, id
-                       },
+                       data, currentUser
                      }: {
   data: ProductBaseListItem; currentUser: CurrentUser;
 }) => {
+  const {
+    desc,
+    genre, id
+  } = data;
   return (
     <div className={styles.listContentWrapper}>
       <Descriptions column={4}>
@@ -81,21 +83,20 @@ const ListContent = ({
         </Descriptions.Item>
         <Descriptions.Item label="产品采购总价" span={2}>
           <>
-            <Text style={{color: '#1890FF'}}>组长：</Text>
-            <Text style={{color: '#FF6A00'}}>¥ {leader_price}</Text>
+            <Text style={{color: '#FF6A00'}}>{currentPrice(data, currentUser?.identity)}</Text>
           </>
         </Descriptions.Item>
-        <Descriptions.Item label="描述" span={4}>
-          {desc?.split("\n")?.map((o, i) => {
+        <Descriptions.Item label="描述" span={4} className={styles.descriptionItemTop}>
+          {desc?.split('\n')?.map((o, i) => {
             return (
               <div key={id + '-x-' + i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
-            )
+            );
           })}
         </Descriptions.Item>
 
       </Descriptions>
     </div>
-  )
+  );
 };
 
 interface ListSearchParams {
@@ -118,7 +119,7 @@ export const Product: FC<BasicListProps> = props => {
   const [visible, setVisible] = useState<boolean>(false);
   const [current, setCurrent] = useState<NotRequired<ProductBaseListItem>>({});
   const [validateVisible, setValidateVisible] = useState(false);
-  const [validateType, setValidateType] = useState<string>("");
+  const [validateType, setValidateType] = useState<string>('');
   const [listParams, setListParams] = useState<ListSearchParams>({
     current: 1, pageSize: 5
   });
@@ -131,7 +132,7 @@ export const Product: FC<BasicListProps> = props => {
 
   useEffect(() => {
     reloadList();
-  }, [listParams])
+  }, [listParams]);
 
   const reloadList = () => {
     dispatch({
@@ -193,7 +194,7 @@ export const Product: FC<BasicListProps> = props => {
 
     let promise;
     if (id) {
-      promise = await updateProduct({id, data: values})
+      promise = await updateProduct({id, data: values});
     } else {
       promise = await addProduct(values);
     }
@@ -218,7 +219,7 @@ export const Product: FC<BasicListProps> = props => {
     const {id, pro_type, desc, mark} = current as ProductBaseListItem;
     if (validateType === ValidateType.DELETE_CONFIG) {
       const hide = () => {
-        message.loading('正在删除')
+        message.loading('正在删除');
       };
       confirm({
         title: '删除产品',
@@ -236,7 +237,7 @@ export const Product: FC<BasicListProps> = props => {
           const success: boolean = new ValidatePwdResult(result).validate('删除成功', null, hide);
           // 刷新数据
           if (success) {
-            setListParams({...listParams, current: 1})
+            setListParams({...listParams, current: 1});
             setCurrent({});
           }
         },
@@ -326,15 +327,15 @@ export const Product: FC<BasicListProps> = props => {
                     reloadList={(index: number) => {
                       changeActive(index);
                       if (index === 0) {
-                        setListParams({..._.omit(listParams, 'genre__icontains'),})
+                        setListParams({..._.omit(listParams, 'genre__icontains'),});
                       } else {
-                        setListParams({...listParams, genre__icontains: index})
+                        setListParams({...listParams, genre__icontains: index});
                       }
                     }}
                     title={d.label}
                     value={countStatistics?.[d.key] || 0} bordered/>
                 </Col>
-              )
+              );
             })}
           </Row>
         </Card>
@@ -385,8 +386,19 @@ export const Product: FC<BasicListProps> = props => {
       </div>
       <PublishModal
         onSubmit={async (value, callback) => {
-          const response = await modifyProductSecondPrice({id: current?.id as number, data: value as PublishType});
+          console.log(value);
+          const {user_list, second_price, member_price} = value as PublishType;
+          const response =  await modifyProductMemberPrice({
+            id: current?.id as number,
+            data: {member_price}
+          });
           const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
+          if(_.head(user_list) ){
+            const response = await modifyProductSecondPrice({
+              id: current?.id as number,
+              data: {second_price, user_list}
+            });
+          }
           if (success) {
             callback();
             handleUpdateModalVisible(false);
@@ -399,11 +411,12 @@ export const Product: FC<BasicListProps> = props => {
         }}
         updateModalVisible={updateModalVisible}
         list={list}
+        current={current}
       />
       <ValidatePassword
         visible={validateVisible}
         onCreate={async (values) => {
-          const success = await onCreate(values)
+          const success = await onCreate(values);
           if (success) {
             setValidateVisible(false);
             // TODO something

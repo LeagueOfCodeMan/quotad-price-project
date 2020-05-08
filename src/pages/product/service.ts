@@ -45,6 +45,16 @@ export async function modifyProductSecondPrice(params: {
   });
 }
 
+export async function modifyProductMemberPrice(params: {
+  id: number,
+  data: { member_price: string | number }
+}) {
+  return request('/api/product/' + params.id + '/mod_mem_price', {
+    method: 'POST',
+    data: params.data,
+  });
+}
+
 export async function countStatistics() {
   return request('/api/product/count_statistics');
 }

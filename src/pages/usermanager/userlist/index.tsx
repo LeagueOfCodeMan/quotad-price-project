@@ -102,7 +102,7 @@ const UserList: React.FC<UserListProps> = (props) => {
       dataIndex: 'identity',
       valueEnum: {
         1: {text: '管理员'},
-        2: {text: '一级组长'},
+        2: {text: '组长'},
         3: {text: '一级组员'},
         4: {text: '二级组员'},
       },
