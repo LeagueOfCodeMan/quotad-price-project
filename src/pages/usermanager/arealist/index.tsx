@@ -177,7 +177,6 @@ const AreaList: React.FC<AreaListItem> = (props) => {
           const success: boolean = new ValidatePwdResult(result).validate('删除成功', null, hide);
           // 刷新数据
           if (actionRef.current && success) {
-            console.log(actionRef);
             actionRef.current.reset();
           }
         },

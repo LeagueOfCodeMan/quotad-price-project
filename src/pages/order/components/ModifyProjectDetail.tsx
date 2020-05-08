@@ -45,7 +45,6 @@ const ModifyProjectDetail: React.FC<PublishModalProps> = props => {
     });
   };
 
-  console.log(current);
   return (
     <Modal
       title="编辑项目信息"

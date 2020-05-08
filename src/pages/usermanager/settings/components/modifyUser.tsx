@@ -25,7 +25,6 @@ const ModifyUserInfo: React.FC<ModifyUserInfoValuesProps> =
           onCreate(values as CreateUser);
         })
         .catch(info => {
-          console.log('Validate Failed:', info);
         });
     };
     return (

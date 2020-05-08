@@ -228,7 +228,6 @@ const UserList: React.FC<UserListProps> = (props) => {
           }
         },
         onCancel() {
-          console.log('Cancel');
         },
       });
 

@@ -162,7 +162,6 @@ const PublishModal: React.FC<PublishModalProps> = props => {
     clearFilters();
     setSearchText('');
   };
-  console.log(list);
   return (
     <Modal
       title="编辑组员价格"

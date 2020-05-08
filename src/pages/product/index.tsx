@@ -386,7 +386,6 @@ export const Product: FC<BasicListProps> = props => {
       </div>
       <PublishModal
         onSubmit={async (value, callback) => {
-          console.log(value);
           const {user_list, second_price, member_price} = value as PublishType;
           const response =  await modifyProductMemberPrice({
             id: current?.id as number,

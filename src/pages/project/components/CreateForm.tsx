@@ -20,10 +20,10 @@ import _ from 'lodash';
 import {queryProduct} from '../../product/service';
 import {ProductBaseListItem} from '../../product/data';
 import styles from '../style.less';
-import {ColumnsType} from "antd/lib/table";
-import {CreateProjectParams} from "../service";
-import {CurrentUser} from "@/models/user";
-import {actPrice, currentPrice, isNormalResponseBody, productType} from "@/utils/utils";
+import {ColumnsType} from 'antd/lib/table';
+import {CreateProjectParams} from '../service';
+import {CurrentUser} from '@/models/user';
+import {actPrice, currentPrice, isNormalResponseBody, productType} from '@/utils/utils';
 
 
 export interface FormValueType {
@@ -62,7 +62,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
   const [dataSource, setDataSource] = useState<ProductBaseListItem[]>([]);
   const [current, setCurrent] = useState<ProductBaseListItem>();
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [totalPrice, setPrice] = useState<string>("0.00");
+  const [totalPrice, setPrice] = useState<string>('0.00');
 
   const [form] = Form.useForm();
   const [formRef, setFormRef] = useState<any>();
@@ -78,12 +78,12 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
       setTimeout(() => {
         const conf_par: { id: number; count: number; }[] = [];
         current?.conf_list?.forEach(d => {
-          conf_par.push({id: d?.id, count: d?.is_required ? 1 : 0})
+          conf_par.push({id: d?.id, count: d?.is_required ? 1 : 0});
         });
         form.setFieldsValue({
           conf_par: conf_par
         });
-      }, 0)
+      }, 0);
     }
   }, [current]);
 
@@ -116,7 +116,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
       const product_list = _.map(dataSource, o => {
         return (
           {production: o?.id, count: o?.count, conf_par: o?.conf_par}
-        )
+        );
       });
       const payload = {
         project_name, project_desc, product_list
@@ -142,6 +142,8 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
   }, 800);
 
   const handleChange = (value: any) => {
+    setPrice('0.00');
+    form.setFieldsValue({count: null});
     const checkedCurrent = _.head(_.filter(data, o => o?.id === value?.value));
     calculate();
     setCurrent(checkedCurrent);
@@ -155,17 +157,16 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
   const calculate = () => {
     const {count, conf_par} = form.getFieldsValue();
     if (count) {
-      const price = parseFloat(actPrice(current, identity) || '0');
+      const price = parseFloat(actPrice(current, identity));
       const checkPar = conf_par?.filter((i: { count: number; }) => i?.count > 0);
       const tPrice = _.reduce(checkPar, (sum, n) => {
         const item = _.head(_.filter(current?.conf_list, o => o?.id === n?.id));
-        const priceItem = parseFloat(actPrice(item, identity) || '0') * n?.count;
+        const priceItem = parseFloat(actPrice(item, identity)) * n?.count;
         return sum + priceItem;
-      }, 0) || 0;
+      }, 0);
       const hPrice = (price + tPrice) * count;
       const fPrice: string = hPrice % 1 !== 0 ? hPrice.toString() : hPrice + '.00';
-      const price2 = _.isNaN(fPrice) ? '部分未定价' : '¥ ' + fPrice;
-      console.log(hPrice, fPrice, price2);
+      const price2 = _.isNaN(hPrice) ? '部分未定价' : '¥ ' + fPrice;
       setPrice(price2);
     }
   };
@@ -182,7 +183,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
           <div>
             <Text style={{color: '#181818'}}>{productType(text)}</Text>
           </div>
-        )
+        );
       },
     },
     {
@@ -196,7 +197,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
           <div>
             <Text style={{color: '#181818'}}>{text}</Text>
           </div>
-        )
+        );
       },
     },
     {
@@ -213,7 +214,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
               <Text type="danger">选配</Text>
             }
           </div>
-        )
+        );
       },
     },
     {
@@ -227,7 +228,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
           <div>
             <Text style={{color: '#FF6A00'}}>{currentPrice(record, identity)}</Text>
           </div>
-        )
+        );
       },
     },
     {
@@ -241,7 +242,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
           <div>
             <Text style={{color: '#181818'}}>{text}</Text>
           </div>
-        )
+        );
       },
     },
   ];
@@ -266,7 +267,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
               删除
             </a>
           </div>
-        )
+        );
       },
     },
   ];
@@ -342,7 +343,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
                   dropdownMatchSelectWidth={300}
                 >
                   {
-                    (productType(form.getFieldValue("genre") === 1 ? -3 : -4) as { label: string; key: number; }[])?.map(d => {
+                    (productType(form.getFieldValue('genre') === 1 ? -3 : -4) as { label: string; key: number; }[])?.map(d => {
                       return (
                         <OptGroup label={<span style={{color: '#FF6A00'}}>{d?.label}</span>} key={d?.key}>
                           {
@@ -355,11 +356,11 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
                                     <span style={{color: '#FF6A00'}}>{currentPrice(d2, identity)}</span>
                                   </>
                                 </Option>
-                              )
+                              );
                             })
                           }
                         </OptGroup>
-                      )
+                      );
                     })
                   }
                 </Select>
@@ -412,7 +413,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
                                   </Form.Item>
                                 </Col>
                               </Row>
-                            )
+                            );
                           })}
                         </div>
                       );
@@ -466,14 +467,14 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
                 <Tooltip
                   placement="top"
                   title={<div>
-                    {project_desc?.split("\n")?.map((o, i) => {
+                    {project_desc?.split('\n')?.map((o, i) => {
                       return (
                         <div key={i}><Text style={{color: 'white'}} key={i}>{o}</Text><br/></div>
-                      )
+                      );
                     })}
                   </div>}
                 >
-                  <Text style={{color: '#181818'}}>{project_desc?.split("\n")?.[0]?.substring(5, 0)}</Text>
+                  <Text style={{color: '#181818'}}>{project_desc?.split('\n')?.[0]?.substring(5, 0)}</Text>
                 </Tooltip>
               </Descriptions.Item>
               <Descriptions.Item label="用户信息" span={4}>
@@ -500,17 +501,18 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
             pagination={false}
             scroll={{y: 195}}
             summary={pageData => {
+              console.log(pageData);
               const tPrice = _.reduce(pageData, (sum, n) => {
-                const price = parseFloat(actPrice(n, identity) || '0');
+                const price = parseFloat(actPrice(n, identity));
                 const priceItem = _.reduce(n?.conf_list, (sum2, n2) => {
-                  const price2 = parseFloat(actPrice(n2, identity) || '0');
+                  const price2 = parseFloat(actPrice(n2, identity));
                   return sum2 + price2 * (n2?.count || 0);
-                }, 0) || 0;
+                }, 0);
                 return sum + (price + priceItem) * (n?.count || 0);
-              }, 0) || 0;
+              }, 0);
 
               const fPrice: string = tPrice % 1 !== 0 ? tPrice.toString() : tPrice + '.00';
-              const mes = _.isNaN(fPrice) ? '部分未定价' : '¥ ' + fPrice;
+              const mes = _.isNaN(tPrice) ? '部分未定价' : '¥ ' + fPrice;
               return (
                 <>
                   <tr>
@@ -544,7 +546,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
           </Form.Item>
         </div>
         <div style={{border: '1px dashed #dddddd'}}>
-          <div style={{textAlign: "center", color: '#1890FF', fontWeight: 'bold', margin: '10px 0'}}>用户信息</div>
+          <div style={{textAlign: 'center', color: '#1890FF', fontWeight: 'bold', margin: '10px 0'}}>用户信息</div>
           <Form.Item
             label="用户"
             name="user_name"
@@ -638,6 +640,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
         handleUpdateModalVisible();
       }}
       className={styles.createFormStyle}
+      maskClosable={false}
     >
       <Steps style={{marginBottom: 28}} size="small" current={currentStep}>
         <Step title="填写项目信息"/>

@@ -599,7 +599,6 @@ const ProjectList: FC<BasicListProps> = props => {
       {orderVisible ? (
         <CreateOrder
           onSubmit={async value => {
-            console.log(value);
             const response = await createOrder({id: current?.id as number, data: value});
             const success = new ValidatePwdResult(response).validate('创建成功', null, undefined);
             if (success) {

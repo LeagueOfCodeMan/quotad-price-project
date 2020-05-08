@@ -158,7 +158,6 @@ const OperationModal: FC<OperationModalProps> = props => {
     };
 
     const handleUploadChange = (info: any) => {
-      // console.log(info);
     };
 
     const upLoadProp = () => ({

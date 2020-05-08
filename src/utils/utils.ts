@@ -305,20 +305,20 @@ export function addKeyToEachArray(array: any[]) {
  */
 export const actPrice = (item: any, identity: CurrentUser['identity']): string => {
   const val = item as ProductBaseListItem;
-  let result = '0.00';
+  let result = '';
   switch (identity) {
     case 1:
     case 2:
-      result = (val?.leader_price || '0.00').toString();
+      result = (val?.leader_price || '').toString();
       break;
     case 3:
-      result = (val?.member_price || '0.00').toString();
+      result = (val?.member_price || '').toString();
       break;
     case 4:
-      result = (val?.second_price || '0.00').toString();
+      result = (val?.second_price || '').toString();
       break;
     default:
-      result = '0.00';
+      result = '';
       break;
   }
   return result;

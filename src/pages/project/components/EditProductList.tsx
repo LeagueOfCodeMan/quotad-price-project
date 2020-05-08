@@ -5,11 +5,13 @@ import _ from 'lodash';
 import {queryProduct} from '../../product/service';
 import {ProductBaseListItem} from '../../product/data';
 import styles from '../style.less';
-import {ColumnsType} from "antd/lib/table";
-import {ProductList} from "../service";
-import {CurrentUser} from "@/models/user";
-import {actPrice, isNormalResponseBody, productType} from "@/utils/utils";
-import {ProjectListItem} from "@/pages/project/data";
+import {ColumnsType} from 'antd/lib/table';
+import {ProductList} from '../service';
+import {CurrentUser} from '@/models/user';
+import {actPrice, isNormalResponseBody, productType} from '@/utils/utils';
+import {ProjectListItem} from '@/pages/project/data';
+import {PlusOutlined} from '@ant-design/icons/lib';
+import {useToggle} from 'react-use';
 
 
 export interface FormValueType {
@@ -45,7 +47,8 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
   const [data, setData] = useState<ProductBaseListItem[]>([]);
   const [dataSource, setDataSource] = useState<ProductBaseListItem[]>([]);
   const [current, setCurrent] = useState<ProductBaseListItem>();
-  const [totalPrice, setPrice] = useState<string>("0.00");
+  const [totalPrice, setPrice] = useState<string>('0.00');
+  const [on, toggle] = useToggle(false);
 
   const [form] = Form.useForm();
   const [formRef, setFormRef] = useState<any>();
@@ -62,12 +65,12 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
       setTimeout(() => {
         const conf_par: { id: number; count: number; }[] = [];
         current?.conf_list?.forEach(d => {
-          conf_par.push({id: d?.id, count: d?.is_required ? 1 : 0})
+          conf_par.push({id: d?.id, count: d?.is_required ? 1 : 0});
         });
         form.setFieldsValue({
           conf_par: conf_par
         });
-      }, 0)
+      }, 0);
     }
   }, [current]);
 
@@ -79,7 +82,7 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
             ...item, price: getPriceBasedIdentity(item?.production), ...item?.production, uuid: uuidv4(),
             conf_par: _.map(item?.conf_par, d => ({...d, price: getPriceBasedIdentity(d)}))
           }
-        )
+        );
       });
       setDataSource(data as ProductBaseListItem[]);
     }
@@ -123,7 +126,7 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
       const product_list = _.map(dataSource, o => {
         return (
           {production: o?.id, count: o?.count, conf_par: _.map(o?.conf_par, d => ({id: d?.id, count: d?.count}))}
-        )
+        );
       });
       handleUpdate(product_list as ProductList);
     }
@@ -185,7 +188,7 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
           <div>
             <Text style={{color: '#181818'}}>{productType(text)}</Text>
           </div>
-        )
+        );
       },
     },
     {
@@ -199,7 +202,7 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
           <div>
             <Text style={{color: '#181818'}}>{text}</Text>
           </div>
-        )
+        );
       },
     },
     {
@@ -213,7 +216,7 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
           <div>
             <Text style={{color: '#FF6A00'}}>{text || '尚未定价'}</Text>
           </div>
-        )
+        );
       },
     },
     {
@@ -227,7 +230,7 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
           <div>
             <Text style={{color: '#181818'}}>{text}</Text>
           </div>
-        )
+        );
       },
     },
   ];
@@ -252,7 +255,7 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
               删除
             </a>
           </div>
-        )
+        );
       },
     },
   ];
@@ -279,174 +282,192 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
   const renderContent = () => {
     return (
       <>
-        <Alert message="产品选择" type="info" closable style={{marginBottom: '10px'}}/>
-        <Row gutter={[8, 8]}>
-          <Col span={11}>
-            <Form.Item
-              label="产品类别"
-              name="genre"
-              rules={[{required: true, message: '产品类型'}]}
-            >
-              <Select
-                placeholder="产品类别"
-                onChange={(val) => {
-                  fetchProduct(val);
-                }}
-                style={{width: '120px'}}
-              >
-                <Option value={1}>硬件</Option>
-                <Option value={2}>软件</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={13} style={{marginLeft: '-45px'}}>
-            <Form.Item
-              name="production"
-              label="产品选择"
-              rules={[
-                ({getFieldValue}) => ({
-                  validator(rule, value) {
-                    if (!getFieldValue('genre')) {
-                      return Promise.reject('请先选择产品类别!');
-                    } else if (!value) {
-                      return Promise.reject('请选择产品');
-                    }
-                    return Promise.resolve();
-                  },
-                })
-              ]}
-            >
-              <Select
-                showSearch
-                labelInValue
-                placeholder="必选配置"
-                notFoundContent="请先选择类别"
-                filterOption={false}
-                style={{width: '100%'}}
-                onChange={handleChange}
-                dropdownMatchSelectWidth={300}
-              >
-                {
-                  (productType(form.getFieldValue("genre") === 1 ? -3 : -4) as { label: string; key: number; }[])?.map(d => {
+        {!on ?
+          <Button
+            type="dashed"
+            onClick={() => {
+              toggle(true);
+            }}
+            style={{width: '560px'}}
+          >
+            <PlusOutlined/> 添加产品
+          </Button> : null
+        }
+        {
+          on ?
+            <>
 
-                    return (
-                      <OptGroup label={<span style={{color: '#FF6A00'}}>{d?.label}</span>} key={d?.key}>
-                        {
-                          _.filter(data, o => o?.genre === d?.key)?.map(d2 => {
-                            const priceText = actPrice(d2, identity);
-                            const priceTextFinal = priceText === '0.00' ? '尚未定价' : '价格：¥' + priceText;
-                            return (
-                              <Option key={d2?.id} value={d2?.id}>
-                                <>
-                                  <span>{d2?.pro_type}</span>
-                                  <Divider type="vertical"/>
-                                  <span style={{color: '#FF6A00'}}>{priceTextFinal}</span>
-                                </>
-                              </Option>
-                            )
-                          })
-                        }
-                      </OptGroup>
-                    )
-                  })
-                }
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-        {_.head(current?.conf_list) ?
-          <>
-            <div className={styles.standardWrapper}>
-              <div className={styles.standardInner}>
-                <Form.List name="conf_par">
-                  {fields => {
-                    return (
-                      <div>
-                        {fields.map((field, index) => {
-                          const conf: ProductBaseListItem = current?.conf_list?.[index] as ProductBaseListItem;
-                          const priceText = actPrice(conf, identity);
-                          const priceTextFinal = priceText === '0.00' ? '尚未定价' : '价格：¥' + priceText;
+              <Alert message="产品选择" type="info" closable style={{marginBottom: '10px'}}/>
+              <Row gutter={[8, 8]}>
+                <Col span={11}>
+                  <Form.Item
+                    label="产品类别"
+                    name="genre"
+                    rules={[{required: true, message: '产品类型'}]}
+                  >
+                    <Select
+                      placeholder="产品类别"
+                      onChange={(val) => {
+                        fetchProduct(val);
+                      }}
+                      style={{width: '120px'}}
+                    >
+                      <Option value={1}>硬件</Option>
+                      <Option value={2}>软件</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={13} style={{marginLeft: '-45px'}}>
+                  <Form.Item
+                    name="production"
+                    label="产品选择"
+                    rules={[
+                      ({getFieldValue}) => ({
+                        validator(rule, value) {
+                          if (!getFieldValue('genre')) {
+                            return Promise.reject('请先选择产品类别!');
+                          } else if (!value) {
+                            return Promise.reject('请选择产品');
+                          }
+                          return Promise.resolve();
+                        },
+                      })
+                    ]}
+                  >
+                    <Select
+                      showSearch
+                      labelInValue
+                      placeholder="必选配置"
+                      notFoundContent="请先选择类别"
+                      filterOption={false}
+                      style={{width: '100%'}}
+                      onChange={handleChange}
+                      dropdownMatchSelectWidth={300}
+                    >
+                      {
+                        (productType(form.getFieldValue('genre') === 1 ? -3 : -4) as { label: string; key: number; }[])?.map(d => {
+
                           return (
-                            <Row key={field.key} gutter={[8, 8]}>
-                              <Col span={16} style={{marginLeft: '-20px'}}>
-                                <Form.Item
-                                  name={[field.name, 'id']}
-                                  label={<Text strong>{productType(conf?.genre)}</Text>}
-                                  // @ts-ignore
-                                  fieldKey={[field.fieldKey, 'id']}
-                                >
-                                  <Select disabled style={{width: 256}} showArrow={false}>
-                                    <Option key={conf?.id} value={conf?.id}>
-                                      <div>
-                                        <span>{conf?.pro_type}</span>
+                            <OptGroup label={<span style={{color: '#FF6A00'}}>{d?.label}</span>} key={d?.key}>
+                              {
+                                _.filter(data, o => o?.genre === d?.key)?.map(d2 => {
+                                  const priceText = actPrice(d2, identity);
+                                  const priceTextFinal = priceText === '0.00' ? '尚未定价' : '价格：¥' + priceText;
+                                  return (
+                                    <Option key={d2?.id} value={d2?.id}>
+                                      <>
+                                        <span>{d2?.pro_type}</span>
                                         <Divider type="vertical"/>
                                         <span style={{color: '#FF6A00'}}>{priceTextFinal}</span>
-                                      </div>
+                                      </>
                                     </Option>
-                                  </Select>
-                                </Form.Item>
-                              </Col>
-                              <Col span={6}>
-                                <Form.Item
-                                  name={[field.name, 'count']}
-                                  label={<Text type="secondary">数量：</Text>}
-                                  // @ts-ignore
-                                  fieldKey={[field.fieldKey, 'count']}
-                                  rules={[{required: true, message: '数量'}]}
-                                >
-                                  <InputNumber
-                                    onChange={() => calculate()}
-                                    style={{marginLeft: '20px'}} placeholder="采购数量"
-                                    min={conf?.is_required ? 1 : 0}/>
-                                </Form.Item>
-                              </Col>
-                            </Row>
-                          )
-                        })}
-                      </div>
-                    );
-                  }}
-                </Form.List>
-              </div>
-            </div>
-          </> : null
-        }
-        <Row gutter={[8, 8]} style={{marginTop: '10px'}}>
-          <Col span={11}>
-            <Form.Item
-              name="count"
-              label="产品数量"
-              rules={[
-                ({getFieldValue}) => ({
-                  validator(rule, value) {
-                    if (value && !getFieldValue('production')) {
-                      return Promise.reject('请先选择产品!');
-                    } else if (!value) {
-                      return Promise.reject('输入数量');
-                    }
-                    return Promise.resolve();
-                  },
-                })
-              ]}
-            >
-              <InputNumber onChange={() => calculate()} style={{width: 120}} placeholder="采购数量" min={1}/>
-            </Form.Item>
-          </Col>
-          <Col span={7}>
+                                  );
+                                })
+                              }
+                            </OptGroup>
+                          );
+                        })
+                      }
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+              {_.head(current?.conf_list) ?
+                <>
+                  <div className={styles.standardWrapper}>
+                    <div className={styles.standardInner}>
+                      <Form.List name="conf_par">
+                        {fields => {
+                          return (
+                            <div>
+                              {fields.map((field, index) => {
+                                const conf: ProductBaseListItem = current?.conf_list?.[index] as ProductBaseListItem;
+                                const priceText = actPrice(conf, identity);
+                                const priceTextFinal = priceText === '0.00' ? '尚未定价' : '价格：¥' + priceText;
+                                return (
+                                  <Row key={field.key} gutter={[8, 8]}>
+                                    <Col span={16} style={{marginLeft: '-20px'}}>
+                                      <Form.Item
+                                        name={[field.name, 'id']}
+                                        label={<Text strong>{productType(conf?.genre)}</Text>}
+                                        // @ts-ignore
+                                        fieldKey={[field.fieldKey, 'id']}
+                                      >
+                                        <Select disabled style={{width: 256}} showArrow={false}>
+                                          <Option key={conf?.id} value={conf?.id}>
+                                            <div>
+                                              <span>{conf?.pro_type}</span>
+                                              <Divider type="vertical"/>
+                                              <span style={{color: '#FF6A00'}}>{priceTextFinal}</span>
+                                            </div>
+                                          </Option>
+                                        </Select>
+                                      </Form.Item>
+                                    </Col>
+                                    <Col span={6}>
+                                      <Form.Item
+                                        name={[field.name, 'count']}
+                                        label={<Text type="secondary">数量：</Text>}
+                                        // @ts-ignore
+                                        fieldKey={[field.fieldKey, 'count']}
+                                        rules={[{required: true, message: '数量'}]}
+                                      >
+                                        <InputNumber
+                                          onChange={() => calculate()}
+                                          style={{marginLeft: '20px'}} placeholder="采购数量"
+                                          min={conf?.is_required ? 1 : 0}/>
+                                      </Form.Item>
+                                    </Col>
+                                  </Row>
+                                );
+                              })}
+                            </div>
+                          );
+                        }}
+                      </Form.List>
+                    </div>
+                  </div>
+                </> : null
+              }
+              <Row gutter={[8, 8]} style={{marginTop: '10px'}}>
+                <Col span={11}>
+                  <Form.Item
+                    name="count"
+                    label="产品数量"
+                    rules={[
+                      ({getFieldValue}) => ({
+                        validator(rule, value) {
+                          if (value && !getFieldValue('production')) {
+                            return Promise.reject('请先选择产品!');
+                          } else if (!value) {
+                            return Promise.reject('输入数量');
+                          }
+                          return Promise.resolve();
+                        },
+                      })
+                    ]}
+                  >
+                    <InputNumber onChange={() => calculate()} style={{width: 120}} placeholder="采购数量" min={1}/>
+                  </Form.Item>
+                </Col>
+                <Col span={7}>
               <span style={{color: '#FF6A00', fontSize: '18px'}}>
                 <span style={{fontSize: '14px', color: 'grey'}}>总价：</span>
                 {totalPrice || '尚未定价'}</span>
-          </Col>
-          <Col span={6}>
-            <Button type="primary" size="small" onClick={() => handleNext(1)}>
-              添加
-            </Button>
-          </Col>
-        </Row>
+                </Col>
+                <Col span={6}>
+                  <Button type="primary" size="small" onClick={() => handleNext(1)}>
+                    添加
+                  </Button>
+                </Col>
+              </Row>
+            </> : null
+        }
         <Alert
           message="产品清单"
           type="info"
           closable
+          style={{margin: '5px 0'}}
         />
         <Table
           rowKey={record => record?.uuid as string}

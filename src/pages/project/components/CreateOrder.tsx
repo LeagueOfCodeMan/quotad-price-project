@@ -178,7 +178,6 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
     if (currentStep < 2) {
 
       if (currentStep === 0) {
-        console.log(current2?.company, fieldsValue?.company);
         if (_.isEqual(current2?.company, fieldsValue?.company)) {
           toggleDisabled(true);
         } else {
@@ -542,6 +541,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
             pagination={false}
             scroll={{y: 195}}
             summary={pageData => {
+              console.log(pageData);
               const tPrice = _.reduce(pageData, (sum, n) => {
                 const price = n?.price - 0;
                 const priceItem = _.reduce(n?.conf_par, (sum2, n2) => {
@@ -887,6 +887,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
   return (
     <Modal
       width={640}
+      maskClosable={false}
       bodyStyle={{padding: '32px 40px 48px'}}
       destroyOnClose
       title="创建订单"
@@ -901,7 +902,6 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
         handleUpdateModalVisible();
       }}
       className={styles.createOrderStyle}
-      maskClosable={false}
     >
       <Steps style={{marginBottom: 28}} size="small" current={currentStep}>
         <Step title="项目信息确认"/>

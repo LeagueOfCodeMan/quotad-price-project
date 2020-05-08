@@ -51,7 +51,6 @@ const PublishModal: React.FC<PublishModalProps> = props => {
   const commonProps = {
     style: {width: '200px'}, size: 'middle' as SizeType,
   };
-  console.log(current);
   return (
     <Modal
       title="编辑成交总价"
