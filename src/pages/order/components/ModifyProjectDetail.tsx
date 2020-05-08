@@ -47,7 +47,7 @@ const ModifyProjectDetail: React.FC<PublishModalProps> = props => {
 
   return (
     <Modal
-      title="编辑项目信息"
+      title="编辑订单信息"
       visible={visible}
       onOk={okHandle}
       onCancel={() => onCancel()}
@@ -109,7 +109,7 @@ const ModifyProjectDetail: React.FC<PublishModalProps> = props => {
                 name="bill_id"
                 rules={[{required: false, message: '税号'}]}
               >
-                <Input placeholder="税号" style={{width: 484}} disabled={current?.label === 2}/>
+                <Input placeholder="税号" style={{width: 484}} disabled={current?.label === 1}/>
               </Form.Item>
             </Col>
           </Row>
@@ -120,7 +120,7 @@ const ModifyProjectDetail: React.FC<PublishModalProps> = props => {
                 name="bill_addr"
                 rules={[{required: false, message: '地址'}]}
               >
-                <Input placeholder="地址" style={{width: 200}} disabled={current?.label === 2}/>
+                <Input placeholder="地址" style={{width: 200}} disabled={current?.label === 1}/>
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -129,7 +129,7 @@ const ModifyProjectDetail: React.FC<PublishModalProps> = props => {
                 name="bill_phone"
                 rules={[{required: false, message: '电话'}]}
               >
-                <Input placeholder="电话" style={{width: 200}} disabled={current?.label === 2}/>
+                <Input placeholder="电话" style={{width: 200}} disabled={current?.label === 1}/>
               </Form.Item>
             </Col>
           </Row>
@@ -140,7 +140,7 @@ const ModifyProjectDetail: React.FC<PublishModalProps> = props => {
                 name="bill_bank"
                 rules={[{required: false, message: '开户行'}]}
               >
-                <Input placeholder="开户行" style={{width: 200}} disabled={current?.label === 2}/>
+                <Input placeholder="开户行" style={{width: 200}} disabled={current?.label === 1}/>
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -150,7 +150,7 @@ const ModifyProjectDetail: React.FC<PublishModalProps> = props => {
                 name="bill_account"
                 rules={[{required: false, message: '账号'}]}
               >
-                <Input placeholder="账号" style={{width: 200}} disabled={current?.label === 2}/>
+                <Input placeholder="账号" style={{width: 200}} disabled={current?.label === 1}/>
               </Form.Item>
             </Col>
           </Row>
