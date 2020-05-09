@@ -2,12 +2,12 @@
 import {Alert, Checkbox} from 'antd';
 import React, {useState} from 'react';
 import {AnyAction, Dispatch} from 'redux';
-// import { Link } from 'umi';
 import {connect} from 'dva';
 import styles from './style.less';
 import {LoginParamsType} from './service';
 import LoginFrom from './components/Login';
-import {UserModelState} from "@/models/user";
+import {UserModelState} from '@/models/user';
+import Link from 'umi/link';
 
 const {
   Tab, UserName, Password,
@@ -83,13 +83,12 @@ const Login: React.FC<LoginProps> = props => {
           <Checkbox checked={autoLogin} onChange={e => setAutoLogin(e.target.checked)}>
             自动登录
           </Checkbox>
-          <a
-            style={{
-              float: 'right',
-            }}
-          >
+          <Link
+                style={{
+                  float: 'right',
+                }} to="/user/changepsd">
             忘记密码
-          </a>
+          </Link>
         </div>
         <Submit loading={submitting}>登录</Submit>
         {/*<div className={styles.other}>*/}

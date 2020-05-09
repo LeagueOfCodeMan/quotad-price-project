@@ -110,6 +110,7 @@ export default {
               path: '/user/login',
               component: './user/login',
             },
+            { path: '/user/changepsd', component: './user/forget' },
             {
               name: 'register-result',
               icon: 'smile',
@@ -135,18 +136,18 @@ export default {
           authority: needUserAuthority,
           routes: [
             {
-              path: '/order',
-              icon: 'smile',
-              name: 'order',
-              component: './order',
-              authority: needManagerAuthority,
-            },
-            {
               path: '/project',
               icon: 'smile',
               name: 'project',
               component: './project',
               authority: needUserAuthority,
+            },
+            {
+              path: '/order',
+              icon: 'smile',
+              name: 'order',
+              component: './order',
+              authority: needManagerAuthority,
             },
             {
               path: '/product',
