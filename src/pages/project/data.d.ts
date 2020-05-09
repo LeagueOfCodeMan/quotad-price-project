@@ -1,11 +1,12 @@
 import {ProductBaseListItem} from "@/pages/product/data";
+import {IdentityType} from '@/utils/utils';
 
 export interface ProjectListItem {
   id: number;
   username: string;
   project_id:string;
   real_name:string; // 填报人
-
+  identity: IdentityType;
   user_name: string; // 用户单位
   user_addr: string;
   user_iphone: string;
@@ -44,8 +45,10 @@ export type ProjectProductionInfoItem = {
   user: number;
   uuid?: string;
   conf_par: ProductBaseListItem[];
+  children?: ProductBaseListItem[];
   conf_list?: ProductBaseListItem[];
   sn?:string;
+  price?:number;
 };
 
 export type ProjectProductionInfo = ProjectProductionInfoItem[];

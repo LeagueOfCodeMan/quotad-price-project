@@ -4,7 +4,8 @@ import {Route} from '@/models/connect';
 import {message} from 'antd';
 import _ from 'lodash';
 import {ProductBaseListItem} from '@/pages/product/data';
-import {CurrentUser} from "@/models/user";
+import {CurrentUser} from '@/models/user';
+import {ProjectProductionInfoItem} from '@/pages/project/data';
 
 /* eslint no-useless-escape:0 import/prefer-default-export:0 */
 const reg = /(((^https?:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(?::\d+)?|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)$/;
@@ -259,7 +260,7 @@ export function productType(genre: number) {
       return product.slice(0, 2);
     case -2:
       product.slice(0, 5)?.forEach((i: { key: number; label: any; }) => {
-        valueEnumGenre[i.key] = {text: i.label}
+        valueEnumGenre[i.key] = {text: i.label};
       });
       return valueEnumGenre;
     case -1:
@@ -336,7 +337,19 @@ export const currentPrice = (item: ProductBaseListItem, identity: CurrentUser['i
   return price;
 };
 
-export const projectType = (pro_status:number) => {
+export const currentPriceNumber = (item: ProductBaseListItem, identity: CurrentUser['identity']): number => {
+  let price = 0;
+  if ((identity === 2 || identity === 1) && item?.leader_price) {
+    price = parseFloat(item?.leader_price);
+  } else if (identity === 3 && item?.member_price) {
+    price = parseFloat(item?.member_price);
+  } else if (identity === 4 && item?.second_price) {
+    price = parseFloat(item?.second_price);
+  }
+  return price;
+};
+
+export const projectType = (pro_status: number) => {
   switch (pro_status) {
     case 1:
       return '进行中';
@@ -354,4 +367,3 @@ export const projectType = (pro_status:number) => {
       return '未知状态';
   }
 };
-

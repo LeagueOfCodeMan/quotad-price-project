@@ -1,7 +1,8 @@
 export interface ProductBaseListItem {
   id: number;
   avatar: any; // 图
-  pro_type: string; // 产品名称
+  name:string; // 产品名
+  pro_type: string; // 产品型号
   mark: string; // 备注
   desc: string; // 描述参数
   leader_price: string; // 组长价格
@@ -14,6 +15,7 @@ export interface ProductBaseListItem {
   conf_par: ProductBaseListItem[];
   is_required?: boolean | 0;
   uuid?: string;
+  price?:number;
 
   [propName: string]: any;
 }

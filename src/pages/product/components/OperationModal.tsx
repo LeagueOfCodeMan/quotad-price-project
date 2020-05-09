@@ -188,7 +188,7 @@ const OperationModal: FC<OperationModalProps> = props => {
     //  拦截生成FormData进行请求，请求完成回调返回结果并显示结果页
     const onFinish = (values: Store) => {
       const formData = new FormData();
-      const {avatar, belong, belong2, desc, leader_price, mark, pro_type, genre} = values;
+      const {avatar, belong, belong2, desc, leader_price, mark, pro_type, genre,name} = values;
       const conf_list: { conf: number; is_required: boolean; }[] = [];
       belong?.forEach((d: { value: number; }) => {
         conf_list.push({conf: d?.value, is_required: true});
@@ -196,7 +196,7 @@ const OperationModal: FC<OperationModalProps> = props => {
       belong2?.forEach((d: { value: number; }) => {
         conf_list.push({conf: d?.value, is_required: false});
       });
-      const payload = {avatar, desc, leader_price, mark, pro_type, genre, conf_list}
+      const payload = {avatar, desc, leader_price, mark, pro_type, genre, conf_list,name}
       Object.keys(_.pickBy(payload, d => !_.isUndefined(d))).map((item) => {
         if (item === 'avatar') {
           if (payload?.[item]?.[0]?.originFileObj) {
@@ -242,7 +242,6 @@ const OperationModal: FC<OperationModalProps> = props => {
           label: o?.pro_type
         }));
 
-        console.log(finalBelong);
         if (update === 'belong') {
           form.setFieldsValue({belong: finalBelong});
         } else {
@@ -257,6 +256,13 @@ const OperationModal: FC<OperationModalProps> = props => {
           name="pro_type"
           label="产品型号"
           rules={[{required: true, message: '请输入产品型号'}]}
+        >
+          <Input/>
+        </Form.Item>
+        <Form.Item
+          name="name"
+          label="产品名称"
+          rules={[{required: true, message: '请输入产品名称'}]}
         >
           <Input/>
         </Form.Item>

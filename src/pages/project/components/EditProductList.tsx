@@ -470,40 +470,40 @@ const EditProductList: React.FC<UpdateFormProps> = props => {
           style={{margin: '5px 0'}}
         />
         <Table
-          rowKey={record => record?.uuid as string}
-          columns={columns.concat(operation)}
-          expandable={{expandedRowRender}}
-          dataSource={dataSource}
-          pagination={false}
-          scroll={{y: 195}}
-          summary={pageData => {
-            const tPrice = _.reduce(pageData, (sum, n) => {
-              const price = n?.price - 0;
-              const priceItem = _.reduce(n?.conf_par, (sum2, n2) => {
-                const price2 = n2?.price - 0;
-                return sum2 + price2 * (n2?.count || 0);
-              }, 0);
-              return sum + (price + priceItem) * (n?.count || 0);
-            }, 0) || 0;
+        rowKey={record => record?.uuid as string}
+        columns={columns.concat(operation)}
+        expandable={{expandedRowRender}}
+        dataSource={dataSource}
+        pagination={false}
+        scroll={{y: 195}}
+        summary={pageData => {
+          const tPrice = _.reduce(pageData, (sum, n) => {
+            const price = n?.price - 0;
+            const priceItem = _.reduce(n?.conf_par, (sum2, n2) => {
+              const price2 = n2?.price - 0;
+              return sum2 + price2 * (n2?.count || 0);
+            }, 0);
+            return sum + (price + priceItem) * (n?.count || 0);
+          }, 0) || 0;
 
-            const fPrice: string = tPrice % 1 !== 0 ? tPrice.toString() : tPrice + '.00';
-            const mes = _.isNaN(fPrice) || parseFloat(fPrice || '0') <= 0 ? '部分未定价' : '¥ ' + fPrice;
+          const fPrice: string = tPrice % 1 !== 0 ? tPrice.toString() : tPrice + '.00';
+          const mes = _.isNaN(fPrice) || parseFloat(fPrice || '0') <= 0 ? '部分未定价' : '¥ ' + fPrice;
 
-            return (
-              <>
-                <tr>
-                  <th>
-                    <div style={{width: '40px'}}>总计</div>
-                  </th>
-                  <td colSpan={6}>
-                    <Text type="danger">{mes}</Text>
-                  </td>
-                </tr>
-              </>
-            );
-          }}
+          return (
+            <>
+              <tr>
+                <th>
+                  <div style={{width: '40px'}}>总计</div>
+                </th>
+                <td colSpan={6}>
+                  <Text type="danger">{mes}</Text>
+                </td>
+              </tr>
+            </>
+          );
+        }}
 
-        />
+      />
       </>
     );
   };
