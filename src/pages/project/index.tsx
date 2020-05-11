@@ -26,7 +26,6 @@ import {CurrentUser, UserModelState} from '@/models/user';
 import {
   addKeyToEachArray,
   currentPriceNumber,
-  handleProjectProductListData,
   IdentityType,
   projectType,
   ResultType,
@@ -41,7 +40,7 @@ import {ColumnsType} from 'antd/lib/table';
 
 
 const {confirm} = Modal;
-const {Text, Paragraph} = Typography;
+const {Text} = Typography;
 
 interface BasicListProps {
   project: ProjectStateType;
@@ -363,6 +362,7 @@ const ProjectList: FC<BasicListProps> = props => {
           </div>
         ),
         okText: '确认',
+        // @ts-ignore
         okType: 'danger',
         cancelText: '取消',
         onOk: async () => {
@@ -690,7 +690,7 @@ const ProjectList: FC<BasicListProps> = props => {
           columns={identity === 1 ? columns : columns.concat(operation)}
           columnsStateMap={columnsStateMap}
           onColumnsStateChange={map => setColumnsStateMap(map)}
-          pagination={{pageSize: 5, showQuickJumper: true}}
+          pagination={{pageSize: 10, showQuickJumper: true}}
         />
       </div>
       <ValidatePassword

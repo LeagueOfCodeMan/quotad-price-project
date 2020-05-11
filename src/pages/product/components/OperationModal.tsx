@@ -389,7 +389,7 @@ const OperationModal: FC<OperationModalProps> = props => {
                 <p className="ant-upload-drag-icon">
                   <InboxOutlined/>
                 </p>
-                <p className="ant-upload-text">点击或拖拽图片到此区域</p>
+                <p className="ant-upload-text">点击或拖拽图片到此区域(长宽为300px最佳)</p>
               </Upload.Dragger>
             </Form.Item>
           </div>

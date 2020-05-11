@@ -1,7 +1,7 @@
-import {NotRequired} from "@/models/user";
-import {AreaListItem, UserListItem} from "@/pages/usermanager/userlist/data";
-import {ProductBaseListItem} from "@/pages/product/product-config/data";
-import {IdentityType} from "@/utils/utils";
+import {NotRequired} from '@/models/user';
+import {AreaListItem, UserListItem} from '@/pages/usermanager/userlist/data';
+import {ProductBaseListItem} from '@/pages/product/product-config/data';
+import {IdentityType} from '@/utils/utils';
 
 export interface TableListPagination {
   total: number;
@@ -27,6 +27,8 @@ export type UsersInfo = {
 };
 
 export interface UserListItem {
+  uid: string;
+  pid:number;
   key: number;
   id: number;
   identity: IdentityType;
@@ -75,6 +77,7 @@ export interface TableListParams {
 export interface AreaListItem {
   id: number;
   company?: string;
+  addr: string;
   code: string;
   area_name: string;
   bill_id?: string;

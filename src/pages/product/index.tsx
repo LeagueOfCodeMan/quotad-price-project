@@ -7,7 +7,8 @@ import OperationModal from './components/OperationModal';
 import styles from './style.less';
 import {
   addProduct,
-  deleteProduct, modifyProductMemberPrice,
+  deleteProduct,
+  modifyProductMemberPrice,
   modifyProductSecondPrice,
   queryProductList,
   queryUsersByProduct,
@@ -20,9 +21,10 @@ import {ProductBaseListItem} from 'src/pages/product/data';
 import {ProductBaseStateType} from 'src/pages/product/model';
 import _ from 'lodash';
 import {CurrentUser, UserModelState} from '@/models/user';
-import {currentPrice, isNormalResponseBody, productType, ResultType, ValidatePwdResult} from '@/utils/utils';
+import {currentPriceNumber, isNormalResponseBody, ResultType, ValidatePwdResult} from '@/utils/utils';
 import {testPassword} from '@/services/user';
 import PublishModal, {PublishType} from '@/pages/product/components/PublishModal';
+import {StatisticWrapper} from '@/components/StatisticWrapper';
 
 const {Search} = Input;
 const {confirm} = Modal;
@@ -73,18 +75,27 @@ const ListContent = ({
 }) => {
   const {
     desc,
-    genre, id
+    id, name, mark, pro_type,
   } = data;
+  const {identity} = currentUser;
   return (
     <div className={styles.listContentWrapper}>
       <Descriptions column={4}>
-        <Descriptions.Item label="类型" span={2}>
-          <Text style={{color: '#181818'}}>{productType(genre)}</Text>
+        <Descriptions.Item label="名称" span={1}>
+          <Text strong style={{color: '#181818'}}>{name}</Text>
         </Descriptions.Item>
-        <Descriptions.Item label="产品采购总价" span={2}>
-          <>
-            <Text style={{color: '#FF6A00'}}>{currentPrice(data, currentUser?.identity)}</Text>
-          </>
+        <Descriptions.Item label="型号" span={1}>
+        <Text strong style={{color: '#181818'}}>{pro_type}</Text>
+      </Descriptions.Item>
+        <Descriptions.Item label="备注" span={1}>
+          <Text strong style={{color: '#181818'}}>{mark}</Text>
+        </Descriptions.Item>
+        <Descriptions.Item label="产品采购总价" span={1}>
+          <Text style={{color: '#FF6A00'}}>
+            {currentPriceNumber(data, identity) ?
+              <StatisticWrapper value={currentPriceNumber(data, identity)}/>
+              : '尚未定价'}
+          </Text>
         </Descriptions.Item>
         <Descriptions.Item label="描述" span={4} className={styles.descriptionItemTop}>
           {desc?.split('\n')?.map((o, i) => {
@@ -172,6 +183,14 @@ export const Product: FC<BasicListProps> = props => {
   // TODO 只要组长才需要发布
   const extraContent = (
     <div className={styles.extraContent}>
+      {currentUser?.identity === 1 ?
+        <Button
+          icon={<PlusOutlined/>} type="primary"
+          onClick={showModal}
+        >
+          新建
+        </Button> : null
+      }
       <Search
         className={styles.extraContentSearch} placeholder="请输入搜索内容"
         onSearch={(value) => setListParams({...listParams, search: value})}/>
@@ -230,6 +249,7 @@ export const Product: FC<BasicListProps> = props => {
           <span>描述：<span>{desc}</span></span>
         </div>),
         okText: '确认',
+        // @ts-ignore
         okType: 'danger',
         cancelText: '取消',
         onOk: async () => {
@@ -262,39 +282,39 @@ export const Product: FC<BasicListProps> = props => {
     switch (identity) {
       case 1:
         return [
-          <a
+          <Button
             key="edit"
-            onClick={e => {
-              e.preventDefault();
+            type="link"
+            onClick={() => {
               showEditModal(item);
             }}
           >
             编辑
-          </a>,
-          <a
+          </Button>,
+          <Button
             key="delete"
-            style={{color: 'red'}}
-            onClick={e => {
-              e.preventDefault();
+            type="link"
+            danger
+            onClick={() => {
               setValidateType(ValidateType.DELETE_CONFIG);
               setCurrent(item);
               setValidateVisible(true);
             }}
           >
             删除
-          </a>,
+          </Button>,
         ];
       case 2:
         return [
-          <a
+          <Button
             key="define"
-            onClick={e => {
-              e.preventDefault();
+            type="link"
+            onClick={() => {
               handleSecondPrice(item);
             }}
           >
             编辑组员价格
-          </a>
+          </Button>
         ];
 
     }
@@ -304,11 +324,9 @@ export const Product: FC<BasicListProps> = props => {
   const product = [
     {label: '全部', key: 0},
     {label: '一体机', key: 1},
-    {label: '云桶', key: 2},
-    {label: '公有云部署', key: 3},
-    {label: '私有云部署', key: 4},
-    {label: '传统环境部署', key: 5},
     {label: '一体机配件', key: 6},
+    {label: '云桶', key: 2},
+    {label: '软件', key: 3},
     {label: '服务', key: 7},
     {label: '其他', key: 8},
   ];
@@ -347,17 +365,6 @@ export const Product: FC<BasicListProps> = props => {
           bodyStyle={{padding: '0 32px 40px 32px'}}
           extra={extraContent}
         >
-          {currentUser?.identity === 1 ?
-            <Button
-              type="dashed"
-              style={{width: '100%', marginBottom: 8}}
-              onClick={showModal}
-            >
-              <PlusOutlined/>
-              添加
-            </Button> : null
-          }
-
           <List
             size="large"
             rowKey={record => record.id.toString()}
@@ -366,18 +373,17 @@ export const Product: FC<BasicListProps> = props => {
             dataSource={results}
             renderItem={item => (
               <List.Item
-                actions={actions(item)}
               >
-                <div style={{flexDirection: 'column'}}>
+                <div style={{display: 'flex'}}>
                   <List.Item.Meta
                     avatar={
-                      <Avatar src={item.avatar} shape="square" size="large"/>
-
+                      <Avatar style={{width: '200px', height: '200px'}} src={item.avatar} shape="square" size="large"/>
                     }
-                    title={<div>{item.pro_type}</div>}
-                    description={item.mark}
                   />
                   <ListContent data={item} currentUser={currentUser}/>
+                  <div style={{display:'flex',flexDirection:'column'}}>
+                    {actions(item)}
+                  </div>
                 </div>
               </List.Item>
             )}
@@ -387,12 +393,13 @@ export const Product: FC<BasicListProps> = props => {
       <PublishModal
         onSubmit={async (value, callback) => {
           const {user_list, second_price, member_price} = value as PublishType;
-          const response =  await modifyProductMemberPrice({
+          const response = await modifyProductMemberPrice({
             id: current?.id as number,
             data: {member_price}
           });
           const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
-          if(_.head(user_list) ){
+          if (_.head(user_list)) {
+            // @ts-ignore
             const response = await modifyProductSecondPrice({
               id: current?.id as number,
               data: {second_price, user_list}

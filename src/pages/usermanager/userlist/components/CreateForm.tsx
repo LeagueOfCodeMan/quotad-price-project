@@ -1,11 +1,11 @@
 import React, {ReactText, useEffect, useRef} from 'react';
 import {Form, Input, Modal, Select} from 'antd';
-import {CurrentUser} from "@/models/user";
-import {SizeType} from "antd/es/config-provider/SizeContext";
+import {CurrentUser} from '@/models/user';
+import {SizeType} from 'antd/es/config-provider/SizeContext';
 import styles from '@/pages/yuntai.less';
-import {CreateUser} from "@/pages/usermanager/userlist/data";
+import {CreateUser} from '@/pages/usermanager/userlist/data';
 import {formatMessage} from 'umi-plugin-react/locale';
-import {AreasInfo, UserListItem} from "@/models/data";
+import {AreasInfo, UserListItem} from '@/models/data';
 
 const {Option} = Select;
 
@@ -40,11 +40,11 @@ const CreateForm: React.FC<CreateFormProps> = props => {
           form.setFieldsValue({
             ...current
           });
-        })
+        });
       } else {
         setTimeout(() => {
           form.resetFields();
-        })
+        });
 
       }
     }
@@ -116,7 +116,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
                 name="real_name"
                 rules={[{required: false}]}
               >
-                <Input placeholder="请输入" {...commonProps}/>
+                <Input placeholder="请输入" {...commonProps} disabled/>
               </FormItem>
             </div>
 
@@ -148,16 +148,19 @@ const CreateForm: React.FC<CreateFormProps> = props => {
                 <Select
                   {...commonProps}
                   style={{width: '437px'}}
+                  dropdownMatchSelectWidth={false}
                 >
-                  {areaList?.results?.map((item: { id: number; area_name: string; code: string; company: string }) => (
+                  {areaList?.results?.map((item: {
+                    addr: string;
+                    id: number; area_name: string; code: string; company: string
+                  }) => (
                     <Option key={item?.id}
-                            value={item?.id as ReactText}>{item?.area_name + '-' + item?.code + '-' + item?.company}</Option>
+                            value={item?.id as ReactText}>{item?.area_name + '-' + item?.code + '-' + item?.company + '-' + (item?.addr || '')}</Option>
                   ))}
 
                 </Select>
               </FormItem>
             </div>
-
             <div className={styles.flexSpaceBetween}>
               <FormItem
                 label="权限级别"
@@ -197,15 +200,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
                 <Input placeholder="请输入" {...commonProps}/>
               </FormItem>
             </div>
-
-            <div className={styles.flexSpaceBetween}>
-              <FormItem
-                label="地址"
-                name="addr"
-                rules={[{required: true, message: '地址!'}]}
-              >
-                <Input placeholder="请输入" {...commonProps}/>
-              </FormItem>
+            <div style={{display: 'flex', marginLeft: '18px'}}>
               <FormItem
                 label="用户名"
                 name="username"

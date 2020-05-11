@@ -6,16 +6,17 @@ import _ from 'lodash';
 import CreateForm from './components/CreateForm';
 import {CreateUser} from './data';
 import {createUser, deleteUser, queryUsers, updateUser} from './service';
-import {Dispatch} from "redux";
-import {connect} from "react-redux";
-import {UserListModalState} from "src/pages/usermanager/userlist/model";
-import {ColumnsState, RequestData} from "@ant-design/pro-table/es";
-import {UserModelState} from "@/models/user";
-import {EditTwoTone, ExclamationCircleOutlined} from "@ant-design/icons/lib";
-import ValidatePassword from "@/components/ValidatePassword";
-import {testPassword} from "@/services/user";
-import {addIcontains, ResultType, ValidatePwdResult} from "@/utils/utils";
-import {UserListItem} from "@/models/data";
+import {Dispatch} from 'redux';
+import {connect} from 'react-redux';
+import {UserListModalState} from 'src/pages/usermanager/userlist/model';
+import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
+import {UserModelState} from '@/models/user';
+import {DeleteTwoTone, EditTwoTone, ExclamationCircleOutlined} from '@ant-design/icons/lib';
+import ValidatePassword from '@/components/ValidatePassword';
+import {testPassword} from '@/services/user';
+import {addIcontains, IdentityType, partitionsData, ResultType, ValidatePwdResult} from '@/utils/utils';
+import {UserListItem} from '@/models/data';
+import styles from '../../project/style.less';
 
 const {confirm} = Modal;
 /**
@@ -54,6 +55,16 @@ interface UserListProps {
   user: UserModelState;
 }
 
+interface ListSearchParams {
+  current?: number;
+  pageSize?: number;
+  state?: 1 | 2;
+  search?: string;
+
+  [propName: string]: any;
+}
+
+
 enum ValidateType {
   DELETE = 'DELETE',
   RECOVER = 'RECOVER',
@@ -63,11 +74,12 @@ const UserList: React.FC<UserListProps> = (props) => {
   const [createModalVisible, handleModalVisible] = useState<boolean>(false);
   const [validateVisible, setValidateVisible] = useState(false);
   const [editFormValues, setEditFormValues] = useState<NotRequired<UserListItem>>({});
-  const [validateType, setValidateType] = useState<string>("");
+  const [validateType, setValidateType] = useState<string>('');
   const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState; }>({
-    ["data_joined"]: {show: false},
-    ["last_login"]: {show: false},
+    ['data_joined']: {show: false},
+    ['last_login']: {show: false},
   });
+  const [listParams, setListParams] = useState<ListSearchParams>({state: 1});
   const actionRef = useRef<ActionType>();
   const {dispatch} = props;
 
@@ -75,27 +87,29 @@ const UserList: React.FC<UserListProps> = (props) => {
     dispatch({
       type: 'userlist/fetchAreas',
       payload: {pageSize: 99999}
-    })
+    });
   }, []);
 
   const {user: {currentUser}, userlist: {areaList}} = props;
 
   const columns: ProColumns<UserListItem>[] = [
     {
-      title: '组编码',
-      dataIndex: 'code',
+      title: '用户ID',
+      dataIndex: 'uid',
+      width: 200,
+    },
+    {
+      title: '真实姓名',
+      dataIndex: 'real_name',
       width: 100,
       ellipsis: true,
     },
     {
-      title: '地区',
-      dataIndex: 'area_name',
-      width: 60,
+      title: '用户名',
+      dataIndex: 'username',
+      width: 176,
       ellipsis: true,
-    },
-    {
-      title: '公司名称',
-      dataIndex: 'company',
+      hideInSearch: true,
     },
     {
       title: '权限',
@@ -107,32 +121,41 @@ const UserList: React.FC<UserListProps> = (props) => {
         4: {text: '二级组员'},
       },
       width: 100,
+      hideInSearch: currentUser?.identity !== 1,
     },
     {
-      title: '真实姓名',
-      dataIndex: 'real_name',
-    },
-    {
-      title: '手机号',
-      dataIndex: 'tel',
-      width: 150,
+      title: '地区',
+      dataIndex: 'area_name',
+      width: 60,
       ellipsis: true,
+      hideInSearch: true,
+    },
+    {
+      title: '公司名称',
+      dataIndex: 'company',
+      width: 220,
+      ellipsis: true,
+      hideInSearch: true,
+    },
+    {
+      title: '电话',
+      dataIndex: 'tel',
+      width: 135,
+      ellipsis: true,
+      hideInSearch: true,
     },
     {
       title: '邮箱',
       dataIndex: 'email',
       width: 150,
       ellipsis: true,
+      hideInSearch: true,
     },
     {
       title: '地址',
       dataIndex: 'addr',
-      width: 150,
       ellipsis: true,
-    },
-    {
-      title: '登录用户名',
-      dataIndex: 'username',
+      hideInSearch: true,
     },
     {
       title: '创建时间',
@@ -165,20 +188,13 @@ const UserList: React.FC<UserListProps> = (props) => {
               handleModalVisible(true);
             }}/>
           <Divider type="vertical"/>
-          <Switch
-            checkedChildren="正常"
-            unCheckedChildren="冻结"
-            checked={record?.state === 1}
-            onClick={
-              (checked) => {
-                if (checked) {
-                  setValidateType(ValidateType.RECOVER);
-                } else {
-                  setValidateType(ValidateType.DELETE);
-                }
-                setEditFormValues(record);
-                setValidateVisible(true);
-              }}
+          <DeleteTwoTone
+            twoToneColor="#eb2f96"
+            onClick={() => {
+              setValidateType(ValidateType.DELETE);
+              setEditFormValues(record);
+              setValidateVisible(true);
+            }}
           />
         </>
       ),
@@ -194,10 +210,10 @@ const UserList: React.FC<UserListProps> = (props) => {
     const searchParamsType = addIcontains(params);
     const result = await queryUsers({...searchParamsType});
     return Promise.resolve({
-      data: result?.results || [],
+      data: partitionsData(result?.results,currentUser?.identity as IdentityType) || [],
       success: true,
       total: result?.count || 0,
-    })
+    });
   };
 
   // 密码校验
@@ -208,15 +224,16 @@ const UserList: React.FC<UserListProps> = (props) => {
   };
 
   const validatePasswordSuccessToDo = () => {
-    const {id} = editFormValues as UserListItem;
+    const {id, real_name} = editFormValues as UserListItem;
     let state = validateType === ValidateType.DELETE;
     if (state || validateType === ValidateType.RECOVER) {
-      const titleContent = state ? '冻结用户' : '解封用户';
+      const titleContent = state ? '删除用户' : '解封用户';
       confirm({
         title: titleContent,
         icon: <ExclamationCircleOutlined/>,
-        content: `请确认是否${titleContent}`,
+        content: `请确认是否${titleContent + ':' + real_name}`,
         okText: '确认',
+        // @ts-ignore
         okType: 'danger',
         cancelText: '取消',
         onOk: async () => {
@@ -233,10 +250,10 @@ const UserList: React.FC<UserListProps> = (props) => {
 
 
     }
-  }
+  };
 
   return (
-    <>
+    <div className={styles.standardList}>
       <ProTable<UserListItem>
         headerTitle="成员列表"
         options={{reload: true, fullScreen: true, setting: true, density: false}}
@@ -248,19 +265,33 @@ const UserList: React.FC<UserListProps> = (props) => {
             return [
               <Button icon={<PlusOutlined/>} type="primary" onClick={() => {
                 setEditFormValues({});
-                handleModalVisible(true)
+                handleModalVisible(true);
               }}>
                 新建
               </Button>,
+              <Button onClick={() => {
+                setListParams({...listParams, state: listParams.state === 1 ? 2 : 1});
+              }}>
+                {listParams.state === 1 ? '显示已删除用户' : '显示所有的用户'}
+              </Button>,
+
             ];
           }
           return [];
         }}
         request={request}
+        search={{
+          collapsed: true,
+          resetText: undefined,
+        }}
+        expandable={{
+          rowExpandable: record => record.children?.length > 0,
+        }}
+        params={{...listParams}}
         columns={currentUser?.identity === 1 ? columns.concat(operation) : columns}
         columnsStateMap={columnsStateMap}
         onColumnsStateChange={map => setColumnsStateMap(map)}
-        pagination={{pageSize: 5, showQuickJumper: true}}
+        pagination={{pageSize: 10, showQuickJumper: true}}
       />
       <CreateForm
         onSubmit={async (value, callback) => {
@@ -271,7 +302,7 @@ const UserList: React.FC<UserListProps> = (props) => {
             success = await handleAdd(value as CreateUser);
           }
           if (success) {
-            callback(true)
+            callback(true);
             handleModalVisible(false);
             if (actionRef.current) {
               actionRef.current.reload();
@@ -289,7 +320,7 @@ const UserList: React.FC<UserListProps> = (props) => {
       <ValidatePassword
         visible={validateVisible}
         onCreate={async (values) => {
-          const success = await onCreate(values)
+          const success = await onCreate(values);
           if (success) {
             setValidateVisible(false);
             // TODO something
@@ -301,7 +332,7 @@ const UserList: React.FC<UserListProps> = (props) => {
           setValidateVisible(false);
         }}
       />
-    </>
+    </div>
   );
 };
 

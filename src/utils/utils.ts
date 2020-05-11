@@ -6,6 +6,7 @@ import _ from 'lodash';
 import {ProductBaseListItem} from '@/pages/product/data';
 import {CurrentUser} from '@/models/user';
 import {ProjectProductionInfoItem} from '@/pages/project/data';
+import {UserListItem} from '@/models/data';
 
 /* eslint no-useless-escape:0 import/prefer-default-export:0 */
 const reg = /(((^https?:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(?::\d+)?|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)$/;
@@ -244,11 +245,9 @@ export type ProductType = {
 export function productType(genre: number) {
   const product = [
     {label: '一体机', key: 1},
-    {label: '云桶', key: 2},
-    {label: '公有云部署', key: 3},
-    {label: '私有云部署', key: 4},
-    {label: '传统环境部署', key: 5},
     {label: '一体机配件', key: 6},
+    {label: '云桶', key: 2},
+    {label: '软件', key: 3},
     {label: '服务', key: 7},
     {label: '其他', key: 8},
   ];
@@ -366,4 +365,19 @@ export const projectType = (pro_status: number) => {
     default:
       return '未知状态';
   }
+};
+
+export const partitionsData = (data: UserListItem[],identity:IdentityType) => {
+  if(identity === 1){
+    const leaderData = data?.filter(d => !d?.pid && d?.identity !== 1);
+    const group: UserListItem[] = [];
+    _.forEach(leaderData, d => {
+      const children = data?.filter(dd => dd?.pid === d?.id);
+      group.push({...d, children});
+    });
+    return group;
+  }else {
+    return data;
+  }
+
 };

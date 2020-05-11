@@ -13,7 +13,7 @@ import {addIcontains, ResultType, ValidatePwdResult} from "@/utils/utils";
 import {AreaListItem, UserListItem} from "@/models/data";
 import {createArea, deleteArea, queryAreas, updateArea} from "@/pages/usermanager/arealist/service";
 import CreateForm from "@/pages/usermanager/arealist/components/CreateForm";
-
+import styles from '../../project/style.less';
 const {confirm} = Modal;
 const {Text} = Typography;
 /**
@@ -59,58 +59,57 @@ const AreaList: React.FC<AreaListItem> = (props) => {
       ellipsis: true,
     },
     {
-      title: '区域名字',
+      title: '区域',
       dataIndex: 'area_name',
-      width: 100,
+      width: 80,
       ellipsis: true,
     },
     {
-      title: '开票信息',
-      dataIndex: 'bill_message',
-      key: 'bill_message',
+      title: '公司名称',
+      dataIndex: 'company',
+      width: 170,
+      ellipsis: true,
+    },
+    {
+      title: '营业地址',
+      dataIndex: 'addr',
+      ellipsis: true,
       hideInSearch: true,
-      render: (text, record) => {
-        return (
-          <Space>
-            <div>
-              <Text>公司名称：</Text>
-              <Text style={{color: '#1890FF'}}>
-                {record?.company}
-              </Text>
-            </div>
-            <div>
-              <Text>税号：</Text>
-              <Text style={{color: '#1890FF'}}>
-                {record?.bill_id}
-              </Text>
-            </div>
-            <div>
-              <Text>地址：</Text>
-              <Text style={{color: '#1890FF'}}>
-                {record?.bill_addr}
-              </Text>
-            </div>
-            <div>
-              <Text>电话：</Text>
-              <Text style={{color: '#1890FF'}}>
-                {record?.bill_phone}
-              </Text>
-            </div>
-            <div>
-              <Text>开户行：</Text>
-              <Text style={{color: '#1890FF'}}>
-                {record?.bill_bank}
-              </Text>
-            </div>
-            <div>
-              <Text>账号：</Text>
-              <Text style={{color: '#1890FF'}}>
-                {record?.bill_account}
-              </Text>
-            </div>
-          </Space>
-        );
-      },
+    },
+    {
+      title: '税号',
+      dataIndex: 'bill_id',
+      width: 200,
+      ellipsis: true,
+      hideInSearch: true,
+    },
+    {
+      title: '开票地址',
+      dataIndex: 'bill_addr',
+      width: 200,
+      ellipsis: true,
+      hideInSearch: true,
+    },
+    {
+      title: '开票电话',
+      dataIndex: 'bill_phone',
+      width: 150,
+      ellipsis: true,
+      hideInSearch: true,
+    },
+    {
+      title: '开户行',
+      dataIndex: 'bill_bank',
+      width: 200,
+      ellipsis: true,
+      hideInSearch: true,
+    },
+    {
+      title: '账号',
+      dataIndex: 'bill_account',
+      width: 200,
+      ellipsis: true,
+      hideInSearch: true,
     },
     {
       title: '操作',
@@ -170,6 +169,7 @@ const AreaList: React.FC<AreaListItem> = (props) => {
         icon: <ExclamationCircleOutlined/>,
         content: '请确认是否删除',
         okText: '确认',
+        // @ts-ignore
         okType: 'danger',
         cancelText: '取消',
         onOk: async () => {
@@ -189,7 +189,7 @@ const AreaList: React.FC<AreaListItem> = (props) => {
   }
 
   return (
-    <>
+    <div className={styles.standardList}>
       <ProTable<AreaListItem>
         options={{reload: true, fullScreen: true, setting: true, density: false}}
         size="small"
@@ -205,11 +205,15 @@ const AreaList: React.FC<AreaListItem> = (props) => {
             </Button>
           ];
         }}
+        search={{
+          collapsed: true,
+          resetText: undefined,
+        }}
         tableAlertOptionRender={false}
         request={request}
         columns={columns}
         // rowSelection={{}}
-        pagination={{pageSize: 5, showQuickJumper: true}}
+        pagination={{pageSize: 10, showQuickJumper: true}}
       />
       <CreateForm
         onSubmit={async (value, callback) => {
@@ -249,7 +253,7 @@ const AreaList: React.FC<AreaListItem> = (props) => {
           setValidateVisible(false);
         }}
       />
-    </>
+    </div>
   );
 };
 

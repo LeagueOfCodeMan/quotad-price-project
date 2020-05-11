@@ -1,7 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import {Alert, Col, Form, Input, Modal, Row} from 'antd';
-import {SizeType} from "antd/es/config-provider/SizeContext";
-import {AreaListItem} from "@/models/data";
+import {SizeType} from 'antd/es/config-provider/SizeContext';
+import {AreaListItem} from '@/models/data';
 
 const FormItem = Form.Item;
 
@@ -30,22 +30,22 @@ const CreateForm: React.FC<CreateFormProps> = props => {
   useEffect(() => {
     if (form && formRef) {
       if (current?.id) {
-        setTimeout(()=>{
+        setTimeout(() => {
           form.setFieldsValue({
             ...current
           });
-        })
+        });
       } else {
-        setTimeout(()=>{
+        setTimeout(() => {
           form.resetFields();
-        })
+        });
 
       }
     }
   }, [current?.id, form]);
 
   const commonProps = {
-    style: {width: '200px'}, size: 'middle' as SizeType,
+    style: {width: '100px'}, size: 'middle' as SizeType,
   };
   const formLayout = {
     labelCol: {span: 7},
@@ -69,7 +69,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
       >
         <Alert
           style={{marginBottom: '10px'}}
-          message="地区信息"
+          message="区域信息"
           type="info"
         />
         <Row gutter={[8, 8]}>
@@ -92,42 +92,68 @@ const CreateForm: React.FC<CreateFormProps> = props => {
             </FormItem>
           </Col>
         </Row>
-
-        <Alert
-          style={{marginBottom: '10px'}}
-          message="开票信息"
-          type="info"
-        />
-        <Row gutter={[8, 8]}>
-          <Col span={12}>
+        <Row gutter={[8, 8]} style={{marginLeft: '-128px'}}>
+          <Col span={24}>
             <Form.Item
               label="公司名"
               name="company"
               rules={[{required: true, message: '公司名'}]}
             >
-              <Input placeholder="一级组员同组长" style={{width: 200}}/>
+              <Input placeholder="一级组员同组长" style={{width: 500}}/>
             </Form.Item>
           </Col>
-          <Col span={12}>
+        </Row>
+        <Row gutter={[8, 8]} style={{marginLeft: '-128px'}}>
+          <Col span={24}>
+            <Form.Item
+              label="营业地址"
+              name="addr"
+              rules={[{required: true, message: '营业地址'}]}
+            >
+              <Input placeholder="营业地址" style={{width: 500}}/>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Alert
+          style={{marginBottom: '10px'}}
+          message="开票信息"
+          type="info"
+        />
+        <Row gutter={[8, 8]} style={{marginLeft: '-128px'}}>
+          <Col span={24}>
             <Form.Item
               label="税号"
               name="bill_id"
               rules={[{required: false, message: '税号'}]}
             >
-              <Input placeholder="税号" style={{width: 200}}/>
+              <Input placeholder="税号" style={{width: 500}}/>
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={[8, 8]} style={{marginLeft: '-128px'}}>
+          <Col span={24}>
+            <Form.Item
+              label="开票地址"
+              name="bill_addr"
+              rules={[{required: false, message: '地址'}]}
+            >
+              <Input placeholder="地址" style={{width: 500}}/>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={[8, 8]} style={{marginLeft: '-128px'}}>
+          <Col span={24}>
+            <Form.Item
+              label="开户行"
+              name="bill_bank"
+              rules={[{required: false, message: '开户行'}]}
+            >
+              <Input placeholder="开户行" style={{width: 500}}/>
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={[8, 8]}>
-          <Col span={12}>
-            <Form.Item
-              label="地址"
-              name="bill_addr"
-              rules={[{required: false, message: '地址'}]}
-            >
-              <Input placeholder="地址" style={{width: 200}}/>
-            </Form.Item>
-          </Col>
           <Col span={12}>
             <Form.Item
               label="电话"
@@ -135,17 +161,6 @@ const CreateForm: React.FC<CreateFormProps> = props => {
               rules={[{required: false, message: '电话'}]}
             >
               <Input placeholder="电话" style={{width: 200}}/>
-            </Form.Item>
-          </Col>
-        </Row>
-        <Row gutter={[8, 8]}>
-          <Col span={12}>
-            <Form.Item
-              label="开户行"
-              name="bill_bank"
-              rules={[{required: false, message: '开户行'}]}
-            >
-              <Input placeholder="开户行" style={{width: 200}}/>
             </Form.Item>
           </Col>
           <Col span={12}>
