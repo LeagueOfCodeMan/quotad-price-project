@@ -12,6 +12,7 @@ import ProLayout, {
 } from '@ant-design/pro-layout';
 import {formatMessage} from 'umi-plugin-react/locale';
 import React, {useEffect} from 'react';
+import ReactDOM from 'react-dom';
 import {Link} from 'umi';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
@@ -19,14 +20,14 @@ import {Button, Result} from 'antd';
 import Authorized from '@/utils/Authorized';
 import RightContent from '@/components/GlobalHeader/RightContent';
 import {ConnectState} from '@/models/connect';
-import {getAuthorityFromRouter, isAntDesignPro} from '@/utils/utils';
+import {getAuthorityFromRouter} from '@/utils/utils';
 // import logo from '../assets/logo.svg';
 // import logo from '../assets/yuntai.svg';
-import {PhoneOutlined} from "@ant-design/icons/lib";
-import {CurrentUser} from "@/models/user";
-import _ from "lodash";
-import {useLocalStorage} from "react-use";
-import {LocalStorageShopType} from "@/models/data";
+import {CopyrightCircleOutlined, PhoneOutlined} from '@ant-design/icons/lib';
+import {CurrentUser} from '@/models/user';
+import _ from 'lodash';
+import {useLocalStorage} from 'react-use';
+import {LocalStorageShopType} from '@/models/data';
 
 const noMatch = (
   <Result
@@ -81,7 +82,7 @@ const defaultFooterDom = (
       },
       {
         key: '/phone',
-        title: <div><PhoneOutlined/> </div>,
+        title: <div><PhoneOutlined/></div>,
         href: '',
         blankTarget: true,
       },
@@ -95,31 +96,31 @@ const defaultFooterDom = (
   />
 );
 
-const footerRender: BasicLayoutProps['footerRender'] = () => {
-  if (!isAntDesignPro()) {
-    return defaultFooterDom;
-  }
-
-  return (
-    <>
-      {defaultFooterDom}
-      <div
-        style={{
-          padding: '0px 24px 24px',
-          textAlign: 'center',
-        }}
-      >
-        <a href="https://www.netlify.com" target="_blank" rel="noopener noreferrer">
-          <img
-            src="https://www.netlify.com/img/global/badges/netlify-color-bg.svg"
-            width="82px"
-            alt="netlify logo"
-          />
-        </a>
-      </div>
-    </>
-  );
-};
+// const footerRender: BasicLayoutProps['footerRender'] = () => {
+//   if (!isAntDesignPro()) {
+//     return defaultFooterDom;
+//   }
+//
+//   return (
+//     <>
+//       {defaultFooterDom}
+//       <div
+//         style={{
+//           padding: '0px 24px 24px',
+//           textAlign: 'center',
+//         }}
+//       >
+//         <a href="https://www.netlify.com" target="_blank" rel="noopener noreferrer">
+//           <img
+//             src="https://www.netlify.com/img/global/badges/netlify-color-bg.svg"
+//             width="82px"
+//             alt="netlify logo"
+//           />
+//         </a>
+//       </div>
+//     </>
+//   );
+// };
 
 const BasicLayout: React.FC<BasicLayoutProps> = props => {
   const {
@@ -131,6 +132,7 @@ const BasicLayout: React.FC<BasicLayoutProps> = props => {
     },
     currentUser,
     shopCount,
+    collapsed,
   } = props;
   /**
    * constructor
@@ -150,8 +152,8 @@ const BasicLayout: React.FC<BasicLayoutProps> = props => {
     dispatch({
       type: 'user/saveShopCount',
       payload: findCountFromLocal
-    })
-  }, [currentUser?.username])
+    });
+  }, [currentUser?.username]);
   /**
    * init variables
    */
@@ -164,10 +166,10 @@ const BasicLayout: React.FC<BasicLayoutProps> = props => {
       });
     }
   }; // get children authority
-
   const authorized = getAuthorityFromRouter(props.route.routes, location.pathname || '/') || {
     authority: undefined,
   };
+  const target = document.querySelector('.ant-pro-sider-menu-sider.ant-layout-sider.ant-layout-sider-dark');
   return (
     <>
       <ProLayout
@@ -202,7 +204,7 @@ const BasicLayout: React.FC<BasicLayoutProps> = props => {
             <span>{route.breadcrumbName}</span>
           );
         }}
-        footerRender={footerRender}
+        // footerRender={footerRender}
         menuDataRender={menuDataRender}
         rightContentRender={() => <RightContent shopCount={shopCount}/>}
         {...props}
@@ -221,6 +223,18 @@ const BasicLayout: React.FC<BasicLayoutProps> = props => {
           })
         }
       />
+      {!collapsed && target ?
+        ReactDOM.createPortal(<div style={{
+          textAlign:'center',
+          color: '#fff',
+          backgroundColor:'#081524',
+        }}>
+          <div>官网 <span><PhoneOutlined/></span></div>
+          <div>Copyright <CopyrightCircleOutlined />2019</div>
+              </div>, target)
+        : null
+      }
+
     </>
   );
 };

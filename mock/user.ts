@@ -270,6 +270,9 @@ export default {
   'POST /api/user/test_password': (req: Request, res: Response) => {
     res.send({"code": 200, "msg": "验证成功"});
   },
+  'POST /api/user/*': (req: Request, res: Response) => {
+    res.send("mock环境无法操作");
+  },
   'GET /api/500': (req: Request, res: Response) => {
     res.status(500).send({
       timestamp: 1513932555104,

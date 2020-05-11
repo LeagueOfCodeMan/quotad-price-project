@@ -1,5 +1,5 @@
 import React, {FC, useEffect, useRef, useState} from 'react';
-import {Avatar, Button, Descriptions, Divider, message, Modal,List, Table, Tooltip, TreeSelect, Typography,} from 'antd';
+import {Button, Descriptions, Divider, List, message, Modal, Table, Tooltip, TreeSelect, Typography,} from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import {ProjectStateType} from './model';
@@ -25,9 +25,9 @@ import EditProject from '@/pages/project/components/EditProject';
 import {CurrentUser, UserModelState} from '@/models/user';
 import {
   addKeyToEachArray,
+  currentPriceNumber,
   handleProjectProductListData,
   IdentityType,
-  productType,
   projectType,
   ResultType,
   ValidatePwdResult
@@ -38,11 +38,10 @@ import CreateOrder from '@/pages/project/components/CreateOrder';
 import {StatisticWrapper} from '@/components/StatisticWrapper';
 import {ProductBaseListItem} from '@/pages/product/data';
 import {ColumnsType} from 'antd/lib/table';
-import Ellipsis from '@/components/Ellipsis';
 
 
 const {confirm} = Modal;
-const {Text,Paragraph} = Typography;
+const {Text, Paragraph} = Typography;
 
 interface BasicListProps {
   project: ProjectStateType;
@@ -59,13 +58,13 @@ enum ValidateType {
 
 type TreeDataItem = { title: JSX.Element; value: string; children?: TreeDataItem }[];
 
-const ListContentWrapper = ({item, identity,index }:
+const ListContentWrapper = ({item, identity, index}:
                               {
                                 item: ProjectProductionInfoItem; identity: IdentityType;
                                 index: number;
                               }) => {
   return (
-    <Descriptions bordered title={"产品" + index + 1} column={5} size="small">
+    <Descriptions bordered title={'产品' + (index + 1)} column={4} size="small" layout="vertical">
       <Descriptions.Item label="产品名称" span={1}>
         <Text style={{color: '#181818'}}>{item?.production?.name}</Text>
       </Descriptions.Item>
@@ -75,61 +74,58 @@ const ListContentWrapper = ({item, identity,index }:
       <Descriptions.Item label="数量" span={1}>
         <Text style={{color: '#181818'}}>{item?.count}</Text>
       </Descriptions.Item>
-      <Descriptions.Item label="采购总价" span={1}>
-        <Text style={{color: '#FF6A00'}}>{'¥ ' + item?.leader_quota}</Text>
+      <Descriptions.Item label="采购单价" span={1}>
+        <Text style={{color: '#FF6A00'}}>
+          {currentPriceNumber(item?.production, identity) ?
+            <StatisticWrapper value={currentPriceNumber(item?.production, identity)}/>
+            : '部分尚未定价'}
+        </Text>
       </Descriptions.Item>
       {_.head(item?.conf_par) ?
-        <Descriptions.Item label="附件清单" span={5}>
-          <ListContent conf_par={item?.conf_par}/>
+        <Descriptions.Item label="附件清单" span={4}>
+          <ListContent conf_par={item?.conf_par} identity={identity}/>
         </Descriptions.Item> : null
       }
+      <Descriptions.Item label="总价" span={4}>
+        <Text style={{color: '#FF6A00'}}>
+          {item?.sell_price ?
+            <StatisticWrapper value={item?.sell_price}/>
+            : '部分尚未定价'}
+        </Text>
+      </Descriptions.Item>
     </Descriptions>
-  )
-}
+  );
+};
 const ListContent = ({
-                       conf_par
+                       conf_par, identity
                      }: {
-  conf_par: ProductBaseListItem[];
+  conf_par: ProductBaseListItem[]; identity: IdentityType;
 }) => {
   const columns: ColumnsType<ProductBaseListItem> = [
     {
-      title: '产品图',
-      dataIndex: 'avatar',
-      key: 'avatar',
-      width: 50,
+      title: '产品名称',
+      dataIndex: 'name',
+      key: 'name',
+      width: 100,
       render: (text) => {
         return (
           <div>
-            <Avatar src={text || ''} shape="square"
-                    size="large"/>
+            <Text style={{color: '#181818'}}>{text}</Text>
           </div>
-        )
-      },
-    },
-    {
-      title: '类型',
-      dataIndex: 'genre',
-      key: 'genre',
-      width: 100,
-      render: (text: number) => {
-        return (
-          <div>
-            <Text style={{color: '#181818'}}>{productType(text)}</Text>
-          </div>
-        )
+        );
       },
     },
     {
       title: '型号',
       dataIndex: 'pro_type',
       key: 'pro_type',
-      width: 100,
+      width: 120,
       render: (text: string) => {
         return (
           <div>
             <Text style={{color: '#181818'}}>{text}</Text>
           </div>
-        )
+        );
       },
     },
     {
@@ -139,42 +135,19 @@ const ListContent = ({
     },
     {
       title: '采购总价',
-      dataIndex: 'leader_price',
-      key: 'leader_price',
+      dataIndex: 'price',
+      key: 'price',
       width: 120,
-      render: (text) => {
+      render: (text, record) => {
         return (
           <div>
-            <Text style={{color: '#FF6A00'}}>{'¥ ' + text}</Text>
+            <Text style={{color: '#FF6A00'}}>
+              {currentPriceNumber(record, identity) ?
+                <StatisticWrapper value={currentPriceNumber(record, identity)}/>
+                : '尚未定价'}
+            </Text>
           </div>
         );
-      },
-    },
-    {
-      title: '描述',
-      key: 'desc',
-      dataIndex: 'desc',
-      render: (text: string) => (
-        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
-          {text?.split("\n")?.map((o, i) => {
-            return (
-              <div><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
-            )
-          })}
-        </div>
-      ),
-    },
-    {
-      title: '备注',
-      dataIndex: 'mark',
-      key: 'mark',
-      width: 50,
-      render: (text) => {
-        return (
-          <div>
-            <Text type="danger">{text}</Text>
-          </div>
-        )
       },
     },
   ];
@@ -182,14 +155,15 @@ const ListContent = ({
     <div className={styles.listContentWrapper}>
       <Table
         showHeader={false}
-        bordered={false} size="small"
+        size="small"
         rowKey={record => record?.id}
         columns={columns}
         pagination={false}
         dataSource={conf_par || []}
+        scroll={{y: 117}}
       />
     </div>
-  )
+  );
 };
 
 export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
@@ -331,11 +305,17 @@ const ProjectList: FC<BasicListProps> = props => {
   const [listParams, setListParams] = useState<ListSearchParams>({});
 
   useEffect(() => {
-    if (currentUser?.identity === 1 || currentUser?.identity === 2) {
-      dispatch({
-        type: 'user/queryCurrentUsers',
-      });
-    }
+    dispatch({
+      type: 'user/fetchCurrent',
+      callback: (res: CurrentUser) => {
+        if (res?.identity === 1 || res?.identity === 2) {
+          dispatch({
+            type: 'user/queryCurrentUsers',
+          });
+        }
+      }
+    });
+
   }, [currentUser?.id]);
 
   const showModal = () => {
@@ -487,6 +467,7 @@ const ProjectList: FC<BasicListProps> = props => {
       dataIndex: 'project_name',
       width: 160,
       ellipsis: true,
+      hideInSearch: true,
     },
     {
       title: '用户',
@@ -530,24 +511,33 @@ const ProjectList: FC<BasicListProps> = props => {
       title: '销售产品',
       dataIndex: 'production',
       hideInSearch: true,
-      width: 80,
+      width: 100,
       render: (text, record) => {
         const {product_list, identity} = record;
 
         return (
           <div>
-            <Button onClick={() => {
+            <Button style={{padding: '0px'}} type="link" onClick={() => {
               Modal.success({
                 maskClosable: true,
-                title: 'This is a warning message',
-                width: 1000,
+                title: (<div style={{display: 'flex', justifyContent: 'space-between'}}><span>产品清单</span><span
+                  style={{marginLeft: '10px'}}>合计：
+                            <Text style={{color: '#FF6A00'}}>
+              {record?.sell_total_price ?
+                <StatisticWrapper value={record?.sell_total_price}/>
+                : '部分尚未定价'}
+            </Text>
+                </span></div>),
+                width: product_list?.length === 1 ? 500 : 1000,
+                icon: null,
                 content: (
                   <List
-                    size="large"
+                    size="small"
                     rowKey={record => record.id?.toString()}
                     pagination={false}
                     dataSource={product_list || []}
-                    renderItem={(item: ProjectProductionInfoItem,index) => (
+                    className={styles.productListDetail}
+                    renderItem={(item: ProjectProductionInfoItem, index) => (
                       <List.Item
                       >
                         <div>
@@ -559,7 +549,7 @@ const ProjectList: FC<BasicListProps> = props => {
                   </List>
                 ),
               });
-            }}>Info</Button>
+            }}>查看详情</Button>
           </div>
         );
       },
@@ -693,7 +683,8 @@ const ProjectList: FC<BasicListProps> = props => {
           }}
           request={request}
           search={{
-            collapsed: false,
+            collapsed: true,
+            resetText: undefined,
           }}
           params={{...listParams}}
           columns={identity === 1 ? columns : columns.concat(operation)}

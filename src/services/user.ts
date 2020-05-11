@@ -28,3 +28,21 @@ export async function testPassword(params: { password: string; }): Promise<any> 
 export async function queryCurrentUsers() {
   return request('/api/user/user_detail_list');
 }
+
+/**
+ * 获取邮箱验证码
+ * @param params
+ */
+export async function fetchEmailCode(params: { username: string;email:string; }): Promise<any> {
+  return request('/api/user/send_email', {
+    method: 'POST',
+    data: params
+  });
+}
+
+export async function resetPasssword(params: { username: string;password:string;code:number; }): Promise<any> {
+  return request('/api/user/reset_password', {
+    method: 'POST',
+    data: params
+  });
+}

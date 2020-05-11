@@ -1,18 +1,18 @@
-import { Form, Button, Col, Input, Popover, Progress, Row, Select, message } from 'antd';
-import { FormattedMessage, formatMessage } from 'umi-plugin-react/locale';
-import React, { FC, useState, useEffect } from 'react';
-import { Store } from 'rc-field-form/es/interface';
-import { Dispatch } from 'redux';
+import {Button, Col, Form, Input, message, Popover, Progress, Row} from 'antd';
+import {formatMessage, FormattedMessage} from 'umi-plugin-react/locale';
+import React, {FC, useEffect, useState} from 'react';
+import {Store} from 'rc-field-form/es/interface';
+import {Dispatch} from 'redux';
 import Link from 'umi/link';
-import { connect } from 'dva';
+import {connect} from 'dva';
 import router from 'umi/router';
 
-import { StateType } from './model';
+import {StateType} from './model';
 import styles from './style.less';
+import {fetchEmailCode, resetPasssword} from '@/services/user';
+import {ValidatePwdResult} from '@/utils/utils';
 
 const FormItem = Form.Item;
-const { Option } = Select;
-const InputGroup = Input.Group;
 
 const passwordStatusMap = {
   ok: (
@@ -60,7 +60,6 @@ export interface UserRegisterParams {
 const ForgetPwd: FC<RegisterProps> = ({ submitting, dispatch, userAndregister }) => {
   const [count, setcount]: [number, any] = useState(0);
   const [visible, setvisible]: [boolean, any] = useState(false);
-  const [prefix, setprefix]: [string, any] = useState('86');
   const [popover, setpopover]: [boolean, any] = useState(false);
   const confirmDirty = false;
   let interval: number | undefined;
@@ -85,16 +84,22 @@ const ForgetPwd: FC<RegisterProps> = ({ submitting, dispatch, userAndregister })
       clearInterval(interval);
     };
   }, []);
-  const onGetCaptcha = () => {
-    let counts = 59;
-    setcount(counts);
-    interval = window.setInterval(() => {
-      counts -= 1;
+
+  const onGetCaptcha = async () => {
+    const values = form.getFieldsValue();
+    const response = await fetchEmailCode({username:values?.username,email:values?.email})
+    const success = new ValidatePwdResult(response).validate("验证码已发送至邮箱！",null,undefined);
+    if(success){
+      let counts = 59;
       setcount(counts);
-      if (counts === 0) {
-        clearInterval(interval);
-      }
-    }, 1000);
+      interval = window.setInterval(() => {
+        counts -= 1;
+        setcount(counts);
+        if (counts === 0) {
+          clearInterval(interval);
+        }
+      }, 1000);
+    }
   };
   const getPasswordStatus = () => {
     const value = form.getFieldValue('password');
@@ -106,14 +111,15 @@ const ForgetPwd: FC<RegisterProps> = ({ submitting, dispatch, userAndregister })
     }
     return 'poor';
   };
-  const onFinish = (values: Store) => {
-    dispatch({
-      type: 'userAndregister/submit',
-      payload: {
-        ...values,
-        prefix,
-      },
-    });
+  const onFinish =async (values: Store) => {
+    const response =  await resetPasssword({username:values?.username,password:values?.password,code:values?.code});
+    const success = new ValidatePwdResult(response).validate("修改成功，请登录",null,undefined);
+    if(success) {
+      router.push({
+        pathname: '/user/login',
+      });
+    }
+
   };
   const checkConfirm = (_: any, value: string) => {
     const promise = Promise;
@@ -142,9 +148,7 @@ const ForgetPwd: FC<RegisterProps> = ({ submitting, dispatch, userAndregister })
     }
     return promise.resolve();
   };
-  const changePrefix = (value: string) => {
-    setprefix(value);
-  };
+
   const renderPasswordProgress = () => {
     const value = form.getFieldValue('password');
     const passwordStatus = getPasswordStatus();
@@ -168,7 +172,21 @@ const ForgetPwd: FC<RegisterProps> = ({ submitting, dispatch, userAndregister })
       </h3>
       <Form form={form} name="UserRegister" onFinish={onFinish}>
         <FormItem
-          name="mail"
+          name="username"
+          rules={[
+            {
+              required: true,
+              message: formatMessage({ id: 'userandregister.login.userName' }),
+            },
+          ]}
+        >
+          <Input
+            size="large"
+            placeholder={formatMessage({ id: 'userandregister.login.userName' })}
+          />
+        </FormItem>
+        <FormItem
+          name="email"
           rules={[
             {
               required: true,
@@ -248,7 +266,7 @@ const ForgetPwd: FC<RegisterProps> = ({ submitting, dispatch, userAndregister })
         <Row gutter={8}>
           <Col span={16}>
             <FormItem
-              name="captcha"
+              name="code"
               rules={[
                 {
                   required: true,

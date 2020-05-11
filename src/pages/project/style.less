@@ -2,6 +2,8 @@
 @import 'utils/utils.less';
 
 .standardList {
+  height: calc(100vh - 128px);
+  background-color: #fff;
   :global {
     .ant-card-head {
       border-bottom: none;
@@ -376,10 +378,10 @@
       opacity: 0.5;
     }
     [data-theme="dark"] .dynamic-delete-button {
-      color: rgba(255,255,255,.45);
+      color: rgba(255, 255, 255, .45);
     }
     [data-theme="dark"] .dynamic-delete-button:hover {
-      color: rgba(255,255,255,.65);
+      color: rgba(255, 255, 255, .65);
     }
 
   }
@@ -416,4 +418,13 @@
   }
 }
 
-
+.productListDetail {
+  :global {
+    .ant-list-items {
+      display: flex;
+      .ant-list-item {
+        border-bottom: none;
+      }
+    }
+  }
+}
