@@ -3,13 +3,10 @@ import React, {Component} from 'react';
 import {Dispatch} from 'redux';
 import {FormattedMessage} from 'umi-plugin-react/locale';
 import {GridContent} from '@ant-design/pro-layout';
-import {Menu, message} from 'antd';
+import {message} from 'antd';
 import {connect} from 'dva';
 import BaseView from './components/base';
-import BindingView from './components/binding';
-import ParentInfo from './components/parentInfo';
 import SecurityView from './components/security';
-import AddressInfo from './components/address';
 import styles from './style.less';
 import {CurrentUser, UserModelState} from '@/models/user';
 import {ModifyType, ResultType, ValidatePwdResult} from '@/utils/utils';
@@ -18,8 +15,6 @@ import {modifyPassword, updateUser} from '@/pages/usermanager/settings/service';
 import ModifyUserInfo from '@/pages/usermanager/settings/components/modifyUser';
 import {UserListItem} from '@/models/data';
 import {CreateUser} from '@/pages/usermanager/userlist/data';
-
-const {Item} = Menu;
 
 interface SettingsProps {
   dispatch: Dispatch<any>;

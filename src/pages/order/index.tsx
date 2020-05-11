@@ -11,16 +11,17 @@ import _ from 'lodash';
 import {useEffectOnce} from 'react-use';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
-import {CurrentChildren, CurrentChildrenResults} from "@/models/data";
-import {CurrentUser, UserModelState} from "@/models/user";
-import {addKeyToEachArray, ResultType, ValidatePwdResult} from "@/utils/utils";
-import {testPassword} from "@/services/user";
-import {OrderListItem} from "@/pages/order/data";
-import {changeOrderStatus, modifyOrder, modifyTotalPrice, queryOrder} from "@/pages/order/service";
-import {PaneDetail, TabsList} from "@/pages/order/components/TabsList";
-import OrderDetail from "@/pages/order/components/OrderDetail";
-import PublishModal from "@/pages/order/components/PublishModal";
-import ModifyProjectDetail from "@/pages/order/components/ModifyProjectDetail";
+import {CurrentChildren, CurrentChildrenResults} from '@/models/data';
+import {CurrentUser, UserModelState} from '@/models/user';
+import {addKeyToEachArray, currentPriceNumber, ResultType, ValidatePwdResult} from '@/utils/utils';
+import {testPassword} from '@/services/user';
+import {OrderListItem} from '@/pages/order/data';
+import {changeOrderStatus, modifyOrder, modifyTotalPrice, queryOrder} from '@/pages/order/service';
+import {PaneDetail, TabsList} from '@/pages/order/components/TabsList';
+import OrderDetail from '@/pages/order/components/OrderDetail';
+import PublishModal from '@/pages/order/components/PublishModal';
+import ModifyProjectDetail from '@/pages/order/components/ModifyProjectDetail';
+import {StatisticWrapper} from '@/components/StatisticWrapper';
 
 const {confirm} = Modal;
 const {Text} = Typography;
@@ -365,11 +366,11 @@ const OrderList: FC<BasicListProps> = props => {
     details?.forEach(item => {
       const item2 = _.find(data, d => d?.id === item?.id);
       if (item2?.id) {
-        newArr.push(item2 as OrderListItem)
+        newArr.push(item2 as OrderListItem);
       }
-    })
+    });
     setDetails(newArr);
-  }
+  };
 
   const columnsGenerate = () => {
     const template: ProColumns<OrderListItem>[] = [];
@@ -387,44 +388,19 @@ const OrderList: FC<BasicListProps> = props => {
         },
       },
       {
-        title: '订单ID',
-        dataIndex: 'id',
-        key: 'id',
-        width: 70,
-        hideInSearch: true,
-        render: (text) => {
-          return (
-            <div style={{textAlign: 'center'}}>
-              {text}
-            </div>
-
-          )
-        }
-      },
-      {
-        title: '订单类型',
-        dataIndex: 'label',
-        key: 'label',
-        width: 100,
-        valueEnum: {
-          1: {text: '订单形式'},
-          2: {text: '合同形式'},
-        },
-      },
-      {
         title: '项目编号',
         dataIndex: 'order_number',
         key: 'order_number',
         render: (text, record) => {
           return (
-            <div style={{display: "flex"}}>
+            <div style={{display: 'flex'}}>
               <span style={{margin: 'auto 0'}}>{text}</span>
               <Button type="link" onClick={() => showMoreDetail(record)}>
                 点击更多详情
               </Button>
             </div>
 
-          )
+          );
         }
       },
       {
@@ -436,10 +412,14 @@ const OrderList: FC<BasicListProps> = props => {
           return (
             <div>
               <Text style={{color: '#1890FF'}}>销售总价：</Text>
-              <Text style={{color: '#FF6A00'}}>{'¥' + record?.order_leader_quota}</Text>
+              <StatisticWrapper
+                style={{
+                  color: record?.order_leader_price === record?.order_leader_quota ? 'red' : '#FF6A00'
+                }}
+                value={record?.order_leader_quota}/>
               <Divider type="vertical"/>
               <Text style={{color: '#1890FF'}}>成交总价：</Text>
-              <Text style={{color: '#FF6A00'}}>{'¥' + (record?.order_leader_price || record?.order_leader_quota)}</Text>
+              <StatisticWrapper value={record?.order_leader_price || record?.order_leader_quota}/>
             </div>
           );
         },
@@ -589,15 +569,15 @@ const OrderList: FC<BasicListProps> = props => {
     const newDetails = [...details];
     _.remove(newDetails, d => d?.id?.toString() === record?.id?.toString());
     setDetails([...newDetails, record]);
-  }
+  };
 
   const handleMenuClick = (e: { key: string; }) => {
     if (e?.key === '1') {
-      console.log('打印合同')
+      console.log('打印合同');
     } else if (e?.key === '2') {
       console.log('上传合同');
     }
-  }
+  };
 
   const operationButtons = (record: OrderListItem) => {
     const template2: JSX.Element[] = [];
@@ -657,7 +637,7 @@ const OrderList: FC<BasicListProps> = props => {
       template2.push(complete, termination, modifyPrice, modifyProject, more);
     }
     return template2;
-  }
+  };
 
   const operationClick = (item: OrderListItem, type: ValidateType) => {
     setCurrent(item);
@@ -682,11 +662,12 @@ const OrderList: FC<BasicListProps> = props => {
             params={{...listParams}}
             search={{
               collapsed: false,
+              resetText: undefined,
             }}
             columns={columnsGenerate()}
             columnsStateMap={columnsStateMap}
             onColumnsStateChange={map => {
-              setColumnsStateMap(map)
+              setColumnsStateMap(map);
             }}
             pagination={{pageSize: 5, showQuickJumper: true}}
           />
@@ -706,7 +687,7 @@ const OrderList: FC<BasicListProps> = props => {
         }}/>,
         key: d?.id?.toString(),
         closable: true,
-      })
+      });
     });
 
     return panes;

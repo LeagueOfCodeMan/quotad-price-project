@@ -470,7 +470,7 @@ const ProjectList: FC<BasicListProps> = props => {
       hideInSearch: true,
     },
     {
-      title: '用户',
+      title: '用户名称(公司名称)',
       dataIndex: 'user_name',
       hideInSearch: true,
       width: 160,
