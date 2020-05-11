@@ -1,13 +1,12 @@
 import {UploadOutlined} from '@ant-design/icons';
-import {Button, Form, Input, Upload, message} from 'antd';
+import {Button, message, Upload} from 'antd';
 import {FormattedMessage} from 'umi-plugin-react/locale';
 import React, {Component} from 'react';
 
 import {connect} from 'dva';
 import styles from './BaseView.less';
-import FormItem from "antd/es/form/FormItem";
-import {CurrentUser} from "@/models/user";
-import {identifyUser, IdentityType} from "@/utils/utils";
+import {CurrentUser} from '@/models/user';
+import {identifyUser, IdentityType} from '@/utils/utils';
 
 // 头像组件 方便以后独立，增加裁剪之类的功能
 const AvatarView = ({avatar, url, hadUploadImage}: {
@@ -27,7 +26,7 @@ const AvatarView = ({avatar, url, hadUploadImage}: {
   };
 
   return (
-    <>
+    <div>
       <div className={styles.avatar_title}>
         <FormattedMessage id="accountandsettings.basic.avatar" defaultMessage="Avatar"/>
       </div>
@@ -45,9 +44,9 @@ const AvatarView = ({avatar, url, hadUploadImage}: {
           </Button>
         </div>
       </Upload>
-    </>
-  )
-}
+    </div>
+  );
+};
 
 interface BaseViewProps {
   currentUser?: CurrentUser;
@@ -84,56 +83,16 @@ class BaseView extends Component<BaseViewProps> {
 
     return (
       <div className={styles.baseView} ref={this.getViewDom}>
-        <div className={styles.left}>
-          <Form
-            layout="vertical"
-            onFinish={this.handleFinish}
-            initialValues={currentUser}
-            hideRequiredMark
-          >
-            <FormItem
-              label="地区编码"
-              name="code"
-              rules={[{required: false}]}
-            >
-              <Input placeholder="请输入" disabled/>
-            </FormItem>
-            <FormItem
-              label="公司名"
-              name="company"
-              rules={[{required: false}]}
-            >
-              <Input placeholder="请输入" disabled/>
-            </FormItem>
-            <FormItem
-              label="真实姓名"
-              name="real_name"
-              rules={[{required: false}]}
-            >
-              <Input placeholder="请输入" disabled/>
-            </FormItem>
-            <FormItem
-              label="联系地址"
-              name="addr"
-              rules={[{required: false}]}
-            >
-              <Input placeholder="请输入" disabled/>
-            </FormItem>
-            {/*<Form.Item>*/}
-              {/*<Button htmlType="submit" type="primary">*/}
-                {/*<FormattedMessage*/}
-                  {/*id="accountandsettings.basic.update"*/}
-                  {/*defaultMessage="Update Information"*/}
-                {/*/>*/}
-              {/*</Button>*/}
-            {/*</Form.Item>*/}
-          </Form>
-        </div>
-        <div className={styles.right}>
-          <AvatarView avatar={this.getAvatarURL()} url={"/api/user/" + currentUser?.id + "/modify_headimg"}
+        <div className={styles.right} style={{display: 'flex'}}>
+          <AvatarView avatar={this.getAvatarURL()} url={'/api/user/' + currentUser?.id + '/modify_headimg'}
                       hadUploadImage={this.props.hadUploadImage}/>
-          <div style={{marginTop: '30px'}}>
-            <div>当前权限级别：<span style={{color: 'red', marginLeft: '14px'}}>{identifyUser(currentUser?.identity as IdentityType)}</span>
+          <div style={{marginTop: '45px', marginLeft: '50px'}}>
+            <div>地区编码：<span style={{color: 'red', marginLeft: '14px'}}>{currentUser?.code}</span></div>
+            <div>公司名称：<span style={{color: 'red', marginLeft: '14px'}}>{currentUser?.company}</span></div>
+            <div>真实姓名：<span style={{color: 'red', marginLeft: '14px'}}>{currentUser?.real_name}</span></div>
+            <div>联系地址：<span style={{color: 'red', marginLeft: '14px'}}>{currentUser?.addr}</span></div>
+            <div>当前权限级别：<span
+              style={{color: 'red', marginLeft: '14px'}}>{identifyUser(currentUser?.identity as IdentityType)}</span>
             </div>
             <div>上一次登录时间：<span style={{color: 'red'}}>{currentUser?.last_login || ''}</span></div>
           </div>

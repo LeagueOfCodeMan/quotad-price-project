@@ -1,5 +1,5 @@
 import {PlusOutlined} from '@ant-design/icons';
-import {Button, Divider, message, Modal, Switch} from 'antd';
+import {Button, Divider, message, Modal} from 'antd';
 import React, {useEffect, useRef, useState} from 'react';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import _ from 'lodash';
@@ -210,9 +210,9 @@ const UserList: React.FC<UserListProps> = (props) => {
     const searchParamsType = addIcontains(params);
     const result = await queryUsers({...searchParamsType});
     return Promise.resolve({
-      data: partitionsData(result?.results,currentUser?.identity as IdentityType) || [],
+      data: partitionsData(result?.results, currentUser?.identity as IdentityType) || [],
       success: true,
-      total: result?.count || 0,
+      total: currentUser?.identity === 1 ? result?.count - 1 || 0 : result?.count,
     });
   };
 

@@ -61,7 +61,7 @@ class SecurityView extends Component<SecurityViewProps> {
   render() {
     const data = this.getData();
     return (
-      <>
+      <div style={{margin:'40px 0 0 100px'}}>
         <List<Unpacked<typeof data>>
           itemLayout="horizontal"
           dataSource={data}
@@ -71,7 +71,7 @@ class SecurityView extends Component<SecurityViewProps> {
             </List.Item>
           )}
         />
-      </>
+      </div>
     );
   }
 }

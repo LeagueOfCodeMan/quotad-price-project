@@ -11,13 +11,13 @@ import ParentInfo from './components/parentInfo';
 import SecurityView from './components/security';
 import AddressInfo from './components/address';
 import styles from './style.less';
-import {CurrentUser, UserModelState} from "@/models/user";
-import {ModifyType, ResultType, ValidatePwdResult} from "@/utils/utils";
-import UpdatePassword from "@/components/UpdatePassword";
-import {modifyPassword, updateUser} from "@/pages/usermanager/settings/service";
-import ModifyUserInfo from "@/pages/usermanager/settings/components/modifyUser";
-import {UserListItem} from "@/models/data";
-import {CreateUser} from "@/pages/usermanager/userlist/data";
+import {CurrentUser, UserModelState} from '@/models/user';
+import {ModifyType, ResultType, ValidatePwdResult} from '@/utils/utils';
+import UpdatePassword from '@/components/UpdatePassword';
+import {modifyPassword, updateUser} from '@/pages/usermanager/settings/service';
+import ModifyUserInfo from '@/pages/usermanager/settings/components/modifyUser';
+import {UserListItem} from '@/models/data';
+import {CreateUser} from '@/pages/usermanager/userlist/data';
 
 const {Item} = Menu;
 
@@ -56,30 +56,6 @@ class Settings extends Component<SettingsProps, SettingsState> {
           defaultMessage="Security Settings"
         />
       ),
-      // binding: (
-      //   <FormattedMessage
-      //     id="accountandsettings.menuMap.binding"
-      //     defaultMessage="Account Binding"
-      //   />
-      // ),
-      // address: (
-      //   <FormattedMessage
-      //     id="accountandsettings.menuMap.address"
-      //     defaultMessage="Address"
-      //   />
-      // ),
-      // notification: (
-      //   <FormattedMessage
-      //     id="accountandsettings.menuMap.notification"
-      //     defaultMessage="New Message Notification"
-      //   />
-      // ),
-      parent: (
-        <FormattedMessage
-          id="accountandsettings.menuMap.parent"
-          defaultMessage="Contact Administrator"
-        />
-      ),
     };
     this.state = {
       mode: 'inline',
@@ -97,14 +73,14 @@ class Settings extends Component<SettingsProps, SettingsState> {
     dispatch({
       type: 'user/fetchCurrent',
     });
-  }
+  };
 
   resetAddress = () => {
     const {dispatch} = this.props;
     dispatch({
       type: 'user/fetchAddress',
     });
-  }
+  };
 
   componentDidMount() {
     this.resetDispatch();
@@ -116,22 +92,6 @@ class Settings extends Component<SettingsProps, SettingsState> {
   componentWillUnmount() {
     window.removeEventListener('resize', this.resize);
   }
-
-  getMenu = () => {
-    const {menuMap} = this.state;
-    return Object.keys(menuMap).map(item => <Item key={item}>{menuMap[item]}</Item>);
-  };
-
-  getRightTitle = () => {
-    const {selectKey, menuMap} = this.state;
-    return menuMap[selectKey];
-  };
-
-  selectKey = (key: SettingsStateKeys) => {
-    this.setState({
-      selectKey: key,
-    });
-  };
 
   resize = () => {
     if (!this.main) {
@@ -170,37 +130,10 @@ class Settings extends Component<SettingsProps, SettingsState> {
 
   handleSecurityUpdate = (target: string) => {
     if (target === 'password') {
-      this.setState({updateVisible: true})
+      this.setState({updateVisible: true});
     } else {
-      this.setState({modifyType: target as ModifyType, modifyUserInfoVisible: true})
+      this.setState({modifyType: target as ModifyType, modifyUserInfoVisible: true});
     }
-  };
-
-  handleAddressUpdate = () => {
-    this.resetAddress();
-  }
-
-  renderChildren = () => {
-    const {selectKey} = this.state;
-    switch (selectKey) {
-      case 'base':
-        return <BaseView onSubmit={this.updateBase} hadUploadImage={() => {
-          this.resetDispatch();
-        }}/>;
-      case 'security':
-        return <SecurityView handleSecurityUpdate={this.handleSecurityUpdate}/>;
-      case 'binding':
-        return <BindingView/>;
-      // case 'notification':
-      //   return <NotificationView/>;
-      case 'parent':
-        return <ParentInfo/>;
-      case 'address':
-        return <AddressInfo handleAddressUpdate={this.handleAddressUpdate}/>;
-      default:
-        break;
-    }
-    return null;
   };
 
   render() {
@@ -208,7 +141,7 @@ class Settings extends Component<SettingsProps, SettingsState> {
     if (!currentUser.username) {
       return '';
     }
-    const {mode, selectKey, updateVisible, modifyUserInfoVisible, modifyType} = this.state;
+    const {updateVisible, modifyUserInfoVisible, modifyType} = this.state;
     const hide = () => {
       message.loading('正在修改');
     };
@@ -258,18 +191,11 @@ class Settings extends Component<SettingsProps, SettingsState> {
             }
           }}
         >
-          <div className={styles.leftMenu}>
-            <Menu
-              mode={mode}
-              selectedKeys={[selectKey]}
-              onClick={({key}) => this.selectKey(key as SettingsStateKeys)}
-            >
-              {this.getMenu()}
-            </Menu>
-          </div>
-          <div className={styles.right}>
-            <div className={styles.title}>{this.getRightTitle()}</div>
-            {this.renderChildren()}
+          <div style={{display: 'flex', flexDirection: 'column', margin: 'auto'}}>
+            <BaseView onSubmit={this.updateBase} hadUploadImage={() => {
+              this.resetDispatch();
+            }}/>
+            <SecurityView handleSecurityUpdate={this.handleSecurityUpdate}/>
           </div>
         </div>
       </GridContent>
