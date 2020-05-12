@@ -2,12 +2,15 @@
 @import 'utils/utils.less';
 
 .standardList {
-  height: calc(100vh - 128px);
-  background-color: #fff;
+  //height: calc(100vh - 128px);
   :global {
     .ant-card-head {
       border-bottom: none;
     }
+    //.ant-tabs-content {
+    //  height: calc(100vh - 168px);
+    //  background-color: #fff;
+    //}
     .ant-card-head-title {
       padding: 24px 0;
       line-height: 32px;
@@ -33,6 +36,9 @@
       bottom: 10px;
       display: flex;
       justify-content: flex-end;
+    }
+    .ant-table-wrapper {
+      min-width: calc(100vw - 425px);
     }
   }
   .headerInfo {

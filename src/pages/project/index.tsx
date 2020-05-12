@@ -1,12 +1,18 @@
 import React, {FC, useEffect, useRef, useState} from 'react';
-import {Button, Descriptions, Divider, List, message, Modal, Table, Tooltip, TreeSelect, Typography,} from 'antd';
+import {Button, Descriptions, Divider, List, message, Modal, Table, Tag, Tooltip, TreeSelect, Typography,} from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import {ProjectStateType} from './model';
 import styles from './style.less';
 
 import ValidatePassword from '../../components/ValidatePassword/index';
-import {ExclamationCircleOutlined, PlusOutlined,} from '@ant-design/icons/lib';
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ExclamationCircleOutlined,
+  PlusOutlined,
+  SyncOutlined,
+} from '@ant-design/icons/lib';
 import _ from 'lodash';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
@@ -37,6 +43,9 @@ import CreateOrder from '@/pages/project/components/CreateOrder';
 import {StatisticWrapper} from '@/components/StatisticWrapper';
 import {ProductBaseListItem} from '@/pages/product/data';
 import {ColumnsType} from 'antd/lib/table';
+import {PaneDetail, TabsList} from '@/pages/order/components/TabsList';
+import {OrderListItem} from '@/pages/order/data';
+import ProjectDetail from '@/pages/project/components/ProjectDetail';
 
 
 const {confirm} = Modal;
@@ -302,6 +311,7 @@ const ProjectList: FC<BasicListProps> = props => {
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>('');
   const [listParams, setListParams] = useState<ListSearchParams>({});
+  const [details, setDetails] = useState<ProjectListItem[]>([]);
 
   useEffect(() => {
     dispatch({
@@ -484,7 +494,7 @@ const ProjectList: FC<BasicListProps> = props => {
                 <div className={styles.listContentWrapper}>
                   <Descriptions column={4} layout="vertical">
                     <Descriptions.Item label={<span style={{color: '#FFFFFF'}}>用户详细信息：</span>} span={4}>
-                      <span style={{color: '#FFFFFF'}}>用户名： </span><Text style={{color: '#FFFFFF'}}>{user_name}</Text>
+                      <span style={{color: '#FFFFFF'}}>用户名称： </span><Text style={{color: '#FFFFFF'}}>{user_name}</Text>
                       <br/>
                       <span style={{color: '#FFFFFF'}}>地址：</span><Text style={{color: '#FFFFFF'}}>{user_addr}</Text>
                       <br/>
@@ -550,6 +560,9 @@ const ProjectList: FC<BasicListProps> = props => {
                 ),
               });
             }}>查看详情</Button>
+            <Button type="link" onClick={() => showMoreDetail(record)}>
+              详情
+            </Button>
           </div>
         );
       },
@@ -559,7 +572,7 @@ const ProjectList: FC<BasicListProps> = props => {
       dataIndex: 'price',
       hideInSearch: true,
       width: 130,
-      align:'right',
+      align: 'right',
       render: (text, record) => {
         const {
           sell_total_quota
@@ -576,7 +589,7 @@ const ProjectList: FC<BasicListProps> = props => {
       },
     },
     {
-      title: '创建时间',
+      title: '项目创建时间',
       dataIndex: 'create_time',
       valueType: 'dateTime',
       hideInSearch: true,
@@ -671,27 +684,102 @@ const ProjectList: FC<BasicListProps> = props => {
     });
   };
 
+  /**
+   * tab操作
+   */
+  const showMoreDetail = (record: ProjectListItem) => {
+    const newDetails = [...details];
+    _.remove(newDetails, d => d?.id?.toString() === record?.id?.toString());
+    setDetails([...newDetails, record]);
+  };
+
+  const removeItem = (target: string) => {
+    const newDetails = [...details];
+    _.remove(newDetails, d => d?.id?.toString() === target);
+    setDetails(newDetails);
+  };
+
+  const panesGenerate = () => {
+    const panes: PaneDetail[] = [
+      {
+        title: '项目列表',
+        content: (
+          <ProTable<ProjectListItem>
+            options={{reload: true, fullScreen: true, setting: true, density: false}}
+            size="small"
+            actionRef={actionRef}
+            rowKey={record => record.id}
+            toolBarRender={() => {
+              return action();
+            }}
+            request={request}
+            search={{
+              collapsed: true,
+              resetText: undefined,
+            }}
+            params={{...listParams}}
+            columns={identity === 1 ? columns : columns.concat(operation)}
+            columnsStateMap={columnsStateMap}
+            onColumnsStateChange={map => setColumnsStateMap(map)}
+            pagination={{pageSize: 10, showQuickJumper: true}}
+          />
+        ),
+        key: 'project',
+        closable: false,
+      },
+    ];
+
+    details?.forEach(d => {
+      let state: JSX.Element;
+      switch (d?.pro_status) {
+        case 1:
+          state = <Tag icon={<SyncOutlined spin/>} color="processing">
+            进行中
+          </Tag>;
+          break;
+        case 2:
+          state = <Tag icon={<CloseCircleOutlined/>} color="error">
+            终止
+          </Tag>;
+          break;
+        case 3:
+          state = <Tag icon={<ExclamationCircleOutlined/>} color="warning">
+            审核中</Tag>;
+          break;
+        case 4:
+          state = <Tag icon={<SyncOutlined spin/>} color="processing">
+            交付中
+          </Tag>;
+          break;
+        default:
+          state = <Tag icon={<CheckCircleOutlined/>} color="success">
+            已完成
+          </Tag>;
+          break;
+      }
+
+      panes.push({
+        title: <span>{state}
+          <span>{d?.real_name + '-' + d?.project_id}</span></span>,
+        content: <ProjectDetail current={d} currentUser={currentUser} reload={() => {
+          if (actionRef.current) {
+            actionRef.current.reload();
+          }
+        }}/>,
+        key: d?.id?.toString(),
+        closable: true,
+      });
+    });
+
+    return panes;
+  };
+
   return (
     <div>
       <div className={styles.standardList}>
-        <ProTable<ProjectListItem>
-          options={{reload: true, fullScreen: true, setting: true, density: false}}
-          size="small"
-          actionRef={actionRef}
-          rowKey={record => record.id}
-          toolBarRender={() => {
-            return action();
-          }}
-          request={request}
-          search={{
-            collapsed: true,
-            resetText: undefined,
-          }}
-          params={{...listParams}}
-          columns={identity === 1 ? columns : columns.concat(operation)}
-          columnsStateMap={columnsStateMap}
-          onColumnsStateChange={map => setColumnsStateMap(map)}
-          pagination={{pageSize: 10, showQuickJumper: true}}
+        <TabsList
+          panes={panesGenerate()}
+          removeItem={removeItem}
         />
       </div>
       <ValidatePassword

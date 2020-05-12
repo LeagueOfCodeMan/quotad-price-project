@@ -722,7 +722,6 @@ const OrderList: FC<BasicListProps> = props => {
           panes={panesGenerate()}
           removeItem={removeItem}
         />
-
       </div>
       <PublishModal
         onSubmit={async (value, callback) => {

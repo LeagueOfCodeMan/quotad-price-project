@@ -11,6 +11,7 @@ export interface ProjectListItem {
   user_addr: string;
   user_iphone: string;
   user_contact: string;
+  other_list:{pro_type:string;price:string;count:number}[];
 
   create_time: string;
   project_name: string;

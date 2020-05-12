@@ -5,7 +5,7 @@ import {message} from 'antd';
 import _ from 'lodash';
 import {ProductBaseListItem} from '@/pages/product/data';
 import {CurrentUser} from '@/models/user';
-import {ProjectProductionInfoItem} from '@/pages/project/data';
+import {ProjectListItem, ProjectProductionInfoItem} from '@/pages/project/data';
 import {UserListItem} from '@/models/data';
 
 /* eslint no-useless-escape:0 import/prefer-default-export:0 */
@@ -367,8 +367,8 @@ export const projectType = (pro_status: number) => {
   }
 };
 
-export const partitionsData = (data: UserListItem[],identity:IdentityType) => {
-  if(identity === 1){
+export const partitionsData = (data: UserListItem[], identity: IdentityType) => {
+  if (identity === 1) {
     const leaderData = data?.filter(d => !d?.pid && d?.identity !== 1);
     const group: UserListItem[] = [];
     _.forEach(leaderData, d => {
@@ -376,8 +376,37 @@ export const partitionsData = (data: UserListItem[],identity:IdentityType) => {
       group.push({...d, children});
     });
     return group;
-  }else {
+  } else {
     return data;
   }
 
+};
+
+export const handleProjectListItemData = (product_list: ProjectProductionInfoItem[],
+                                          identity: IdentityType,
+                                          other_list: { pro_type: string; price: string; count: number }[],
+                                          total_price: string | null) => {
+  const list: any[] = [];
+  _.forEach(product_list, (d, index) => {
+    list[index] = [{
+      ...d?.production,
+      count: d?.count,
+      price: currentPriceNumber(d?.production, identity),
+      total_price,
+      total: d?.conf_par?.length + 1
+    },
+      ..._.map(d?.conf_par, dd => ({
+        ...dd,
+        price: currentPriceNumber(dd, identity),
+        total_price,
+        total: d?.conf_par?.length + 1
+      }))
+    ];
+  });
+  const final = !!_.head(other_list) ? [...list, [..._.map(other_list, d => ({
+    ..._.omit(d, ['pro_type']), total: other_list?.length || 0,
+    name: d?.pro_type,
+  }))]] : list;
+  console.log(list, other_list, final);
+  return final;
 };
