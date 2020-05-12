@@ -559,6 +559,7 @@ const ProjectList: FC<BasicListProps> = props => {
       dataIndex: 'price',
       hideInSearch: true,
       width: 130,
+      align:'right',
       render: (text, record) => {
         const {
           sell_total_quota

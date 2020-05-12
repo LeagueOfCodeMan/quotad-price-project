@@ -21,7 +21,7 @@ import {PaneDetail, TabsList} from '@/pages/order/components/TabsList';
 import OrderDetail from '@/pages/order/components/OrderDetail';
 import PublishModal from '@/pages/order/components/PublishModal';
 import ModifyProjectDetail from '@/pages/order/components/ModifyProjectDetail';
-import {StatisticWrapper} from '@/components/StatisticWrapper';
+import {StatisticArrow, StatisticWrapper} from '@/components/StatisticWrapper';
 
 const {confirm} = Modal;
 const {Text} = Typography;
@@ -175,6 +175,7 @@ const OrderList: FC<BasicListProps> = props => {
     ['delivery_message']: {show: false,},
     ['bill_message']: {show: false},
     ['bill_delivery_message']: {show: false},
+    ['sn']: {show: false},
   });
   const actionRef = useRef<ActionType>();
   const [visible, setVisible] = useState<boolean>(false);
@@ -373,7 +374,6 @@ const OrderList: FC<BasicListProps> = props => {
   };
 
   const columnsGenerate = () => {
-    const template: ProColumns<OrderListItem>[] = [];
     const commonMessage: ProColumns<OrderListItem>[] = [
       {
         title: '状态',
@@ -388,38 +388,53 @@ const OrderList: FC<BasicListProps> = props => {
         },
       },
       {
-        title: '项目编号',
+        title: '项目ID',
         dataIndex: 'order_number',
         key: 'order_number',
-        render: (text, record) => {
-          return (
-            <div style={{display: 'flex'}}>
-              <span style={{margin: 'auto 0'}}>{text}</span>
-              <Button type="link" onClick={() => showMoreDetail(record)}>
-                点击更多详情
-              </Button>
-            </div>
-
-          );
-        }
+        width: 120,
       },
       {
-        title: '销售总价',
+        title: '公司名称',
+        dataIndex: 'company',
+        width: 220,
+        ellipsis: true,
+        hideInSearch: true,
+      },
+      {
+        title: '下单人',
+        dataIndex: 'order_user',
+        width: 100,
+        ellipsis: true,
+        hideInSearch: true,
+      },
+      {
+        title: '填报人',
+        dataIndex: 'create_user',
+        width: 100,
+        ellipsis: true,
+        hideInSearch: true,
+      },
+      {
+        title: '销售价格明细',
         dataIndex: 'order_leader_quota',
         key: 'order_leader_quota',
         hideInSearch: true,
         render: (text, record) => {
+          console.log(record);
+          const price = parseFloat(record?.order_leader_price || record?.order_leader_quota);
+          const quota = parseFloat(record?.order_leader_quota);
           return (
-            <div>
-              <Text style={{color: '#1890FF'}}>销售总价：</Text>
+            <div style={{display: 'flex'}}>
+              <Text style={{color: '#1890FF'}}>订单额：</Text>
               <StatisticWrapper
                 style={{
-                  color: record?.order_leader_price === record?.order_leader_quota ? 'red' : '#FF6A00'
+                  color: price === quota ? 'red' : 'gold'
                 }}
                 value={record?.order_leader_quota}/>
-              <Divider type="vertical"/>
-              <Text style={{color: '#1890FF'}}>成交总价：</Text>
-              <StatisticWrapper value={record?.order_leader_price || record?.order_leader_quota}/>
+              <Text style={{color: '#1890FF', marginLeft: '10px'}}>成交价：</Text>
+              <StatisticWrapper value={price}/>
+              <Text style={{color: '#1890FF', marginLeft: '10px'}}>差价：</Text>
+              <StatisticArrow value={Math.floor((price - quota) * 100) / 100}/>
             </div>
           );
         },
@@ -539,8 +554,11 @@ const OrderList: FC<BasicListProps> = props => {
         valueType: 'dateTime',
         hideInSearch: true,
       },
-    ];
-    const operation: ProColumns<OrderListItem>[] = [
+      {
+        title: 'SN码',
+        dataIndex: 'sn',
+        key: 'sn',
+      },
       {
         title: '操作',
         dataIndex: 'option',
@@ -548,17 +566,15 @@ const OrderList: FC<BasicListProps> = props => {
         render: (text, record) => {
           return (
             <div style={{display: 'flex'}}>
-              {operationButtons(record)}
+              <Button type="link" onClick={() => showMoreDetail(record)}>
+                详情
+              </Button>
             </div>
           );
         },
       },
     ];
-    if (identity === 1) {
-      return template.concat(commonMessage, operation);
-    } else {
-      return template.concat(commonMessage);
-    }
+    return commonMessage;
   };
 
   /**
