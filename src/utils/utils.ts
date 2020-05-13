@@ -5,7 +5,7 @@ import {message} from 'antd';
 import _ from 'lodash';
 import {ProductBaseListItem} from '@/pages/product/data';
 import {CurrentUser} from '@/models/user';
-import {ProjectListItem, ProjectProductionInfoItem} from '@/pages/project/data';
+import {ProjectProductionInfoItem} from '@/pages/project/data';
 import {UserListItem} from '@/models/data';
 
 /* eslint no-useless-escape:0 import/prefer-default-export:0 */
@@ -409,4 +409,19 @@ export const handleProjectListItemData = (product_list: ProjectProductionInfoIte
   }))]] : list;
   console.log(list, other_list, final);
   return final;
+};
+
+/**
+ * 前端计算并列的产品
+ */
+export const calculateProductList = (data: ProductBaseListItem[], identity: IdentityType):number => {
+  const group = _.head(_.filter(data, d => d?.production > 0));
+  const children = _.filter(data, d => !d?.production);
+  const price = parseFloat(actPrice(group, identity));
+  const tPrice = _.reduce(children, (sum, n) => {
+    const priceItem = parseFloat(actPrice(n, identity)) * (n?.count || 0);
+    return sum + priceItem;
+  }, 0);
+  const hPrice = (price + tPrice) * (group?.count || 1);
+  return hPrice;
 };

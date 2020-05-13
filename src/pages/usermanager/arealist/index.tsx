@@ -15,7 +15,7 @@ import {createArea, deleteArea, queryAreas, updateArea} from "@/pages/usermanage
 import CreateForm from "@/pages/usermanager/arealist/components/CreateForm";
 import styles from '../../project/style.less';
 const {confirm} = Modal;
-const {Text} = Typography;
+
 /**
  * 添加
  * @param fields

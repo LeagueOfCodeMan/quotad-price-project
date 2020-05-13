@@ -46,6 +46,9 @@ import {ColumnsType} from 'antd/lib/table';
 import {PaneDetail, TabsList} from '@/pages/order/components/TabsList';
 import {OrderListItem} from '@/pages/order/data';
 import ProjectDetail from '@/pages/project/components/ProjectDetail';
+import PublishModal, {PublishType} from '@/pages/product/components/PublishModal';
+import {modifyProductMemberPrice, modifyProductSecondPrice} from '@/pages/product/service';
+import AddProduct from '@/pages/project/components/AddProduct';
 
 
 const {confirm} = Modal;
@@ -872,6 +875,7 @@ const ProjectList: FC<BasicListProps> = props => {
           currentUser={currentUser}
         />
       ) : null}
+
     </div>
   );
 };

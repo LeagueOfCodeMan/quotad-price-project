@@ -7,6 +7,7 @@ import {ProductBaseListItem} from '@/pages/product/data';
 import {ColumnsType} from 'antd/lib/table';
 import {ProjectListItem} from '@/pages/project/data';
 import {StatisticWrapper} from '@/components/StatisticWrapper';
+import Ellipsis from '@/components/Ellipsis';
 
 const {Paragraph} = Typography;
 const {Text} = Typography;
@@ -37,12 +38,14 @@ const Content = ({data, currentUser, reload}: {
       title: '产品名称',
       dataIndex: 'name',
       key: 'name',
-      width: 100,
+      width: 160,
       align: 'center',
-      render: (text) => {
+      render: (text: string) => {
         return (
           <div>
-            <Text style={{color: '#181818'}}>{text}</Text>
+            <Ellipsis tooltip lines={1}>
+              {text}
+            </Ellipsis>
           </div>
         );
       },
@@ -56,7 +59,9 @@ const Content = ({data, currentUser, reload}: {
       render: (text: string) => {
         return (
           <div>
-            <Text style={{color: '#181818'}}>{text}</Text>
+            <Ellipsis tooltip lines={1}>
+              {text}
+            </Ellipsis>
           </div>
         );
       },
@@ -64,16 +69,19 @@ const Content = ({data, currentUser, reload}: {
     {
       title: '产品描述',
       dataIndex: 'desc',
-      key: 'desc',
-      align: 'center',
-      render: (text: string) => {
+      width: 190,
+      render: (text) => {
         return (
           <div style={{textAlign: 'left'}}>
-            {text?.split('\n')?.map((o, i) => {
-              return (
-                <div key={id + '-x-' + i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
-              );
-            })}
+            <Ellipsis tooltip lines={1}>
+              <p style={{marginBottom: '0px'}}>
+                {(text as string)?.split('\n')?.map((o, i) => {
+                  return (
+                    <span key={i}>{o}<br/></span>
+                  );
+                })}
+              </p>
+            </Ellipsis>
           </div>
         );
       },
@@ -83,7 +91,7 @@ const Content = ({data, currentUser, reload}: {
       dataIndex: 'price',
       key: 'price',
       align: 'center',
-      width: 130,
+      width: 170,
       render: (text) => {
         return (
           <div>
@@ -101,13 +109,13 @@ const Content = ({data, currentUser, reload}: {
       dataIndex: 'count',
       key: 'count',
       align: 'center',
-      width: 120,
+      width: 100,
     },
     {
       title: '金额',
       dataIndex: 'total_price',
       key: 'total_price',
-      width: 130,
+      width: 170,
       align: 'center',
       render: (value, row, index) => {
         const obj: {
@@ -187,33 +195,33 @@ const Content = ({data, currentUser, reload}: {
         />
       </div>
       <List
-        size="large"
-        rowKey={record => record.id?.toString()}
-        pagination={false}
-        dataSource={handleProjectListItemData(product_list, identity as IdentityType, other_list, sell_total_quota) || []}
-        renderItem={(item: any[], index) => {
-          console.log(item);
-          // console.log(handleProjectListItemData(product_list, identity as IdentityType, other_list));
-          return (
-            <List.Item
-            >
+      size="large"
+      rowKey={record => record.id?.toString()}
+      pagination={false}
+      dataSource={handleProjectListItemData(product_list, identity as IdentityType, other_list, sell_total_quota) || []}
+      renderItem={(item: any[], index) => {
+        console.log(item);
+        // console.log(handleProjectListItemData(product_list, identity as IdentityType, other_list));
+        return (
+          <List.Item
+          >
+            <div>
               <div>
-                <div>
-                  产品{index + 1}
-                </div>
-                <Table
-                  bordered
-                  rowKey={record => record?.id}
-                  columns={columns}
-                  pagination={false}
-                  dataSource={item || []}
-                />
+                产品{index + 1}
               </div>
-            </List.Item>
-          );
-        }}
-      >
-      </List>
+              <Table
+                bordered
+                rowKey={record => record?.id}
+                columns={columns}
+                pagination={false}
+                dataSource={item || []}
+              />
+            </div>
+          </List.Item>
+        );
+      }}
+    >
+    </List>
     </div>
   );
 };

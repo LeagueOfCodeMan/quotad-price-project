@@ -1,29 +1,17 @@
 import React, {useEffect, useState} from 'react';
-import {
-  Alert,
-  Button,
-  Col,
-  Descriptions,
-  Divider,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Row,
-  Select,
-  Steps,
-  Table, Tooltip,
-  Typography
-} from 'antd';
-import {v4 as uuidv4} from 'uuid';
+import {Alert, List, Button, Form, Input, Modal, Select, Steps, Table, Typography, Divider, Space} from 'antd';
 import _ from 'lodash';
-import {queryProduct} from '../../product/service';
 import {ProductBaseListItem} from '../../product/data';
 import styles from '../style.less';
 import {ColumnsType} from 'antd/lib/table';
 import {CreateProjectParams} from '../service';
 import {CurrentUser} from '@/models/user';
-import {actPrice, currentPrice, isNormalResponseBody, productType} from '@/utils/utils';
+import {actPrice, calculateProductList, currentPrice, currentPriceNumber, IdentityType} from '@/utils/utils';
+import AddProduct from '@/pages/project/components/AddProduct';
+import Ellipsis from '@/components/Ellipsis';
+import {StatisticWrapper} from '@/components/StatisticWrapper';
+import {DeleteTwoTone, EditTwoTone} from '@ant-design/icons/lib';
+import {v4 as uuidv4} from 'uuid';
 
 
 export interface FormValueType {
@@ -56,13 +44,15 @@ const formLayout = {
   wrapperCol: {span: 13},
 };
 
+
 const CreateForm: React.FC<UpdateFormProps> = props => {
   const [formVals, setFormVals] = useState<FormValueType>({});
   const [data, setData] = useState<ProductBaseListItem[]>([]);
-  const [dataSource, setDataSource] = useState<ProductBaseListItem[]>([]);
-  const [current, setCurrent] = useState<ProductBaseListItem>();
+  const [dataSource, setDataSource] = useState<{ uuid: string; data: ProductBaseListItem[] }[]>([]);
+  const [current, setCurrent] = useState<ProductBaseListItem[]>();
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [totalPrice, setPrice] = useState<string>('0.00');
+  const [totalPrice, setPrice] = useState<number>(0);
+  const [addVisible, handleAddVisible] = useState<boolean>(false);
 
   const [form] = Form.useForm();
   const [formRef, setFormRef] = useState<any>();
@@ -70,22 +60,9 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     onSubmit: handleUpdate,
     onCancel: handleUpdateModalVisible,
     updateModalVisible,
-    currentUser: {identity}
+    currentUser
   } = props;
-
-  useEffect(() => {
-    if (current && formRef) {
-      setTimeout(() => {
-        const conf_par: { id: number; count: number; }[] = [];
-        current?.conf_list?.forEach(d => {
-          conf_par.push({id: d?.id, count: d?.is_required ? 1 : 0});
-        });
-        form.setFieldsValue({
-          conf_par: conf_par
-        });
-      }, 0);
-    }
-  }, [current]);
+  const {identity} = currentUser;
 
   const forward = () => setCurrentStep(currentStep + 1);
 
@@ -97,19 +74,6 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     setFormVals({...formVals, ...fieldsValue});
 
     if (currentStep < 2) {
-      if (currentStep === 1) {
-        const checkPar = fieldsValue?.conf_par?.filter((i: { count: number; }) => i?.count > 0);
-        const conf_list: ProductBaseListItem[] = [];
-        _.forEach(current?.conf_list, o => {
-          const target = _.head(_.filter(checkPar, d => d?.id === o?.id));
-          if (target) {
-            conf_list.push({...o, count: target?.count, uuid: uuidv4(),});
-          }
-        });
-        setDataSource([...dataSource, {
-          ...current, count: fieldsValue?.count, conf_list, conf_par: checkPar, uuid: uuidv4(), is_required: 0,
-        } as ProductBaseListItem]);
-      }
       forward();
     } else {
       const {project_name, project_desc, user_name, user_addr, user_iphone, user_contact} = formVals;
@@ -126,408 +90,275 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     }
   };
 
-  const fetchProduct = _.debounce(async (index: any) => {
-    const payload = {pageSize: 9999,};
-    if (index === 1) {
-      payload['genre__lte'] = 2;
-      payload['genre__gte'] = 1;
-    } else {
-      payload['genre__lte'] = 5;
-      payload['genre__gte'] = 3;
-    }
-    const response = await queryProduct(payload);
-    if (isNormalResponseBody(response)) {
-      setData(response?.results || []);
-    }
-  }, 800);
-
-  const handleChange = (value: any) => {
-    setPrice('0.00');
-    form.setFieldsValue({count: null});
-    const checkedCurrent = _.head(_.filter(data, o => o?.id === value?.value));
-    calculate();
-    setCurrent(checkedCurrent);
+  const remove = (record: { uuid: string; [propName: string]: any; }) => {
+    const newData = [...dataSource];
+    _.remove(newData, d => d?.uuid === record?.uuid);
+    setDataSource(newData);
   };
 
-  /**
-   * 计算价格
-   * @param selectedRowKeys
-   * @param selectedRows
-   */
-  const calculate = () => {
-    const {count, conf_par} = form.getFieldsValue();
-    if (count) {
-      const price = parseFloat(actPrice(current, identity));
-      const checkPar = conf_par?.filter((i: { count: number; }) => i?.count > 0);
-      const tPrice = _.reduce(checkPar, (sum, n) => {
-        const item = _.head(_.filter(current?.conf_list, o => o?.id === n?.id));
-        const priceItem = parseFloat(actPrice(item, identity)) * n?.count;
-        return sum + priceItem;
-      }, 0);
-      const hPrice = (price + tPrice) * count;
-      const fPrice: string = hPrice % 1 !== 0 ? hPrice.toString() : hPrice + '.00';
-      const price2 = _.isNaN(hPrice) ? '部分未定价' : '¥ ' + fPrice;
-      setPrice(price2);
-    }
-  };
-
-  const columns: ColumnsType<ProductBaseListItem> = [
-    {
-      title: '类型',
-      dataIndex: 'genre',
-      key: 'genre',
-      align: 'center',
-      width: 70,
-      render: (text: number) => {
-        return (
-          <div>
-            <Text style={{color: '#181818'}}>{productType(text)}</Text>
-          </div>
-        );
-      },
-    },
-    {
-      title: '型号',
-      dataIndex: 'pro_type',
-      key: 'pro_type',
-      align: 'center',
-      width: 100,
-      render: (text: string) => {
-        return (
-          <div>
-            <Text style={{color: '#181818'}}>{text}</Text>
-          </div>
-        );
-      },
-    },
-    {
-      title: '配置类型',
-      dataIndex: 'is_required',
-      key: 'is_required',
-      align: 'center',
-      width: 80,
-      render: (text: boolean | 0) => {
-        return (
-          <div style={{textAlign: 'center'}}>
-            {text === 0 ? <Text type="warning">标准</Text> : text ?
-              <Text style={{color: '#181818'}}>附加</Text> :
-              <Text type="danger">选配</Text>
-            }
-          </div>
-        );
-      },
-    },
-    {
-      title: '采购价格',
-      dataIndex: 'price',
-      key: 'price',
-      align: 'center',
-      width: 100,
-      render: (text: string, record: ProductBaseListItem) => {
-        return (
-          <div>
-            <Text style={{color: '#FF6A00'}}>{currentPrice(record, identity)}</Text>
-          </div>
-        );
-      },
-    },
-    {
-      title: '数量',
-      dataIndex: 'count',
-      key: 'count',
-      align: 'center',
-      width: 70,
-      render: (text: number) => {
-        return (
-          <div>
-            <Text style={{color: '#181818'}}>{text}</Text>
-          </div>
-        );
-      },
-    },
-  ];
-
-  const operation: ColumnsType<ProductBaseListItem> = [
-    {
-      title: '操作',
-      dataIndex: 'operation',
-      key: 'operation',
-      align: 'center',
-      width: 60,
-      render: (text: undefined, record: ProductBaseListItem) => {
-        return (
-          <div style={{textAlign: 'center'}}>
-            <a
-              onClick={e => {
-                e.preventDefault();
-                remove(record);
-              }}
-              style={{color: '#FF4D4F'}}
-            >
-              删除
-            </a>
-          </div>
-        );
-      },
-    },
-  ];
-
-  const remove = (record: ProductBaseListItem) => {
-    const nDataSource = [...dataSource];
-    _.remove(nDataSource, d => d?.uuid === record?.uuid);
-    setDataSource(nDataSource);
-  };
-
-  const expandedRowRender = (record: ProductBaseListItem) => {
-    return (
-      <Table
-        showHeader={false}
-        size="small" rowKey={record => record?.uuid as string}
-        columns={columns}
-        dataSource={record?.conf_list || []}
-        pagination={false}
-        scroll={{y: 78}}
-      />
-    );
-  };
+  // const columns: ProColumns<ProductBaseListItem>[] =
+  //   [
+  //     {
+  //       title: '产品名称',
+  //       dataIndex: 'name',
+  //       width: 100,
+  //       ellipsis: true,
+  //       render: (text) => {
+  //         return (
+  //           <div>
+  //             <Text style={{color: '#181818'}}>{text}</Text>
+  //           </div>
+  //         );
+  //       },
+  //     },
+  //     {
+  //       title: '型号',
+  //       dataIndex: 'pro_type',
+  //       width: 120,
+  //       render: (text) => {
+  //         return (
+  //           <div>
+  //             <Text style={{color: '#181818'}}>{text}</Text>
+  //           </div>
+  //         );
+  //       },
+  //     },
+  //     {
+  //       title: '产品描述',
+  //       dataIndex: 'desc',
+  //       render: (text) => {
+  //         return (
+  //           <div style={{textAlign: 'left'}}>
+  //             <Ellipsis tooltip lines={1}>
+  //               <p style={{marginBottom: '0px'}}>
+  //                 {(text as string)?.split("\n")?.map((o, i) => {
+  //                   return (
+  //                     <span key={i}>{o}<br/></span>
+  //                   )
+  //                 })}
+  //               </p>
+  //             </Ellipsis>
+  //           </div>
+  //         );
+  //       },
+  //     },
+  //     {
+  //       title: '单价',
+  //       dataIndex: 'price',
+  //       width: 130,
+  //       align:'right',
+  //       render: (text:any,record) => {
+  //         console.log(text,record);
+  //         const price = currentPriceNumber(record,identity)
+  //         return (
+  //           <div>
+  //             <Text style={{color: '#FF6A00'}}>
+  //               {text ?
+  //                 <StatisticWrapper value={price}/>
+  //                 : '尚未定价'}
+  //             </Text>
+  //           </div>
+  //         );
+  //       },
+  //     },
+  //     {
+  //       title: '数量',
+  //       dataIndex: 'count',
+  //       key: 'count',
+  //       width: 120,
+  //     },
+  //     {
+  //       title: '金额',
+  //       dataIndex: 'total_price',
+  //       key: 'total_price',
+  //       width: 130,
+  //       render: (value:any, row, index) => {
+  //         const obj: {
+  //           props: { rowSpan?: number; [propName: string]: any; };
+  //           [propName: string]: any;
+  //         } = {
+  //           children: <div>
+  //             <Text style={{color: '#FF6A00'}}>
+  //               {value ?
+  //                 <StatisticWrapper value={value}/>
+  //                 : '部分尚未定价'}
+  //             </Text>
+  //           </div>,
+  //           props: {},
+  //         };
+  //         if (index === 0) {
+  //           obj.props.rowSpan = row?.total;
+  //         } else {
+  //           obj.props.rowSpan = 0;
+  //         }
+  //         return obj;
+  //       },
+  //     },
+  //   ];
 
   const renderContent = () => {
-    const {project_name, project_desc, user_name, user_addr, user_iphone, user_contact} = formVals;
     if (currentStep === 1) {
       return (
         <>
-          <Row gutter={[8, 8]}>
-            <Col span={11}>
-              <Form.Item
-                label="产品类别"
-                name="genre"
-                rules={[{required: true, message: '产品类型'}]}
-              >
-                <Select
-                  placeholder="产品类别"
-                  onChange={(val) => {
-                    fetchProduct(val);
-                  }}
-                  style={{width: '120px'}}
-                >
-                  <Option value={1}>硬件</Option>
-                  <Option value={2}>软件</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={13} style={{marginLeft: '-45px'}}>
-              <Form.Item
-                name="production"
-                label="产品选择"
-                rules={[
-                  ({getFieldValue}) => ({
-                    validator(rule, value) {
-                      if (!getFieldValue('genre')) {
-                        return Promise.reject('请先选择产品类别!');
-                      } else if (!value) {
-                        return Promise.reject('请选择产品');
-                      }
-                      return Promise.resolve();
-                    },
-                  })
-                ]}
-              >
-                <Select
-                  showSearch
-                  labelInValue
-                  placeholder="必选配置"
-                  notFoundContent="请先选择类别"
-                  filterOption={false}
-                  style={{width: '100%'}}
-                  onChange={handleChange}
-                  dropdownMatchSelectWidth={300}
-                >
-                  {
-                    (productType(form.getFieldValue('genre') === 1 ? -3 : -4) as { label: string; key: number; }[])?.map(d => {
-                      return (
-                        <OptGroup label={<span style={{color: '#FF6A00'}}>{d?.label}</span>} key={d?.key}>
-                          {
-                            _.filter(data, o => o?.genre === d?.key)?.map(d2 => {
-                              return (
-                                <Option key={d2?.id} value={d2?.id}>
-                                  <>
-                                    <span>{d2?.pro_type}</span>
-                                    <Divider type="vertical"/>
-                                    <span style={{color: '#FF6A00'}}>{currentPrice(d2, identity)}</span>
-                                  </>
-                                </Option>
-                              );
-                            })
-                          }
-                        </OptGroup>
-                      );
-                    })
-                  }
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          {_.head(current?.conf_list) ?
-            <>
-              <Alert message="服务与配件" type="info" closable style={{marginBottom: '10px'}}/>
-              <div className={styles.standardWrapper}>
-                <div className={styles.standardInner}>
-                  <Form.List name="conf_par">
-                    {fields => {
-                      return (
-                        <div>
-                          {fields.map((field, index) => {
-                            const conf: ProductBaseListItem = current?.conf_list?.[index] as ProductBaseListItem;
-                            return (
-                              <Row key={field.key} gutter={[8, 8]}>
-                                <Col span={16} style={{marginLeft: '-20px'}}>
-                                  <Form.Item
-                                    name={[field.name, 'id']}
-                                    label={<Text strong>{productType(conf?.genre)}</Text>}
-                                    // @ts-ignore
-                                    fieldKey={[field.fieldKey, 'id']}
-                                  >
-                                    <Select disabled style={{width: 256}} showArrow={false}>
-                                      <Option key={conf?.id} value={conf?.id}>
-                                        <div>
-                                          <span>{conf?.pro_type}</span>
-                                          <Divider type="vertical"/>
-                                          <span style={{color: '#FF6A00'}}>{currentPrice(conf, identity)}</span>
-                                        </div>
-                                      </Option>
-                                    </Select>
-                                  </Form.Item>
-                                </Col>
-                                <Col span={6}>
-                                  <Form.Item
-                                    name={[field.name, 'count']}
-                                    label={<Text type="secondary">数量：</Text>}
-                                    // @ts-ignore
-                                    fieldKey={[field.fieldKey, 'count']}
-                                    rules={[{required: true, message: '数量'}]}
-                                  >
-                                    <InputNumber
-                                      onChange={() => calculate()}
-                                      style={{marginLeft: '20px'}} placeholder="采购数量"
-                                      min={conf?.is_required ? 1 : 0}/>
-                                  </Form.Item>
-                                </Col>
-                              </Row>
-                            );
-                          })}
-                        </div>
-                      );
-                    }}
-                  </Form.List>
-                </div>
-              </div>
-            </> : null
-          }
-          <Row gutter={[8, 8]} style={{marginTop: '10px'}}>
-            <Col span={11}>
-              <Form.Item
-                name="count"
-                label="产品数量"
-                rules={[
-                  ({getFieldValue}) => ({
-                    validator(rule, value) {
-                      if (value && !getFieldValue('production')) {
-                        return Promise.reject('请先选择产品!');
-                      } else if (!value) {
-                        return Promise.reject('输入数量');
-                      }
-                      return Promise.resolve();
-                    },
-                  })
-                ]}
-              >
-                <InputNumber onChange={() => calculate()} style={{width: 120}} placeholder="采购数量" min={1}/>
-              </Form.Item>
-            </Col>
-            <Col span={13}>
-              <span style={{color: '#FF6A00', fontSize: '18px'}}>
-                <span style={{fontSize: '14px', color: 'grey'}}>总价：</span>
-                {totalPrice ? totalPrice : '部分未定价'}</span>
-            </Col>
-          </Row>
-        </>
-      );
-    }
-    if (currentStep === 2) {
-      return (
-        <>
-          <Alert message="项目信息" type="info" closable style={{marginBottom: '10px'}}/>
-          <div className={styles.listContentWrapper}>
-            <Descriptions column={4} bordered>
-              <Descriptions.Item label="项目名称" span={2}>
-                <Text style={{color: '#181818'}}>{project_name}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="项目描述" span={2}>
-
-                <Tooltip
-                  placement="top"
-                  title={<div>
-                    {project_desc?.split('\n')?.map((o, i) => {
-                      return (
-                        <div key={i}><Text style={{color: 'white'}} key={i}>{o}</Text><br/></div>
-                      );
-                    })}
-                  </div>}
-                >
-                  <Text style={{color: '#181818'}}>{project_desc?.split('\n')?.[0]?.substring(5, 0)}</Text>
-                </Tooltip>
-              </Descriptions.Item>
-              <Descriptions.Item label="用户信息" span={4}>
-                用户： <Text style={{color: '#181818'}}>{user_name}</Text>
-                <Divider type="vertical"/>
-                地址：<Text style={{color: '#181818'}}>{user_addr}</Text>
-                <br/>
-                电话：<Text style={{color: '#181818'}}>{user_iphone}</Text>
-                <Divider type="vertical"/>
-                联系人：<Text style={{color: '#181818'}}>{user_contact}</Text>
-              </Descriptions.Item>
-            </Descriptions>
+          <div style={{margin: '10px 0'}}>
+            <Alert
+              message="产品清单"
+              type="info"
+              closable
+            />
           </div>
-          <Alert
-            message="产品清单"
-            type="info"
-            closable
-          />
-          <Table
-            rowKey={record => record?.uuid as string}
-            columns={columns.concat(operation)}
-            expandable={{expandedRowRender}}
-            dataSource={dataSource}
+          <List
+            size="large"
+            rowKey={(record) => record?.uuid}
             pagination={false}
-            scroll={{y: 195}}
-            summary={pageData => {
-              console.log(pageData);
-              const tPrice = _.reduce(pageData, (sum, n) => {
-                const price = parseFloat(actPrice(n, identity));
-                const priceItem = _.reduce(n?.conf_list, (sum2, n2) => {
-                  const price2 = parseFloat(actPrice(n2, identity));
-                  return sum2 + price2 * (n2?.count || 0);
-                }, 0);
-                return sum + (price + priceItem) * (n?.count || 0);
-              }, 0);
+            dataSource={dataSource || []}
+            loadMore={<div style={{textAlign: 'center', marginTop: '10px'}}>
+              <Button type="primary" onClick={() => {
+                handleAddVisible(true);
+              }}>添加产品</Button>
+            </div>}
+            renderItem={(item: { uuid: string; data: ProductBaseListItem[] }, index: number) => {
+              console.log(item);
+              const account = calculateProductList(item?.data, identity as IdentityType);
 
-              const fPrice: string = tPrice % 1 !== 0 ? tPrice.toString() : tPrice + '.00';
-              const mes = _.isNaN(tPrice) ? '部分未定价' : '¥ ' + fPrice;
+              const columns: ColumnsType<any> = [
+                {
+                  title: '产品名称',
+                  dataIndex: 'name',
+                  key: 'name',
+                  align: 'center',
+                  width: 160,
+                  render: (text: string) => {
+                    return (
+                      <div>
+                        <Ellipsis tooltip lines={1}>
+                          {text}
+                        </Ellipsis>
+                      </div>
+                    );
+                  },
+                },
+                {
+                  title: '型号',
+                  dataIndex: 'pro_type',
+                  key: 'pro_type',
+                  width: 120,
+                  align: 'center',
+                  render: (text: string) => {
+                    return (
+                      <div>
+                        <Ellipsis tooltip lines={1}>
+                          {text}
+                        </Ellipsis>
+                      </div>
+                    );
+                  },
+                },
+                {
+                  title: '产品描述',
+                  dataIndex: 'desc',
+                  width: 190,
+                  render: (text) => {
+                    return (
+                      <div style={{textAlign: 'left'}}>
+                        <Ellipsis tooltip lines={1}>
+                          <p style={{marginBottom: '0px'}}>
+                            {(text as string)?.split('\n')?.map((o, i) => {
+                              return (
+                                <span key={i}>{o}<br/></span>
+                              );
+                            })}
+                          </p>
+                        </Ellipsis>
+                      </div>
+                    );
+                  },
+                },
+                {
+                  title: '单价',
+                  dataIndex: 'price',
+                  width: 170,
+                  align: 'right',
+                  render: (text: any, record) => {
+                    const price = currentPriceNumber(record, identity);
+                    return (
+                      <div>
+                        <Text style={{color: '#FF6A00'}}>
+                          {price ?
+                            <StatisticWrapper value={price}/>
+                            : '尚未定价'}
+                        </Text>
+                      </div>
+                    );
+                  },
+                },
+                {
+                  title: '数量',
+                  dataIndex: 'count',
+                  key: 'count',
+                  align: 'center',
+                  width: 100,
+                },
+                {
+                  title: '金额',
+                  dataIndex: 'total_price',
+                  key: 'total_price',
+                  width: 170,
+                  align: 'center',
+                  render: (value, row, index) => {
+                    const obj: {
+                      props: { rowSpan?: number; [propName: string]: any; };
+                      [propName: string]: any;
+                    } = {
+                      children: <div>
+                        <Text style={{color: '#FF6A00'}}>
+                          {account ?
+                            <StatisticWrapper value={account}/>
+                            : '部分尚未定价'}
+                        </Text>
+                      </div>,
+                      props: {},
+                    };
+                    if (row?.production > 0) {
+                      obj.props.rowSpan = item?.data?.length;
+                    } else {
+                      obj.props.rowSpan = 0;
+                    }
+                    return obj;
+                  },
+                },
+              ];
               return (
-                <>
-                  <tr>
-                    <th>
-                      <div style={{width: '40px'}}>总计</div>
-                    </th>
-                    <td colSpan={6}>
-                      <Text type="danger">{mes}</Text>
-                    </td>
-                  </tr>
-                </>
+                <List.Item
+                >
+                  <div>
+                    <Space style={{display: 'flex'}}>
+                      <span>产品{index + 1}</span>
+                      <EditTwoTone
+                        onClick={() => {
+                          setCurrent(item);
+                        }}/>
+                      <Divider type="vertical"/>
+                      <DeleteTwoTone
+                        twoToneColor="#eb2f96"
+                        onClick={() => {
+                          remove(item);
+                        }}
+                      />
+                    </Space>
+                    <Table
+                      bordered
+                      rowKey={record => record?.id}
+                      columns={columns}
+                      pagination={false}
+                      dataSource={item?.data || []}
+                    />
+                  </div>
+                </List.Item>
               );
             }}
-
-          />
+          >
+          </List>
         </>
       );
     }
@@ -588,22 +419,6 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
             setFormVals({});
             handleUpdateModalVisible();
           }}>取消</Button>
-          <Button type="primary" onClick={() => handleNext()}>
-            下一步
-          </Button>
-        </>
-      );
-    }
-    if (currentStep === 2) {
-      return (
-        <>
-          <Button style={{float: 'left'}} onClick={backward}>
-            继续添加
-          </Button>
-          <Button onClick={() => {
-            setFormVals({});
-            handleUpdateModalVisible();
-          }}>取消</Button>
           <Button type="primary" onClick={() => handleNext()} disabled={!_.head(dataSource)}>
             完成
           </Button>
@@ -625,7 +440,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
 
   return (
     <Modal
-      width={640}
+      width={1000}
       bodyStyle={{padding: '32px 40px 48px'}}
       destroyOnClose
       title="创建项目"
@@ -642,10 +457,22 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
       className={styles.createFormStyle}
       maskClosable={false}
     >
+      <AddProduct
+        onSubmit={(value, callback) => {
+          console.log(value);
+          const dt = [value, ...value?.conf_par];
+          setDataSource([...dataSource, {uuid: uuidv4(), data: dt}]);
+        }}
+        onCancel={() => {
+          handleAddVisible(false);
+        }}
+        updateModalVisible={addVisible}
+        current={current}
+        currentUser={currentUser}
+      />
       <Steps style={{marginBottom: 28}} size="small" current={currentStep}>
         <Step title="填写项目信息"/>
         <Step title="添加产品"/>
-        <Step title="创建信息确认"/>
       </Steps>
       <Form
         {...formLayout}
