@@ -3,7 +3,7 @@ import {Button, Drawer, Form, InputNumber, Modal, Select, Table, Typography} fro
 import {ProductBaseListItem} from '@/pages/product/data';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
-import {actPrice, addIcontains, currentPriceNumber} from '@/utils/utils';
+import {actPrice, addIcontains, calculateProductList, currentPriceNumber, IdentityType} from '@/utils/utils';
 import {queryProduct} from '@/pages/product/service';
 import Ellipsis from '@/components/Ellipsis';
 import {StatisticWrapper} from '@/components/StatisticWrapper';
@@ -17,9 +17,9 @@ const {Option, OptGroup} = Select;
 
 interface PublishModalProps {
   updateModalVisible: boolean;
-  onSubmit: (fieldsValue: ProductBaseListItem, callback: Function) => void;
+  onSubmit: (fieldsValue: ProductBaseListItem, uuid: string | undefined, callback: Function) => void;
   onCancel: () => void;
-  current?: NotRequired<ProductBaseListItem>;
+  current?: { uuid: string; data: ProductBaseListItem[] };
   currentUser: CurrentUser;
 }
 
@@ -134,6 +134,7 @@ const AddProduct: React.FC<PublishModalProps> = props => {
   const [dataSource, setDataSource] = useState<ProductBaseListItem[]>([]);
 
   const [selectedRows, setSelectedRows] = useState<ProductBaseListItem[]>([]);
+
   useEffect(() => {
     if (form && !visible && formRef) {
       setTimeout(() => form.resetFields(), 0);
@@ -144,41 +145,42 @@ const AddProduct: React.FC<PublishModalProps> = props => {
 
   useEffect(() => {
     if (current && formRef) {
+      const data = _.head(_.filter(current?.data, d => d?.production > 0));
+      const dataChild = _.filter(current?.data, d => !d?.production);
       setTimeout(() => {
         form.setFieldsValue({
-          ...current
+          count: data?.count,
         });
+        // 编辑时设置初始化
+        setPrice(calculateProductList(current?.data, identity as IdentityType));
+        setSelectedRows([data as ProductBaseListItem]);
+        setDataSource(dataChild);
       }, 0);
     }
   }, [current]);
+
+  const initData = () => {
+    setListParams({genre: 1, current: 1});
+    setPrice(0);
+    setSelectedRows([]);
+  };
 
   const okHandle = async () => {
     const fieldsValue = await form.validateFields();
     const row = selectedRows?.[0];
     const children = dataSource?.filter((i: ProductBaseListItem) => i?.count as number > 0);
     const payload = {...row, production: row?.id, count: fieldsValue?.count, conf_par: children};
-    handleAdd(payload as ProductBaseListItem, (callback: boolean) => {
-      if (callback) {
-        form.resetFields();
-      }
+    handleAdd(payload as ProductBaseListItem, current?.uuid, (callback: boolean) => {
+      if (callback) {form.resetFields();}
     });
-    Modal.confirm({
-      title: '操作成功',
-      content: '成功添加一个产品至产品清单，是否继续添加',
-      okText: '继续添加',
-      cancelText: '返回产品清单',
-      onOk: () => {
-        setListParams({genre: 1, current: 1});
-        setPrice(0);
-        setSelectedRows([]);
-      },
-      onCancel: () => {
-        setListParams({genre: 1, current: 1});
-        setPrice(0);
-        setSelectedRows([]);
-        onCancel()
-      },
-    });
+    if (!current?.uuid) {
+      Modal.confirm({
+        title: '操作成功', content: '成功添加一个产品至产品清单，是否继续添加',
+        okText: '继续添加', cancelText: '返回产品清单',
+        onOk: () => {initData();},
+        onCancel: () => {initData();onCancel();},
+      });
+    } else {initData();onCancel();}
   };
 
   // 表格请求数据
@@ -435,7 +437,7 @@ const AddProduct: React.FC<PublishModalProps> = props => {
 
   return (
     <Drawer
-      title="添加产品"
+      title={current?.uuid ? '编辑' : '添加' + '产品'}
       visible={visible}
       onClose={() => onCancel()}
       width={1000}
@@ -473,50 +475,66 @@ const AddProduct: React.FC<PublishModalProps> = props => {
               取消
             </Button>
             <Button onClick={okHandle} type="primary">
-              添加至产品清单
+              {current?.uuid ? '确定' : '添加至产品清单'}
             </Button>
           </div>
         </div>
       }
     >
       <div>
-        <div style={{marginBottom: '10px'}}>
-          <span style={{color: 'red', fontSize: '16px'}}>产品分类：</span>
-          <Select
-            value={listParams?.genre} style={{width: 200}}
-            onChange={(genre) => {
-              setListParams({...listParams, genre});
-            }}
-          >
-            <OptGroup label="硬件">
-              <Option value={1}>一体机</Option>
-              <Option value={6}>一体机配件</Option>
-              <Option value={2}>云桶</Option>
-            </OptGroup>
-            <Option value={3}>软件</Option>
-            <Option value={7}>服务</Option>
-            <Option value={8}>其他</Option>
-          </Select>
-        </div>
-        <ProTable<ProductBaseListItem>
-          headerTitle=""
-          options={false}
-          size="small"
-          actionRef={actionRef}
-          rowKey={record => record.id}
-          tableAlertRender={false}
-          tableAlertOptionRender={false}
-          toolBarRender={false}
-          rowSelection={{...rowSelection}}
-          request={request}
-          search={false}
-          params={{...listParams}}
-          columns={columns}
-          columnsStateMap={columnsStateMap}
-          onColumnsStateChange={map => setColumnsStateMap(map)}
-          pagination={{pageSize: 3, showQuickJumper: true, showSizeChanger: false}}
-        />
-        {_.head(selectedRows?.[0]?.conf_list) ?
+        {!current?.uuid ?
+          <>
+            <div style={{marginBottom: '10px'}}>
+              <span style={{color: 'red', fontSize: '16px'}}>产品分类：</span>
+              <Select
+                value={listParams?.genre} style={{width: 200}}
+                onChange={(genre) => {
+                  setListParams({...listParams, genre});
+                }}
+              >
+                <OptGroup label="硬件">
+                  <Option value={1}>一体机</Option>
+                  <Option value={6}>一体机配件</Option>
+                  <Option value={2}>云桶</Option>
+                </OptGroup>
+                <Option value={3}>软件</Option>
+                <Option value={7}>服务</Option>
+                <Option value={8}>其他</Option>
+              </Select>
+            </div>
+            <ProTable<ProductBaseListItem>
+              headerTitle=""
+              options={false}
+              size="small"
+              actionRef={actionRef}
+              rowKey={record => record.id}
+              tableAlertRender={false}
+              tableAlertOptionRender={false}
+              toolBarRender={false}
+              rowSelection={{...rowSelection}}
+              request={request}
+              search={false}
+              params={{...listParams}}
+              columns={columns}
+              columnsStateMap={columnsStateMap}
+              onColumnsStateChange={map => setColumnsStateMap(map)}
+              pagination={{pageSize: 3, showQuickJumper: true, showSizeChanger: false}}
+            />
+          </> : <ProTable<ProductBaseListItem>
+            headerTitle="产品"
+            options={false}
+            size="small"
+            rowKey={record => record.id}
+            tableAlertRender={false}
+            tableAlertOptionRender={false}
+            toolBarRender={false}
+            dataSource={selectedRows}
+            search={false}
+            columns={columns}
+            pagination={false}
+          />
+        }
+        {_.head(dataSource) ?
           <>
             <Table
               title={() => '配件与服务'}

@@ -63,9 +63,6 @@ interface BasicListProps {
   users: NotRequired<CurrentChildren>;
 }
 
-enum ValidateType {
-  DELETE_CONFIG = 'DELETE_CONFIG',
-}
 
 type TreeDataItem = { title: JSX.Element; value: string; children?: TreeDataItem }[];
 
@@ -307,7 +304,6 @@ const ProjectList: FC<BasicListProps> = props => {
   const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState }>({});
   const actionRef = useRef<ActionType>();
   const [visible, setVisible] = useState<boolean>(false);
-  const [orderVisible, setOrderVisible] = useState<boolean>(false);
   const [editVisible, setEditVisible] = useState<boolean>(false);
   const [editVisible2, setEditVisible2] = useState<boolean>(false);
   const [current, setCurrent] = useState<NotRequired<ProjectListItem>>({});
@@ -340,61 +336,6 @@ const ProjectList: FC<BasicListProps> = props => {
     return handleUsersProjectToTreeData(initArr);
   };
 
-  //  =========== 密码校验 ======================
-  const onCreate = async (values: { password: string }) => {
-    const hide = message.loading('正在校验密码');
-    const result: ResultType | string = await testPassword(values);
-    return new ValidatePwdResult(result).validate('校验成功', '校验失败，请重新输入', hide);
-  };
-
-  const validatePasswordSuccessToDo = () => {
-    const {id, project_name, project_desc, pro_status} = current as ProjectListItem;
-    if (validateType === ValidateType.DELETE_CONFIG) {
-      const hide = () => {
-        message.loading('正在终止');
-      };
-      confirm({
-        title: '终止项目',
-        icon: <ExclamationCircleOutlined/>,
-        content: (
-          <div style={{display: 'flex', flexDirection: 'column'}}>
-            <span>
-              项目名称：<span>{project_name}</span>
-            </span>
-            <span>
-              项目状态：<span>{projectType(pro_status)}</span>
-            </span>
-            <span>
-              项目描述：
-              {project_desc?.split('\n')?.map((o, i) => {
-                return (
-                  <div key={id + '-' + i}><Text style={{color: '#181818'}} key={i}>{o}</Text><br/></div>
-                );
-              })}
-            </span>
-          </div>
-        ),
-        okText: '确认',
-        // @ts-ignore
-        okType: 'danger',
-        cancelText: '取消',
-        onOk: async () => {
-          const result: ResultType | string = await terminateProject({id});
-          const success: boolean = new ValidatePwdResult(result).validate('终止成功', null, hide);
-          // 刷新数据
-          if (success) {
-            setCurrent({});
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        },
-        onCancel() {
-          setCurrent({});
-        },
-      });
-    }
-  };
 
   // ================= 列表操作 ================
 
@@ -444,11 +385,24 @@ const ProjectList: FC<BasicListProps> = props => {
     [key: string]: any;
   }): Promise<RequestData<ProjectListItem>> => {
     const result = await queryProject({...params});
+    // 刷新当前current
+    result?.results && refreshData(result?.results);
     return Promise.resolve({
       data: result?.results || [],
       success: true,
       total: result?.count || 0,
     });
+  };
+
+  const refreshData = (data: ProjectListItem[]) => {
+    const newArr: ProjectListItem[] = [];
+    details?.forEach(item => {
+      const item2 = _.find(data, d => d?.id === item?.id);
+      if (item2?.id) {
+        newArr.push(item2 as ProjectListItem);
+      }
+    });
+    setDetails(newArr);
   };
 
   const columns: ProColumns<ProjectListItem>[] = [
@@ -527,7 +481,6 @@ const ProjectList: FC<BasicListProps> = props => {
       width: 100,
       render: (text, record) => {
         const {product_list, identity} = record;
-
         return (
           <div>
             <Button style={{padding: '0px'}} type="link" onClick={() => {
@@ -563,9 +516,6 @@ const ProjectList: FC<BasicListProps> = props => {
                 ),
               });
             }}>查看详情</Button>
-            <Button type="link" onClick={() => showMoreDetail(record)}>
-              详情
-            </Button>
           </div>
         );
       },
@@ -605,87 +555,15 @@ const ProjectList: FC<BasicListProps> = props => {
       dataIndex: 'option',
       valueType: 'option',
       render: (_, record) => {
-        const {pro_status} = record;
-        const template: JSX.Element[] = [];
-        if (pro_status !== 1) {
-          return template;
-        }
-        const edit = (
-          <a
-            key="edit"
-            onClick={e => {
-              e.preventDefault();
-              setCurrent(record);
-              setEditVisible(true);
-            }}
-          >
-            编辑基础
-          </a>
-        );
-        const edit2 = (
-          <a
-            key="edit2"
-            onClick={e => {
-              e.preventDefault();
-              setCurrent(record);
-              setEditVisible2(true);
-            }}
-          >
-            编辑产品清单
-          </a>
-        );
-        const remove = (<a
-          key="remove"
-          onClick={e => {
-            e.preventDefault();
-            setCurrent(record);
-            setValidateType(ValidateType.DELETE_CONFIG);
-            setValidateVisible(true);
-          }}
-        >
-          终止
-        </a>);
-        const place = (
-          <a
-            key="order"
-            onClick={e => {
-              e.preventDefault();
-              setCurrent(record);
-              setOrderVisible(true);
-            }}
-          >
-            下单
-          </a>
-        );
-
-        switch (currentUser?.identity) {
-          case 2:
-            template.push(place);
-            if (record?.username === currentUser?.username) {
-              template.push(edit, edit2, remove);
-            }
-            return addDividerToActions(template);
-          case 3:
-          case 4:
-            if (record?.username === currentUser?.username) {
-              template.push(edit, edit2, remove);
-            }
-            return addDividerToActions(template);
-        }
+        const template: JSX.Element[] = [
+          <Button type="link" onClick={() => showMoreDetail(record)}>
+            详情
+          </Button>
+        ];
         return template;
       },
     },
   ];
-
-
-  const addDividerToActions = (template: JSX.Element[]) => {
-    return template?.map((item, index) => {
-      if (index === template?.length - 1) {
-        return (<>{item}</>);
-      }
-      return (<>{item}<Divider type="vertical"/></>);
-    });
-  };
 
   /**
    * tab操作
@@ -785,20 +663,6 @@ const ProjectList: FC<BasicListProps> = props => {
           removeItem={removeItem}
         />
       </div>
-      <ValidatePassword
-        visible={validateVisible}
-        onCreate={async values => {
-          const success = await onCreate(values);
-          if (success) {
-            setValidateVisible(false);
-            // TODO something
-            validatePasswordSuccessToDo();
-          }
-        }}
-        onCancel={() => {
-          setValidateVisible(false);
-        }}
-      />
       {visible ? (
         <CreateForm
           onSubmit={async value => {
@@ -818,43 +682,7 @@ const ProjectList: FC<BasicListProps> = props => {
           currentUser={currentUser}
         />
       ) : null}
-      {orderVisible ? (
-        <CreateOrder
-          onSubmit={async value => {
-            const response = await createOrder({id: current?.id as number, data: value});
-            const success = new ValidatePwdResult(response).validate('创建成功', null, undefined);
-            if (success) {
-              setOrderVisible(false);
-            }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }}
-          onCancel={() => {
-            setOrderVisible(false);
-          }}
-          updateModalVisible={orderVisible}
-          current={current}
-          currentUser={currentUser}
-        />
-      ) : null}
-      <EditProject
-        onSubmit={async value => {
-          const response = await modifyProject({id: current?.id as number, data: value});
-          const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
-          if (success) {
-            setEditVisible(false);
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          setEditVisible(false);
-        }}
-        updateModalVisible={editVisible}
-        current={current}
-      />
+
       {editVisible2 ? (
         <EditProductList
           onSubmit={async value => {

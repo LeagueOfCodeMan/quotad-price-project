@@ -7,6 +7,8 @@ import {ProductBaseListItem} from '@/pages/product/data';
 import {CurrentUser} from '@/models/user';
 import {ProjectProductionInfoItem} from '@/pages/project/data';
 import {UserListItem} from '@/models/data';
+import {v4 as uuidv4} from 'uuid';
+import {ProductList} from '@/pages/project/service';
 
 /* eslint no-useless-escape:0 import/prefer-default-export:0 */
 const reg = /(((^https?:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+(?::\d+)?|(?:www.|[-;:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~%\/.\w-_]*)?\??(?:[-\+=&;%@.\w_]*)#?(?:[\w]*))?)$/;
@@ -382,39 +384,46 @@ export const partitionsData = (data: UserListItem[], identity: IdentityType) => 
 
 };
 
-export const handleProjectListItemData = (product_list: ProjectProductionInfoItem[],
-                                          identity: IdentityType,
-                                          other_list: { pro_type: string; price: string; count: number }[],
-                                          total_price: string | null) => {
-  const list: any[] = [];
-  _.forEach(product_list, (d, index) => {
-    list[index] = [{
-      ...d?.production,
-      count: d?.count,
-      price: currentPriceNumber(d?.production, identity),
-      total_price,
-      total: d?.conf_par?.length + 1
-    },
-      ..._.map(d?.conf_par, dd => ({
-        ...dd,
-        price: currentPriceNumber(dd, identity),
-        total_price,
-        total: d?.conf_par?.length + 1
-      }))
-    ];
+// 项目详细列表产品的展示
+export const handleProjectListItemData = (product_list: ProjectProductionInfoItem[]) => {
+  const list = _.map(product_list, d => {
+    return (
+      {
+        uuid: uuidv4(), data: [{
+          ...d?.production,
+          production: d?.id,
+          count: d?.count,
+        },
+          ..._.map(d?.conf_par, dd => ({
+            ...dd,
+          }))]
+      }
+    );
   });
-  const final = !!_.head(other_list) ? [...list, [..._.map(other_list, d => ({
-    ..._.omit(d, ['pro_type']), total: other_list?.length || 0,
-    name: d?.pro_type,
-  }))]] : list;
-  console.log(list, other_list, final);
-  return final;
+
+  return list;
+};
+
+// 对项目详细列表产品的列表请求数据处理
+export const handleProductListInProjectFormData = (
+  data: { uuid: string; data: ProductBaseListItem[] }[]): ProductList => {
+  const product_list = _.map(data, o => {
+    const group = _.head(_.filter(o?.data, d => d?.production > 0));
+    const child = _.filter(o?.data, d => !d?.production);
+    return (
+      {
+        production: group?.id, count: group?.count,
+        conf_par: _.map(child, d => ({id: d?.id, count: d?.count}))
+      }
+    );
+  }) as ProductList;
+  return product_list;
 };
 
 /**
  * 前端计算并列的产品
  */
-export const calculateProductList = (data: ProductBaseListItem[], identity: IdentityType):number => {
+export const calculateProductList = (data: ProductBaseListItem[], identity: IdentityType): number => {
   const group = _.head(_.filter(data, d => d?.production > 0));
   const children = _.filter(data, d => !d?.production);
   const price = parseFloat(actPrice(group, identity));
@@ -424,4 +433,12 @@ export const calculateProductList = (data: ProductBaseListItem[], identity: Iden
   }, 0);
   const hPrice = (price + tPrice) * (group?.count || 1);
   return hPrice;
+};
+
+export const calculateAllProductList = (data: { uuid: string; data: ProductBaseListItem[] }[], identity: IdentityType): number => {
+  const tPrice = _.reduce(data, (sum, n) => {
+    const priceItem = calculateProductList(n?.data, identity);
+    return sum + priceItem;
+  }, 0);
+  return tPrice;
 };

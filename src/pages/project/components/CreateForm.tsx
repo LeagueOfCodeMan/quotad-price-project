@@ -1,12 +1,18 @@
-import React, {useEffect, useState} from 'react';
-import {Alert, List, Button, Form, Input, Modal, Select, Steps, Table, Typography, Divider, Space} from 'antd';
+import React, {useState} from 'react';
+import {Alert, Button, Divider, Form, Input, List, Modal, Space, Steps, Table, Typography} from 'antd';
 import _ from 'lodash';
 import {ProductBaseListItem} from '../../product/data';
 import styles from '../style.less';
 import {ColumnsType} from 'antd/lib/table';
 import {CreateProjectParams} from '../service';
 import {CurrentUser} from '@/models/user';
-import {actPrice, calculateProductList, currentPrice, currentPriceNumber, IdentityType} from '@/utils/utils';
+import {
+  calculateAllProductList,
+  calculateProductList,
+  currentPriceNumber,
+  handleProductListInProjectFormData,
+  IdentityType
+} from '@/utils/utils';
 import AddProduct from '@/pages/project/components/AddProduct';
 import Ellipsis from '@/components/Ellipsis';
 import {StatisticWrapper} from '@/components/StatisticWrapper';
@@ -38,7 +44,6 @@ const {Step} = Steps;
 
 const {Text} = Typography;
 const {TextArea} = Input;
-const {Option, OptGroup} = Select;
 const formLayout = {
   labelCol: {span: 7},
   wrapperCol: {span: 13},
@@ -47,15 +52,13 @@ const formLayout = {
 
 const CreateForm: React.FC<UpdateFormProps> = props => {
   const [formVals, setFormVals] = useState<FormValueType>({});
-  const [data, setData] = useState<ProductBaseListItem[]>([]);
   const [dataSource, setDataSource] = useState<{ uuid: string; data: ProductBaseListItem[] }[]>([]);
-  const [current, setCurrent] = useState<ProductBaseListItem[]>();
+  const [current, setCurrent] = useState<{ uuid: string; data: ProductBaseListItem[] }>();
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [totalPrice, setPrice] = useState<number>(0);
   const [addVisible, handleAddVisible] = useState<boolean>(false);
 
   const [form] = Form.useForm();
-  const [formRef, setFormRef] = useState<any>();
   const {
     onSubmit: handleUpdate,
     onCancel: handleUpdateModalVisible,
@@ -73,15 +76,11 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
 
     setFormVals({...formVals, ...fieldsValue});
 
-    if (currentStep < 2) {
+    if (currentStep < 1) {
       forward();
     } else {
       const {project_name, project_desc, user_name, user_addr, user_iphone, user_contact} = formVals;
-      const product_list = _.map(dataSource, o => {
-        return (
-          {production: o?.id, count: o?.count, conf_par: o?.conf_par}
-        );
-      });
+      const product_list = handleProductListInProjectFormData(dataSource);
       const payload = {
         project_name, project_desc, product_list
         , user_name, user_addr, user_iphone, user_contact
@@ -94,107 +93,8 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
     const newData = [...dataSource];
     _.remove(newData, d => d?.uuid === record?.uuid);
     setDataSource(newData);
+    setPrice(calculateAllProductList(newData, identity as IdentityType));
   };
-
-  // const columns: ProColumns<ProductBaseListItem>[] =
-  //   [
-  //     {
-  //       title: '产品名称',
-  //       dataIndex: 'name',
-  //       width: 100,
-  //       ellipsis: true,
-  //       render: (text) => {
-  //         return (
-  //           <div>
-  //             <Text style={{color: '#181818'}}>{text}</Text>
-  //           </div>
-  //         );
-  //       },
-  //     },
-  //     {
-  //       title: '型号',
-  //       dataIndex: 'pro_type',
-  //       width: 120,
-  //       render: (text) => {
-  //         return (
-  //           <div>
-  //             <Text style={{color: '#181818'}}>{text}</Text>
-  //           </div>
-  //         );
-  //       },
-  //     },
-  //     {
-  //       title: '产品描述',
-  //       dataIndex: 'desc',
-  //       render: (text) => {
-  //         return (
-  //           <div style={{textAlign: 'left'}}>
-  //             <Ellipsis tooltip lines={1}>
-  //               <p style={{marginBottom: '0px'}}>
-  //                 {(text as string)?.split("\n")?.map((o, i) => {
-  //                   return (
-  //                     <span key={i}>{o}<br/></span>
-  //                   )
-  //                 })}
-  //               </p>
-  //             </Ellipsis>
-  //           </div>
-  //         );
-  //       },
-  //     },
-  //     {
-  //       title: '单价',
-  //       dataIndex: 'price',
-  //       width: 130,
-  //       align:'right',
-  //       render: (text:any,record) => {
-  //         console.log(text,record);
-  //         const price = currentPriceNumber(record,identity)
-  //         return (
-  //           <div>
-  //             <Text style={{color: '#FF6A00'}}>
-  //               {text ?
-  //                 <StatisticWrapper value={price}/>
-  //                 : '尚未定价'}
-  //             </Text>
-  //           </div>
-  //         );
-  //       },
-  //     },
-  //     {
-  //       title: '数量',
-  //       dataIndex: 'count',
-  //       key: 'count',
-  //       width: 120,
-  //     },
-  //     {
-  //       title: '金额',
-  //       dataIndex: 'total_price',
-  //       key: 'total_price',
-  //       width: 130,
-  //       render: (value:any, row, index) => {
-  //         const obj: {
-  //           props: { rowSpan?: number; [propName: string]: any; };
-  //           [propName: string]: any;
-  //         } = {
-  //           children: <div>
-  //             <Text style={{color: '#FF6A00'}}>
-  //               {value ?
-  //                 <StatisticWrapper value={value}/>
-  //                 : '部分尚未定价'}
-  //             </Text>
-  //           </div>,
-  //           props: {},
-  //         };
-  //         if (index === 0) {
-  //           obj.props.rowSpan = row?.total;
-  //         } else {
-  //           obj.props.rowSpan = 0;
-  //         }
-  //         return obj;
-  //       },
-  //     },
-  //   ];
 
   const renderContent = () => {
     if (currentStep === 1) {
@@ -218,7 +118,6 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
               }}>添加产品</Button>
             </div>}
             renderItem={(item: { uuid: string; data: ProductBaseListItem[] }, index: number) => {
-              console.log(item);
               const account = calculateProductList(item?.data, identity as IdentityType);
 
               const columns: ColumnsType<any> = [
@@ -332,19 +231,22 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
                 <List.Item
                 >
                   <div>
-                    <Space style={{display: 'flex'}}>
-                      <span>产品{index + 1}</span>
-                      <EditTwoTone
-                        onClick={() => {
-                          setCurrent(item);
-                        }}/>
-                      <Divider type="vertical"/>
-                      <DeleteTwoTone
-                        twoToneColor="#eb2f96"
-                        onClick={() => {
-                          remove(item);
-                        }}
-                      />
+                    <Space style={{display: 'flex', justifyContent: 'space-between'}}>
+                      <Text strong>产品{index + 1}</Text>
+                      <div>
+                        <EditTwoTone
+                          onClick={() => {
+                            setCurrent(item);
+                            handleAddVisible(true);
+                          }}/>
+                        <Divider type="vertical"/>
+                        <DeleteTwoTone
+                          twoToneColor="#eb2f96"
+                          onClick={() => {
+                            remove(item);
+                          }}
+                        />
+                      </div>
                     </Space>
                     <Table
                       bordered
@@ -370,38 +272,38 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
             name="project_name"
             rules={[{required: true, message: '项目名称'}]}
           >
-            <Input placeholder="项目名称" style={{width: 270}}/>
+            <Input placeholder="项目名称" style={{width: 400}}/>
           </Form.Item>
           <Form.Item label="项目描述" name="project_desc" rules={[{required: true, message: '项目描述'}]}>
-            <TextArea rows={2} placeholder="请输入至少五个字符" style={{width: 270}}/>
+            <TextArea rows={2} placeholder="请输入至少五个字符" style={{width: 400}}/>
           </Form.Item>
         </div>
         <div style={{border: '1px dashed #dddddd'}}>
           <div style={{textAlign: 'center', color: '#1890FF', fontWeight: 'bold', margin: '10px 0'}}>用户信息</div>
           <Form.Item
-            label="用户"
+            label="用户名称"
             name="user_name"
             rules={[{required: true, message: '用户'}]}
           >
-            <Input placeholder="用户" style={{width: 270}}/>
+            <Input placeholder="用户" style={{width: 400}}/>
           </Form.Item>
           <Form.Item
             label="地址"
             name="user_addr"
           >
-            <Input placeholder="地址" style={{width: 270}}/>
+            <Input placeholder="地址" style={{width: 400}}/>
           </Form.Item>
           <Form.Item
             label="电话"
             name="user_iphone"
           >
-            <Input placeholder="电话" style={{width: 270}}/>
+            <Input placeholder="电话" style={{width: 400}}/>
           </Form.Item>
           <Form.Item
             label="联系人"
             name="user_contact"
           >
-            <Input placeholder="联系人" style={{width: 270}}/>
+            <Input placeholder="联系人" style={{width: 400}}/>
           </Form.Item>
         </div>
       </>
@@ -411,18 +313,28 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
   const renderFooter = () => {
     if (currentStep === 1) {
       return (
-        <>
-          <Button style={{float: 'left'}} onClick={backward}>
+        <div style={{display: 'flex', justifyContent: 'space-between'}}>
+          <Button onClick={backward}>
             上一步
           </Button>
-          <Button onClick={() => {
-            setFormVals({});
-            handleUpdateModalVisible();
-          }}>取消</Button>
-          <Button type="primary" onClick={() => handleNext()} disabled={!_.head(dataSource)}>
-            完成
-          </Button>
-        </>
+          <div style={{display:'flex'}}>
+            <div style={{margin:'5px 30px 0 30px', display: 'flex', }}>
+              <Text style={{fontSize: '16px', color: 'grey'}}>总价：</Text>
+              <Text style={{color: '#FF6A00', fontSize: '20px', marginTop: '-5px'}}>
+                {!_.isNaN(totalPrice) ?
+                  <StatisticWrapper value={totalPrice} style={{fontSize: '20px'}}/>
+                  : '部分尚未定价'}
+              </Text>
+            </div>
+            <Button onClick={() => {
+              setFormVals({});
+              handleUpdateModalVisible();
+            }}>取消</Button>
+            <Button type="primary" onClick={() => handleNext()} disabled={!_.head(dataSource)}>
+              完成
+            </Button>
+          </div>
+        </div>
       );
     }
     return (
@@ -458,10 +370,17 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
       maskClosable={false}
     >
       <AddProduct
-        onSubmit={(value, callback) => {
+        onSubmit={(value, uuid, callback) => {
           console.log(value);
+          const index = _.findIndex(dataSource, o => o?.uuid === uuid);
           const dt = [value, ...value?.conf_par];
-          setDataSource([...dataSource, {uuid: uuidv4(), data: dt}]);
+          const newDtSource = !!uuid ?
+            _.fill([...dataSource], {uuid: uuidv4(), data: dt},
+              index, index + 1) :
+            [...dataSource, {uuid: uuidv4(), data: dt}];
+          setDataSource(newDtSource);
+          setPrice(calculateAllProductList(newDtSource, identity as IdentityType));
+
         }}
         onCancel={() => {
           handleAddVisible(false);
@@ -477,7 +396,6 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
       <Form
         {...formLayout}
         form={form}
-        ref={(ref) => setFormRef(ref)}
       >
         {renderContent()}
       </Form>
