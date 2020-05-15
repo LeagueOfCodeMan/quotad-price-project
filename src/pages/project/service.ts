@@ -1,6 +1,6 @@
 import request from '../../utils/request';
-import {ProjectListItem} from "./data";
-import {CreateOrderParams} from "@/pages/project/components/CreateOrder";
+import {ProjectListItem} from './data';
+import {CreateOrderParams} from '@/pages/project/components/CreateOrder';
 
 
 interface ParamsType extends Partial<ProjectListItem> {
@@ -36,7 +36,14 @@ export async function createProject(params: CreateProjectParams) {
   });
 }
 
-export async function modifyProductList(params: { id: number; data: { product_list: ProductList; } }) {
+export async function modifyProductList(params:
+                                          {
+                                            id: number;
+                                            data: {
+                                              product_list?: ProductList;
+                                              other_list?: { name: string; price: string; count: number; }[]
+                                            }
+                                          }) {
   return request('/api/project/' + params.id + '/mod_porduct_list', {
     method: 'POST',
     data: params.data,

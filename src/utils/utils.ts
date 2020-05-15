@@ -387,16 +387,17 @@ export const partitionsData = (data: UserListItem[], identity: IdentityType) => 
 // 项目详细列表产品的展示
 export const handleProjectListItemData = (product_list: ProjectProductionInfoItem[]) => {
   const list = _.map(product_list, d => {
+    const identity = d?.identity;
+    const child = _.map(d?.conf_par, dd => ({
+      ...dd, identity
+    }));
     return (
       {
         uuid: uuidv4(), data: [{
           ...d?.production,
           production: d?.id,
-          count: d?.count,
-        },
-          ..._.map(d?.conf_par, dd => ({
-            ...dd,
-          }))]
+          ..._.omit(d, ['production']),
+        }, ...child]
       }
     );
   });
@@ -438,6 +439,18 @@ export const calculateProductList = (data: ProductBaseListItem[], identity: Iden
 export const calculateAllProductList = (data: { uuid: string; data: ProductBaseListItem[] }[], identity: IdentityType): number => {
   const tPrice = _.reduce(data, (sum, n) => {
     const priceItem = calculateProductList(n?.data, identity);
+    return sum + priceItem;
+  }, 0);
+  return tPrice;
+};
+
+/**
+ * 其他产品列表的处理
+ */
+
+export const calculateOtherList = (data: { name: string; price: string; count: number; }[]) => {
+  const tPrice = _.reduce(data, (sum, n) => {
+    const priceItem = parseFloat(n?.price || '0') * n?.count;
     return sum + priceItem;
   }, 0);
   return tPrice;

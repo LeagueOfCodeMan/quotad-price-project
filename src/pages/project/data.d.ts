@@ -1,17 +1,17 @@
-import {ProductBaseListItem} from "@/pages/product/data";
+import {ProductBaseListItem} from '@/pages/product/data';
 import {IdentityType} from '@/utils/utils';
 
 export interface ProjectListItem {
   id: number;
   username: string;
-  project_id:string;
-  real_name:string; // 填报人
+  project_id: string;
+  real_name: string; // 填报人
   identity: IdentityType;
   user_name: string; // 用户单位
   user_addr: string;
   user_iphone: string;
   user_contact: string;
-  other_list:{pro_type:string;price:string;count:number}[];
+  other_list: { name: string; price: string; count: number }[];
 
   create_time: string;
   project_name: string;
@@ -45,11 +45,12 @@ export type ProjectProductionInfoItem = {
   sell_price?: string;
   user: number;
   uuid?: string;
+  identity:IdentityType;
   conf_par: ProductBaseListItem[];
   children?: ProductBaseListItem[];
   conf_list?: ProductBaseListItem[];
-  sn?:string;
-  price?:number;
+  sn?: string;
+  price?: number;
 };
 
 export type ProjectProductionInfo = ProjectProductionInfoItem[];

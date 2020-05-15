@@ -137,6 +137,7 @@ const AddProduct: React.FC<PublishModalProps> = props => {
 
   useEffect(() => {
     if (form && !visible && formRef) {
+      initData();
       setTimeout(() => form.resetFields(), 0);
 
     }
@@ -163,6 +164,7 @@ const AddProduct: React.FC<PublishModalProps> = props => {
     setListParams({genre: 1, current: 1});
     setPrice(0);
     setSelectedRows([]);
+    setDataSource([]);
   };
 
   const okHandle = async () => {

@@ -1,3 +1,5 @@
+import {IdentityType} from '@/utils/utils';
+
 export interface ProductBaseListItem {
   id: number;
   avatar: any; // 图
@@ -14,6 +16,7 @@ export interface ProductBaseListItem {
   count?: number;
   conf_list?: ProductBaseListItem[];
   conf_par: ProductBaseListItem[];
+  identity:IdentityType;
   is_required?: boolean | 0;
   uuid?: string;
   price?: number;

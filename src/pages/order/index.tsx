@@ -1,29 +1,28 @@
 import React, {FC, useRef, useState} from 'react';
-import {Button, Divider, message, Modal, TreeSelect, Typography, Descriptions, Dropdown, Menu} from 'antd';
+import {Button, Tag, TreeSelect, Typography} from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import {ProjectStateType} from './model';
 import styles from './style.less';
-
-import ValidatePassword from '../../components/ValidatePassword/index';
-import {DownOutlined, ExclamationCircleOutlined, PlusOutlined,} from '@ant-design/icons/lib';
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ExclamationCircleOutlined,
+  SyncOutlined,
+} from '@ant-design/icons/lib';
 import _ from 'lodash';
 import {useEffectOnce} from 'react-use';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
 import {CurrentChildren, CurrentChildrenResults} from '@/models/data';
 import {CurrentUser, UserModelState} from '@/models/user';
-import {addKeyToEachArray, currentPriceNumber, ResultType, ValidatePwdResult} from '@/utils/utils';
-import {testPassword} from '@/services/user';
+import {addKeyToEachArray} from '@/utils/utils';
 import {OrderListItem} from '@/pages/order/data';
-import {changeOrderStatus, modifyOrder, modifyTotalPrice, queryOrder} from '@/pages/order/service';
+import {queryOrder} from '@/pages/order/service';
 import {PaneDetail, TabsList} from '@/pages/order/components/TabsList';
 import OrderDetail from '@/pages/order/components/OrderDetail';
-import PublishModal from '@/pages/order/components/PublishModal';
-import ModifyProjectDetail from '@/pages/order/components/ModifyProjectDetail';
 import {StatisticArrow, StatisticWrapper} from '@/components/StatisticWrapper';
 
-const {confirm} = Modal;
 const {Text} = Typography;
 
 interface BasicListProps {
@@ -35,13 +34,6 @@ interface BasicListProps {
   users: NotRequired<CurrentChildren>;
 }
 
-enum ValidateType {
-  CONFIRM = 'CONFIRM',
-  TERMINATION = 'TERMINATION',
-  COMPLETE = 'COMPLETE',
-  PRICE = 'PRICE',
-  PROJECT = 'PROJECT',
-}
 
 type TreeDataItem = { title: JSX.Element; value: string; children?: TreeDataItem }[];
 
@@ -170,7 +162,6 @@ const OrderList: FC<BasicListProps> = props => {
     users,
     currentUser,
   } = props;
-  const {identity} = currentUser;
   const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState }>({
     ['delivery_message']: {show: false,},
     ['bill_message']: {show: false},
@@ -178,12 +169,9 @@ const OrderList: FC<BasicListProps> = props => {
     ['sn']: {show: false},
   });
   const actionRef = useRef<ActionType>();
-  const [visible, setVisible] = useState<boolean>(false);
-  const [modifyVisible, setModifyVisible] = useState<boolean>(false);
-  const [current, setCurrent] = useState<NotRequired<OrderListItem>>({});
+
   const [details, setDetails] = useState<OrderListItem[]>([]);
-  const [validateVisible, setValidateVisible] = useState(false);
-  const [validateType, setValidateType] = useState<string>('');
+
   const [listParams, setListParams] = useState<ListSearchParams>({});
 
   useEffectOnce(() => {
@@ -192,118 +180,11 @@ const OrderList: FC<BasicListProps> = props => {
     });
   });
 
-  const showModal = () => {
-    setVisible(true);
-    setCurrent({});
-  };
-
   const treeData = () => {
     const initArr: CurrentChildrenResults = addKeyToEachArray(users?.results as any[]);
     return handleUsersProjectToTreeData(initArr);
   };
 
-  //  =========== 密码校验 ======================
-  const onCreate = async (values: { password: string }) => {
-    const hide = message.loading('正在校验密码');
-    const result: ResultType | string = await testPassword(values);
-    return new ValidatePwdResult(result).validate('校验成功', '校验失败，请重新输入', hide);
-  };
-
-  const validatePasswordSuccessToDo = () => {
-    const {id, create_user, order_leader_quota, order_leader_price, company, order_number, project_name, order_user} = current as OrderListItem;
-    if (validateType === ValidateType.PRICE) {
-      setVisible(true);
-    } else if (validateType === ValidateType.PROJECT) {
-      setModifyVisible(true);
-    }
-    let oper_code: number = 0;
-    let operation: string = '';
-    switch (validateType) {
-      case ValidateType.CONFIRM:
-        oper_code = 1;
-        operation = '同意操作';
-        break;
-      case ValidateType.TERMINATION:
-        oper_code = 2;
-        operation = '终止操作';
-        break;
-      case ValidateType.COMPLETE:
-        oper_code = 3;
-        operation = '完成操作';
-        break;
-    }
-    if (!!oper_code) {
-      confirm({
-        title: `订单-${operation}`,
-        icon: <ExclamationCircleOutlined/>,
-        content: (
-          <div>
-            <Descriptions bordered column={4} size="small">
-              <Descriptions.Item label="订单ID" span={1}>
-                <Text style={{color: '#FF6A00'}}>{id}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="订单总价" span={3}>
-                <>
-                  <Text style={{color: '#1890FF'}}>销售总价：</Text>
-                  <Text style={{color: '#FF6A00'}}>{'¥' + order_leader_quota}</Text>
-                  <br/>
-                  {
-                    order_leader_price ?
-                      <>
-                        <Text style={{color: '#1890FF'}}>成交总价：</Text>
-                        <Text style={{color: '#FF6A00'}}>{'¥' + order_leader_price}</Text>
-                      </> : null
-                  }
-                </>
-              </Descriptions.Item>
-              <Descriptions.Item label="项目基础信息" span={4}>
-                <div>
-                  <Text>合同方：</Text>
-                  <Text style={{color: '#FF6A00'}}>{company}</Text>
-                </div>
-                <div style={{display: 'flex'}}>
-                  <div style={{marginRight: '5px'}}>
-                    <Text>项目名称：</Text>
-                    <Text>{project_name}</Text>
-                    <br/>
-                    <Text>项目编号：</Text>
-                    <Text>{order_number}</Text>
-                  </div>
-                  <div>
-                    <Text>下单人：</Text>
-                    <Text>{order_user}</Text>
-                    <br/>
-                    <Text>填报人：</Text>
-                    <Text>{create_user}</Text>
-                  </div>
-                </div>
-              </Descriptions.Item>
-            </Descriptions>
-          </div>
-
-        ),
-        okText: '确认',
-        // @ts-ignore
-        okType: 'danger',
-        cancelText: '取消',
-        width: 620,
-        onOk: async () => {
-          const result: ResultType | string = await changeOrderStatus({id, data: {oper_code}});
-          const success: boolean = new ValidatePwdResult(result).validate('操作成功', null, undefined);
-          // 刷新数据
-          if (success) {
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-            setCurrent({});
-          }
-        },
-        onCancel() {
-          setCurrent({});
-        },
-      });
-    }
-  };
 
   // ================= 列表操作 ================
 
@@ -334,14 +215,6 @@ const OrderList: FC<BasicListProps> = props => {
     );
     if (currentUser?.identity === 1 || currentUser?.identity === 2) {
       buttons.push(treeButton);
-    }
-    const add = (
-      <Button icon={<PlusOutlined/>} type="primary" onClick={showModal}>
-        新建
-      </Button>
-    );
-    if (currentUser?.identity !== 1) {
-      buttons.push(add);
     }
     return buttons;
   };
@@ -394,7 +267,7 @@ const OrderList: FC<BasicListProps> = props => {
         width: 120,
       },
       {
-        title: '公司名称',
+        title: '合同方',
         dataIndex: 'company',
         width: 220,
         ellipsis: true,
@@ -587,79 +460,7 @@ const OrderList: FC<BasicListProps> = props => {
     setDetails([...newDetails, record]);
   };
 
-  const handleMenuClick = (e: { key: string; }) => {
-    if (e?.key === '1') {
-      console.log('打印合同');
-    } else if (e?.key === '2') {
-      console.log('上传合同');
-    }
-  };
 
-  const operationButtons = (record: OrderListItem) => {
-    const template2: JSX.Element[] = [];
-    // order_status 1 ： 可终止，同意，拒绝
-    // 2：无操作
-    // 3：已完成，打印合同，上传合同
-    const confirm = (<Button
-      type="link"
-      key="confirm"
-      onClick={() => operationClick(record, ValidateType.CONFIRM)}
-    >
-      同意
-    </Button>);
-    const complete = (<Button
-      key="remove"
-      type="link"
-      onClick={() => operationClick(record, ValidateType.COMPLETE)}
-    >
-      完成
-    </Button>);
-    const modifyPrice = (<Button
-      key="price"
-      type="link"
-      onClick={() => operationClick(record, ValidateType.PRICE)}
-    >
-      编辑总价
-    </Button>);
-    const modifyProject = (<Button
-      key="project"
-      type="link"
-      onClick={() => operationClick(record, ValidateType.PROJECT)}
-    >编辑订单信息</Button>);
-    const termination = (<Button
-      type="link"
-      danger
-      key="termination"
-      onClick={() => operationClick(record, ValidateType.TERMINATION)}
-    >
-      终止
-    </Button>);
-    const menu = (
-      <Menu onClick={handleMenuClick}>
-        <Menu.Item key="1">打印合同</Menu.Item>
-        <Menu.Item key="2">上传合同</Menu.Item>
-      </Menu>
-    );
-    const more = (
-      <Dropdown overlay={menu}>
-        <Button type="link">
-          更多 <DownOutlined/>
-        </Button>
-      </Dropdown>
-    );
-    if (record?.order_status === 1) {
-      template2.push(confirm, termination, modifyPrice, modifyProject);
-    } else if (record?.order_status === 2) {
-      template2.push(complete, termination, modifyPrice, modifyProject, more);
-    }
-    return template2;
-  };
-
-  const operationClick = (item: OrderListItem, type: ValidateType) => {
-    setCurrent(item);
-    setValidateType(type);
-    setValidateVisible(true);
-  };
 
   const panesGenerate = () => {
     const panes: PaneDetail[] = [
@@ -694,8 +495,31 @@ const OrderList: FC<BasicListProps> = props => {
       },
     ];
     details?.forEach(d => {
+      let state: JSX.Element;
+      switch (d?.order_status) {
+        case 2:
+          state = <Tag icon={<SyncOutlined spin/>} color="processing">
+            已确认
+          </Tag>;
+          break;
+        case 3:
+          state = <Tag icon={<CloseCircleOutlined/>} color="error">
+            终止
+          </Tag>;
+          break;
+        case 1:
+          state = <Tag icon={<ExclamationCircleOutlined/>} color="warning">
+            待确认</Tag>;
+          break;
+        default:
+          state = <Tag icon={<CheckCircleOutlined/>} color="success">
+            已完成
+          </Tag>;
+          break;
+      }
       panes.push({
-        title: `${d?.create_user + '-' + d?.project_name}`,
+        title: <span>{state}
+          <span>{d?.create_user + '-' + d?.project_name}</span></span>,
         content: <OrderDetail current={d} currentUser={currentUser} reload={() => {
           if (actionRef.current) {
             actionRef.current.reload();
@@ -723,60 +547,6 @@ const OrderList: FC<BasicListProps> = props => {
           removeItem={removeItem}
         />
       </div>
-      <PublishModal
-        onSubmit={async (value, callback) => {
-          const response = await modifyTotalPrice({id: current?.id as number, data: value});
-          const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
-          if (success) {
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-            callback();
-            setVisible(false);
-            setCurrent({});
-          }
-        }}
-        onCancel={() => {
-          setVisible(false);
-          setCurrent({});
-        }}
-        updateModalVisible={visible}
-        current={current}
-      />
-      <ModifyProjectDetail
-        onSubmit={async (value, callback) => {
-          const response = await modifyOrder({id: current?.id as number, data: value});
-          const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
-          if (success) {
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-            callback();
-            setModifyVisible(false);
-            setCurrent({});
-          }
-        }}
-        onCancel={() => {
-          setModifyVisible(false);
-          setCurrent({});
-        }}
-        updateModalVisible={modifyVisible}
-        current={current}
-      />
-      <ValidatePassword
-        visible={validateVisible}
-        onCreate={async values => {
-          const success = await onCreate(values);
-          if (success) {
-            setValidateVisible(false);
-            // TODO something
-            validatePasswordSuccessToDo();
-          }
-        }}
-        onCancel={() => {
-          setValidateVisible(false);
-        }}
-      />
     </div>
   );
 };

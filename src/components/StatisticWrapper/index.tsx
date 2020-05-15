@@ -7,7 +7,7 @@ export const StatisticWrapper: React.FC<{ value: string | number; style?: CSSPro
   return (
     <>
       <Statistic className={styles.statisticWrapper} title="" prefix="¥" suffix="元"
-                 valueStyle={{fontSize: style?.fontSize || '14px', color: style?.color || 'red', width: '135px', textAlign: 'right'}}
+                 valueStyle={{fontSize: style?.fontSize || '14px', color: style?.color || 'red', minWidth: '135px', textAlign: 'right'}}
                  value={typeof value === 'number' ? value : parseFloat(value)} precision={2}/>
     </>
   );

@@ -15,6 +15,7 @@ import {
 } from 'antd';
 import {CurrentUser} from '@/models/user';
 import {
+  calculateOtherList,
   currentPriceNumber,
   handleProductListInProjectFormData,
   handleProjectListItemData,
@@ -37,6 +38,7 @@ import CreateOrder from '@/pages/project/components/CreateOrder';
 import AddProduct from '@/pages/project/components/AddProduct';
 import _ from 'lodash';
 import {v4 as uuidv4} from 'uuid';
+import EditOtherList from '@/pages/project/components/EditOtherList';
 
 const {Text} = Typography;
 
@@ -63,6 +65,8 @@ const Content = ({data, currentUser, reload}: {
   const [validateVisible, setValidateVisible] = useState(false);
   const [validateType, setValidateType] = useState<string>('');
   const [addVisible, handleAddVisible] = useState<boolean>(false);
+  const [editOtherVisible, handleEditOtherListVisible] = useState<boolean>(false);
+
   const [dataSource, setDataSource] = useState<{ uuid: string; data: ProductBaseListItem[] }[]>([]);
   const [current, setCurrent] = useState<{ uuid: string; data: ProductBaseListItem[] }>();
   console.log(data);
@@ -184,6 +188,106 @@ const Content = ({data, currentUser, reload}: {
     }
   };
 
+  const columnsOtherList: ColumnsType<any> = [
+    {
+      title: '产品名称',
+      dataIndex: 'name',
+      key: 'name',
+      align: 'center',
+      width: 160,
+      render: (text: string) => {
+        return (
+          <div>
+            <Ellipsis tooltip lines={1}>
+              {text}
+            </Ellipsis>
+          </div>
+        );
+      },
+    },
+    {
+      title: '型号',
+      dataIndex: 'pro_type',
+      key: 'pro_type',
+      width: 120,
+      align: 'center',
+      render: (text: string) => {
+        return (
+          <div>
+            <Ellipsis tooltip lines={1}>
+              {text}
+            </Ellipsis>
+          </div>
+        );
+      },
+    },
+    {
+      title: '产品描述',
+      dataIndex: 'desc',
+      width: 190,
+      render: (text) => {
+        return (
+          <div style={{textAlign: 'left'}}>
+            <Ellipsis tooltip lines={1}>
+              <p style={{marginBottom: '0px'}}>
+                {(text as string)?.split('\n')?.map((o, i) => {
+                  return (
+                    <span key={i}>{o}<br/></span>
+                  );
+                })}
+              </p>
+            </Ellipsis>
+          </div>
+        );
+      },
+    },
+    {
+      title: '单价',
+      dataIndex: 'price',
+      width: 170,
+      align: 'right',
+      render: (text: any) => {
+        const price = parseFloat(text || '');
+        return (
+          <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+            <StatisticWrapper value={price}/>
+          </div>
+        );
+      },
+    },
+    {
+      title: '数量',
+      dataIndex: 'count',
+      key: 'count',
+      align: 'center',
+      width: 100,
+    },
+    {
+      title: '金额',
+      dataIndex: 'total_price',
+      key: 'total_price',
+      width: 170,
+      align: 'center',
+      render: (value, row, index) => {
+        const obj: {
+          props: { rowSpan?: number; [propName: string]: any; };
+          [propName: string]: any;
+        } = {
+          children: <div>
+            <StatisticWrapper value={calculateOtherList(other_list)}/>
+          </div>,
+          props: {},
+        };
+        if (row?.production > 0) {
+          obj.props.rowSpan = other_list?.length;
+        } else {
+          obj.props.rowSpan = 0;
+        }
+        return obj;
+      },
+    },
+  ];
+
   return (
     <div className={styles.listContentWrapper}>
       <EditProject
@@ -218,6 +322,21 @@ const Content = ({data, currentUser, reload}: {
         updateModalVisible={addVisible}
         current={current}
         currentUser={currentUser}
+      />
+      <EditOtherList
+        onSubmit={async (payload: { name: string; price: string; count: number; }[]) => {
+          const response =
+            await modifyProductList({id, data: {other_list: payload}});
+          const success = new ValidatePwdResult(response).validate('操作成功', null, undefined);
+          if (success) {
+            reload();
+          }
+        }}
+        onCancel={() => {
+          handleEditOtherListVisible(false);
+        }}
+        updateModalVisible={editOtherVisible}
+        current={other_list}
       />
       {orderVisible ? (
         <CreateOrder
@@ -258,9 +377,8 @@ const Content = ({data, currentUser, reload}: {
           closable
           style={{margin: '10px 0'}}
         />
-        {pro_status === 1 ? editBase : null}
       </div>
-
+      {pro_status === 1 ? editBase : null}
       <Descriptions bordered column={4} size="small">
         <Descriptions.Item label="项目基础信息" span={1}>
           <Text style={{color: '#181818', width: '100px', display: 'inline-block'}}>项目ID：</Text>
@@ -305,26 +423,26 @@ const Content = ({data, currentUser, reload}: {
           closable
         />
       </div>
-      <div style={{margin: '5px 30px 0 30px', display: 'flex', justifyContent: 'flex-end'}}>
+      <div style={{margin: '5px 0px 0 30px', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end'}}>
         <Text strong style={{fontSize: '16px', color: 'grey'}}>总价：</Text>
         <Text style={{color: '#FF6A00', fontSize: '20px', marginTop: '-5px'}}>
           {!_.isNaN(total_price) ?
             <StatisticWrapper value={total_price} style={{fontSize: '20px'}}/>
             : '部分尚未定价'}
         </Text>
+        <div style={{marginLeft: '30px'}}>
+          {identity!==1 && pro_status === 1 ?
+            <Button type="primary" onClick={() => {
+              handleAddVisible(true);
+            }}>添加产品</Button> : null
+          }
+        </div>
       </div>
       <List
         size="large"
         rowKey={(record) => record?.uuid}
         pagination={false}
         dataSource={dataSource || []}
-        loadMore={<div style={{textAlign: 'center', marginTop: '10px'}}>
-          {pro_status === 1 ?
-            <Button type="primary" onClick={() => {
-              handleAddVisible(true);
-            }}>添加产品</Button> : null
-          }
-        </div>}
         renderItem={(item: { uuid: string; data: ProductBaseListItem[] }, index: number) => {
           const account = _.head(_.filter(data, d => d?.production > 0))?.sell_quota;
           console.log(dataSource);
@@ -442,7 +560,7 @@ const Content = ({data, currentUser, reload}: {
                 <Space style={{display: 'flex', justifyContent: 'space-between'}}>
                   <Text strong>产品{index + 1}</Text>
                   {
-                    pro_status === 1 ?
+                    identity!==1 &&  pro_status === 1 ?
                       <div>
                         <EditTwoTone
                           onClick={() => {
@@ -483,6 +601,46 @@ const Content = ({data, currentUser, reload}: {
         }}
       >
       </List>
+      <div style={{padding: '16px 24px'}}>
+        <Space style={{display: 'flex', justifyContent: 'space-between'}}>
+          <Text strong>附加产品(组长可编辑)</Text>
+          {
+            pro_status === 1 && identity === 2 ?
+              <div>
+                <EditTwoTone
+                  onClick={() => {
+                    // setCurrent(item);
+                    handleEditOtherListVisible(true);
+                  }}/>
+                <Divider type="vertical"/>
+                <Popconfirm
+                  placement="topRight"
+                  title="将此产品移除？"
+                  onConfirm={() => {
+                    // const newData = [...dataSource];
+                    // _.remove(newData, d => d?.uuid === item?.uuid);
+                    // editProductList(newData);
+                  }}
+                  okText="确定"
+                  cancelText="取消"
+                >
+                  <DeleteTwoTone
+                    twoToneColor="#eb2f96"
+                  />
+                </Popconfirm>
+
+              </div> : null
+          }
+        </Space>
+        <Table
+          bordered
+          size="small"
+          rowKey={record => record?.id}
+          columns={columnsOtherList}
+          pagination={false}
+          dataSource={other_list || []}
+        />
+      </div>
       {pro_status === 1 ?
         <>
           <div style={{margin: '10px 0'}}>

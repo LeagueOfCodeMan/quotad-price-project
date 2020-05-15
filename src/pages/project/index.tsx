@@ -1,11 +1,9 @@
 import React, {FC, useEffect, useRef, useState} from 'react';
-import {Button, Descriptions, Divider, List, message, Modal, Table, Tag, Tooltip, TreeSelect, Typography,} from 'antd';
+import {Button, Descriptions, Tag, Tooltip, TreeSelect, Typography,} from 'antd';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
 import {ProjectStateType} from './model';
 import styles from './style.less';
-
-import ValidatePassword from '../../components/ValidatePassword/index';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -17,41 +15,15 @@ import _ from 'lodash';
 import ProTable, {ActionType, ProColumns} from '@ant-design/pro-table';
 import {ColumnsState, RequestData} from '@ant-design/pro-table/es';
 import {CurrentChildren, CurrentChildrenResults} from '@/models/data';
-import {ProjectListItem, ProjectProductionInfoItem} from '@/pages/project/data';
-import {
-  createOrder,
-  createProject,
-  modifyProductList,
-  modifyProject,
-  queryProject,
-  terminateProject
-} from '@/pages/project/service';
+import {ProjectListItem} from '@/pages/project/data';
+import {createProject, queryProject} from '@/pages/project/service';
 import CreateForm from '@/pages/project/components/CreateForm';
-import EditProject from '@/pages/project/components/EditProject';
 import {CurrentUser, UserModelState} from '@/models/user';
-import {
-  addKeyToEachArray,
-  currentPriceNumber,
-  IdentityType,
-  projectType,
-  ResultType,
-  ValidatePwdResult
-} from '@/utils/utils';
-import {testPassword} from '@/services/user';
-import EditProductList from '@/pages/project/components/EditProductList';
-import CreateOrder from '@/pages/project/components/CreateOrder';
+import {addKeyToEachArray, ValidatePwdResult} from '@/utils/utils';
 import {StatisticWrapper} from '@/components/StatisticWrapper';
-import {ProductBaseListItem} from '@/pages/product/data';
-import {ColumnsType} from 'antd/lib/table';
 import {PaneDetail, TabsList} from '@/pages/order/components/TabsList';
-import {OrderListItem} from '@/pages/order/data';
 import ProjectDetail from '@/pages/project/components/ProjectDetail';
-import PublishModal, {PublishType} from '@/pages/product/components/PublishModal';
-import {modifyProductMemberPrice, modifyProductSecondPrice} from '@/pages/product/service';
-import AddProduct from '@/pages/project/components/AddProduct';
 
-
-const {confirm} = Modal;
 const {Text} = Typography;
 
 interface BasicListProps {
@@ -65,114 +37,6 @@ interface BasicListProps {
 
 
 type TreeDataItem = { title: JSX.Element; value: string; children?: TreeDataItem }[];
-
-const ListContentWrapper = ({item, identity, index}:
-                              {
-                                item: ProjectProductionInfoItem; identity: IdentityType;
-                                index: number;
-                              }) => {
-  return (
-    <Descriptions bordered title={'产品' + (index + 1)} column={4} size="small" layout="vertical">
-      <Descriptions.Item label="产品名称" span={1}>
-        <Text style={{color: '#181818'}}>{item?.production?.name}</Text>
-      </Descriptions.Item>
-      <Descriptions.Item label="型号" span={1}>
-        <Text style={{color: '#1890FF'}}>{item?.production?.pro_type}</Text>
-      </Descriptions.Item>
-      <Descriptions.Item label="数量" span={1}>
-        <Text style={{color: '#181818'}}>{item?.count}</Text>
-      </Descriptions.Item>
-      <Descriptions.Item label="采购单价" span={1}>
-        <Text style={{color: '#FF6A00'}}>
-          {currentPriceNumber(item?.production, identity) ?
-            <StatisticWrapper value={currentPriceNumber(item?.production, identity)}/>
-            : '部分尚未定价'}
-        </Text>
-      </Descriptions.Item>
-      {_.head(item?.conf_par) ?
-        <Descriptions.Item label="附件清单" span={4}>
-          <ListContent conf_par={item?.conf_par} identity={identity}/>
-        </Descriptions.Item> : null
-      }
-      <Descriptions.Item label="总价" span={4}>
-        <Text style={{color: '#FF6A00'}}>
-          {item?.sell_price ?
-            <StatisticWrapper value={item?.sell_price}/>
-            : '部分尚未定价'}
-        </Text>
-      </Descriptions.Item>
-    </Descriptions>
-  );
-};
-const ListContent = ({
-                       conf_par, identity
-                     }: {
-  conf_par: ProductBaseListItem[]; identity: IdentityType;
-}) => {
-  const columns: ColumnsType<ProductBaseListItem> = [
-    {
-      title: '产品名称',
-      dataIndex: 'name',
-      key: 'name',
-      width: 100,
-      render: (text) => {
-        return (
-          <div>
-            <Text style={{color: '#181818'}}>{text}</Text>
-          </div>
-        );
-      },
-    },
-    {
-      title: '型号',
-      dataIndex: 'pro_type',
-      key: 'pro_type',
-      width: 120,
-      render: (text: string) => {
-        return (
-          <div>
-            <Text style={{color: '#181818'}}>{text}</Text>
-          </div>
-        );
-      },
-    },
-    {
-      title: '数量',
-      dataIndex: 'count',
-      key: 'count',
-    },
-    {
-      title: '采购总价',
-      dataIndex: 'price',
-      key: 'price',
-      width: 120,
-      render: (text, record) => {
-        return (
-          <div>
-            <Text style={{color: '#FF6A00'}}>
-              {currentPriceNumber(record, identity) ?
-                <StatisticWrapper value={currentPriceNumber(record, identity)}/>
-                : '尚未定价'}
-            </Text>
-          </div>
-        );
-      },
-    },
-  ];
-  return (
-    <div className={styles.listContentWrapper}>
-      <Table
-        showHeader={false}
-        size="small"
-        rowKey={record => record?.id}
-        columns={columns}
-        pagination={false}
-        dataSource={conf_par || []}
-        scroll={{y: 117}}
-      />
-    </div>
-  );
-};
 
 export const handleUsersProjectToTreeData = (array: CurrentChildrenResults) => {
   const template = _.map(array, v => {
@@ -304,11 +168,6 @@ const ProjectList: FC<BasicListProps> = props => {
   const [columnsStateMap, setColumnsStateMap] = useState<{ [key: string]: ColumnsState }>({});
   const actionRef = useRef<ActionType>();
   const [visible, setVisible] = useState<boolean>(false);
-  const [editVisible, setEditVisible] = useState<boolean>(false);
-  const [editVisible2, setEditVisible2] = useState<boolean>(false);
-  const [current, setCurrent] = useState<NotRequired<ProjectListItem>>({});
-  const [validateVisible, setValidateVisible] = useState(false);
-  const [validateType, setValidateType] = useState<string>('');
   const [listParams, setListParams] = useState<ListSearchParams>({});
   const [details, setDetails] = useState<ProjectListItem[]>([]);
 
@@ -328,7 +187,6 @@ const ProjectList: FC<BasicListProps> = props => {
 
   const showModal = () => {
     setVisible(true);
-    setCurrent({});
   };
 
   const treeData = () => {
@@ -474,52 +332,52 @@ const ProjectList: FC<BasicListProps> = props => {
       ellipsis: true,
       hideInSearch: true,
     },
-    {
-      title: '销售产品',
-      dataIndex: 'production',
-      hideInSearch: true,
-      width: 100,
-      render: (text, record) => {
-        const {product_list, identity} = record;
-        return (
-          <div>
-            <Button style={{padding: '0px'}} type="link" onClick={() => {
-              Modal.success({
-                maskClosable: true,
-                title: (<div style={{display: 'flex', justifyContent: 'space-between'}}><span>产品清单</span><span
-                  style={{marginLeft: '10px'}}>合计：
-                            <Text style={{color: '#FF6A00'}}>
-              {record?.sell_total_price ?
-                <StatisticWrapper value={record?.sell_total_price}/>
-                : '部分尚未定价'}
-            </Text>
-                </span></div>),
-                width: product_list?.length === 1 ? 500 : 1000,
-                icon: null,
-                content: (
-                  <List
-                    size="small"
-                    rowKey={record => record.id?.toString()}
-                    pagination={false}
-                    dataSource={product_list || []}
-                    className={styles.productListDetail}
-                    renderItem={(item: ProjectProductionInfoItem, index) => (
-                      <List.Item
-                      >
-                        <div>
-                          <ListContentWrapper item={item} identity={identity as IdentityType} index={index}/>
-                        </div>
-                      </List.Item>
-                    )}
-                  >
-                  </List>
-                ),
-              });
-            }}>查看详情</Button>
-          </div>
-        );
-      },
-    },
+    // {
+    //   title: '销售产品',
+    //   dataIndex: 'production',
+    //   hideInSearch: true,
+    //   width: 100,
+    //   render: (text, record) => {
+    //     const {product_list, identity} = record;
+    //     return (
+    //       <div>
+    //         <Button style={{padding: '0px'}} type="link" onClick={() => {
+    //           Modal.success({
+    //             maskClosable: true,
+    //             title: (<div style={{display: 'flex', justifyContent: 'space-between'}}><span>产品清单</span><span
+    //               style={{marginLeft: '10px'}}>合计：
+    //                         <Text style={{color: '#FF6A00'}}>
+    //           {record?.sell_total_price ?
+    //             <StatisticWrapper value={record?.sell_total_price}/>
+    //             : '部分尚未定价'}
+    //         </Text>
+    //             </span></div>),
+    //             width: product_list?.length === 1 ? 500 : 1000,
+    //             icon: null,
+    //             content: (
+    //               <List
+    //                 size="small"
+    //                 rowKey={record => record.id?.toString()}
+    //                 pagination={false}
+    //                 dataSource={product_list || []}
+    //                 className={styles.productListDetail}
+    //                 renderItem={(item: ProjectProductionInfoItem, index) => (
+    //                   <List.Item
+    //                   >
+    //                     <div>
+    //                       <ListContentWrapper item={item} identity={identity as IdentityType} index={index}/>
+    //                     </div>
+    //                   </List.Item>
+    //                 )}
+    //               >
+    //               </List>
+    //             ),
+    //           });
+    //         }}>查看详情</Button>
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       title: '销售总价',
       dataIndex: 'price',
@@ -547,13 +405,11 @@ const ProjectList: FC<BasicListProps> = props => {
       valueType: 'dateTime',
       hideInSearch: true,
     },
-  ];
-
-  const operation: ProColumns<ProjectListItem>[] = [
     {
       title: '操作',
       dataIndex: 'option',
       valueType: 'option',
+      align: 'center',
       render: (_, record) => {
         const template: JSX.Element[] = [
           <Button type="link" onClick={() => showMoreDetail(record)}>
@@ -599,7 +455,7 @@ const ProjectList: FC<BasicListProps> = props => {
               resetText: undefined,
             }}
             params={{...listParams}}
-            columns={identity === 1 ? columns : columns.concat(operation)}
+            columns={columns}
             columnsStateMap={columnsStateMap}
             onColumnsStateChange={map => setColumnsStateMap(map)}
             pagination={{pageSize: 10, showQuickJumper: true}}
@@ -679,27 +535,6 @@ const ProjectList: FC<BasicListProps> = props => {
             setVisible(false);
           }}
           updateModalVisible={visible}
-          currentUser={currentUser}
-        />
-      ) : null}
-
-      {editVisible2 ? (
-        <EditProductList
-          onSubmit={async value => {
-            const response = await modifyProductList({id: current?.id as number, data: {product_list: value}});
-            const success = new ValidatePwdResult(response).validate('修改成功', null, undefined);
-            if (success) {
-              setEditVisible2(false);
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
-          }}
-          onCancel={() => {
-            setEditVisible2(false);
-          }}
-          updateModalVisible={editVisible2}
-          current={current}
           currentUser={currentUser}
         />
       ) : null}

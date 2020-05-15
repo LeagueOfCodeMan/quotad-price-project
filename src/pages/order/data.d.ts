@@ -36,7 +36,7 @@ export interface OrderListItem {
   [propName: string]: any;
 }
 
-export type OtherListItem = { id: number; pro_type: string; price: string; count: number; };
+export type OtherListItem = { id: number; name: string; price: string; count: number; };
 
 export interface OrderListInfo {
   count: number;

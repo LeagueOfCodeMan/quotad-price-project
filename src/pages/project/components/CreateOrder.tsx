@@ -1,31 +1,21 @@
 import React, {useEffect, useState} from 'react';
-import {
-  Alert,
-  Button,
-  Col,
-  Divider,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Row,
-  Select,
-  Steps,
-  Table,
-  Typography
-} from 'antd';
-import {v4 as uuidv4} from 'uuid';
+import {Alert, Button, Col, Form, Input, List, Modal, Row, Space, Steps, Table, Typography} from 'antd';
 import _ from 'lodash';
-import {queryProduct} from '../../product/service';
 import {ProductBaseListItem} from '../../product/data';
 import styles from '../style.less';
-import {ColumnsType} from "antd/lib/table";
-import {ProductList} from "../service";
-import {CurrentUser} from "@/models/user";
-import {actPrice, isNormalResponseBody, productType} from "@/utils/utils";
-import {ProjectListItem} from "@/pages/project/data";
-import {useToggle} from "react-use";
-import {MinusCircleOutlined, PlusOutlined} from "@ant-design/icons/lib";
+import {ColumnsType} from 'antd/lib/table';
+import {ProductList} from '../service';
+import {CurrentUser} from '@/models/user';
+import {
+  calculateOtherList,
+  currentPriceNumber,
+  handleProductListInProjectFormData,
+  handleProjectListItemData
+} from '@/utils/utils';
+import {ProjectListItem} from '@/pages/project/data';
+import {useToggle} from 'react-use';
+import {StatisticWrapper} from '@/components/StatisticWrapper';
+import Ellipsis from '@/components/Ellipsis';
 
 
 export interface FormValueType {
@@ -53,7 +43,7 @@ export interface UpdateFormProps {
   onSubmit: (values: CreateOrderParams) => void;
   updateModalVisible: boolean;
   currentUser: CurrentUser;
-  current?: NotRequired<ProjectListItem>;
+  current?: ProjectListItem;
 }
 
 export interface CreateOrderParams {
@@ -71,13 +61,12 @@ export interface CreateOrderParams {
   contract_phone: string;
   product_list: ProductList;
   label?: 1 | 2; // 1订单  2 合同
-  other_list: { pro_type: string; price: string; count: number; }[];
+  other_list: { name: string; price: string; count: number; }[];
 }
 
 const {Step} = Steps;
 
 const {Text} = Typography;
-const {Option, OptGroup} = Select;
 const formLayout = {
   labelCol: {span: 7},
   wrapperCol: {span: 13},
@@ -85,12 +74,7 @@ const formLayout = {
 
 const CreateOrder: React.FC<UpdateFormProps> = props => {
   const [formVals, setFormVals] = useState<FormValueType>({});
-  const [data, setData] = useState<ProductBaseListItem[]>([]);
-  const [dataSource, setDataSource] = useState<ProductBaseListItem[]>([]);
-  const [current, setCurrent] = useState<ProductBaseListItem>();
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [totalPrice, setPrice] = useState<string>("0.00");
-  const [add, toggleAdd] = useToggle(false);
   const [disabled, toggleDisabled] = useToggle(true);
 
   const [form] = Form.useForm();
@@ -100,76 +84,27 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
     onCancel: handleUpdateModalVisible,
     updateModalVisible,
     currentUser: {identity},
-    current: current2
+    current
   } = props;
-
+  const {
+     sell_total_quota,
+    product_list, other_list, company
+  } = current as ProjectListItem;
   useEffect(() => {
     if (current && formRef) {
       setTimeout(() => {
-        const conf_par: { id: number; count: number; }[] = [];
-        current?.conf_list?.forEach(d => {
-          conf_par.push({id: d?.id, count: d?.is_required ? 1 : 0})
-        });
         form.setFieldsValue({
-          conf_par: conf_par,
+          ...current
         });
-      }, 0)
+      }, 0);
     }
   }, [current]);
 
-  useEffect(() => {
-    if (_.head(current2?.product_list)) {
-      const data = current2?.product_list?.map(item => {
-        return (
-          {
-            ...item, price: getPriceBasedIdentity(item?.production), ...item?.production, uuid: uuidv4(),
-            conf_par: _.map(item?.conf_par, d => ({...d, price: getPriceBasedIdentity(d), uuid: uuidv4(),}))
-          }
-        )
-      });
-      setDataSource(data as ProductBaseListItem[]);
-    }
-  }, [current2]);
-
-  const getPriceBasedIdentity = (item: ProductBaseListItem | undefined) => {
-    let price;
-    if (identity === 2) {
-      price = item?.leader_quota || item?.leader_price;
-    } else if (identity === 3) {
-      if (item?.sell_quota) {
-        price = item?.member_price;
-      }
-    } else if (identity === 4) {
-      price = item?.second_price;
-    }
-    return price;
-  };
-
+  const dataSource = handleProjectListItemData(product_list);
+  console.log(dataSource);
   const forward = () => setCurrentStep(currentStep + 1);
 
   const backward = () => setCurrentStep(currentStep - 1);
-
-  const addProductToList = async () => {
-    const fieldsValue = await form.validateFields();
-
-    setFormVals({...formVals, ...fieldsValue});
-    const checkPar = fieldsValue?.conf_par?.filter((i: { count: number; }) => i?.count > 0);
-    const conf_list: ProductBaseListItem[] = [];
-    _.forEach(current?.conf_list, o => {
-      const target = _.head(_.filter(checkPar, d => d?.id === o?.id));
-      if (target) {
-        conf_list.push({...o, price: getPriceBasedIdentity(o), count: target?.count, uuid: uuidv4(),});
-      }
-    });
-    setDataSource([...dataSource, {
-      ...current,
-      price: getPriceBasedIdentity(current),
-      count: fieldsValue?.count,
-      conf_par: conf_list,
-      uuid: uuidv4(),
-    } as ProductBaseListItem]);
-    toggleAdd();
-  };
 
   const handleNext = async () => {
     const fieldsValue = await form.validateFields();
@@ -178,7 +113,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
     if (currentStep < 2) {
 
       if (currentStep === 0) {
-        if (_.isEqual(current2?.company, fieldsValue?.company)) {
+        if (_.isEqual(company, fieldsValue?.company)) {
           toggleDisabled(true);
         } else {
           toggleDisabled(false);
@@ -188,17 +123,12 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
     } else {
       const {company} = formVals;
       const {
-         addr, contact, phone,
+        addr, contact, phone,
         bill_id, bill_addr, bill_phone, bill_bank, bill_account,
         contract_addr, contract_contact, contract_phone,
       } = fieldsValue;
-      const {other_list} = formVals;
 
-      const product_list = _.map(dataSource, o => {
-        return (
-          {production: o?.id, count: o?.count, conf_par: _.map(o?.conf_par, d => ({id: d?.id, count: d?.count}))}
-        )
-      });
+      const product_list = handleProductListInProjectFormData(dataSource);
       const label = disabled ? 1 : 2;
       const payload = {
         company, addr, contact, phone,
@@ -209,90 +139,71 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
     }
   };
 
-  const fetchProduct = _.debounce(async (index: any) => {
-    const payload = {pageSize: 9999,};
-    if (index === 1) {
-      payload['genre__lte'] = 2;
-      payload['genre__gte'] = 1;
-    } else {
-      payload['genre__lte'] = 5;
-      payload['genre__gte'] = 3;
-    }
-    const response = await queryProduct(payload);
-    if (isNormalResponseBody(response)) {
-      setData(response?.results || []);
-    }
-  }, 800);
-
-  const handleChange = (value: any) => {
-    const checkedCurrent = _.head(_.filter(data, o => o?.id === value?.value));
-    calculate();
-    setCurrent(checkedCurrent);
-  };
-
-  /**
-   * 计算价格
-   * @param selectedRowKeys
-   * @param selectedRows
-   */
-  const calculate = () => {
-    const {count, conf_par} = form.getFieldsValue();
-    if (count) {
-      const price = parseFloat(actPrice(current, identity) || '0');
-      const checkPar = conf_par?.filter((i: { count: number; }) => i?.count > 0);
-      const tPrice = _.reduce(checkPar, (sum, n) => {
-        const item = _.head(_.filter(current?.conf_list, o => o?.id === n?.id));
-        const priceItem = parseFloat(actPrice(item, identity) || '0') * n?.count;
-        return sum + priceItem;
-      }, 0) || 0;
-      const hPrice = (price + tPrice) * count;
-      const fPrice: string = hPrice % 1 !== 0 ? hPrice.toString() : hPrice + '.00';
-      const price2 = _.isNaN(fPrice) ? '部分未定价' : '¥ ' + fPrice;
-      setPrice(price2);
-    }
-  };
-
-  const columns: ColumnsType<ProductBaseListItem> = [
+  const columnsOtherList: ColumnsType<any> = [
     {
-      title: '类型',
-      dataIndex: 'genre',
-      key: 'genre',
+      title: '产品名称',
+      dataIndex: 'name',
+      key: 'name',
       align: 'center',
-      width: 83,
-      render: (text) => {
+      width: 160,
+      render: (text: string) => {
         return (
           <div>
-            <Text style={{color: '#181818'}}>{productType(text)}</Text>
+            <Ellipsis tooltip lines={1}>
+              {text}
+            </Ellipsis>
           </div>
-        )
+        );
       },
     },
     {
       title: '型号',
       dataIndex: 'pro_type',
       key: 'pro_type',
+      width: 120,
       align: 'center',
-      width: 117,
-      render: (text) => {
+      render: (text: string) => {
         return (
           <div>
-            <Text style={{color: '#181818'}}>{text}</Text>
+            <Ellipsis tooltip lines={1}>
+              {text}
+            </Ellipsis>
           </div>
-        )
+        );
       },
     },
     {
-      title: '采购价格',
-      dataIndex: 'price',
-      key: 'price',
-      align: 'center',
-      width: 117,
+      title: '产品描述',
+      dataIndex: 'desc',
+      width: 190,
       render: (text) => {
         return (
-          <div>
-            <Text style={{color: '#FF6A00'}}>{text || '尚未定价'}</Text>
+          <div style={{textAlign: 'left'}}>
+            <Ellipsis tooltip lines={1}>
+              <p style={{marginBottom: '0px'}}>
+                {(text as string)?.split('\n')?.map((o, i) => {
+                  return (
+                    <span key={i}>{o}<br/></span>
+                  );
+                })}
+              </p>
+            </Ellipsis>
           </div>
-        )
+        );
+      },
+    },
+    {
+      title: '单价',
+      dataIndex: 'price',
+      width: 170,
+      align: 'right',
+      render: (text: any) => {
+        const price = parseFloat(text || '');
+        return (
+          <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+            <StatisticWrapper value={price}/>
+          </div>
+        );
       },
     },
     {
@@ -300,352 +211,204 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
       dataIndex: 'count',
       key: 'count',
       align: 'center',
-      width: 60,
-      render: (text: number) => {
-        return (
-          <div>
-            <Text style={{color: '#181818'}}>{text}</Text>
-          </div>
-        )
-      },
+      width: 100,
     },
-  ];
-
-  const operation: ColumnsType<ProductBaseListItem> = [
     {
-      title: '操作',
-      dataIndex: 'operation',
-      key: 'operation',
+      title: '金额',
+      dataIndex: 'total_price',
+      key: 'total_price',
+      width: 170,
       align: 'center',
-      width: 120,
-      render: (text: undefined, record: ProductBaseListItem) => {
-        return (
-          <div style={{textAlign: 'center'}}>
-            <a
-              onClick={e => {
-                e.preventDefault();
-                remove(record);
-              }}
-              style={{color: '#FF4D4F'}}
-            >
-              删除
-            </a>
-          </div>
-        )
+      render: (value, row, index) => {
+        const obj: {
+          props: { rowSpan?: number; [propName: string]: any; };
+          [propName: string]: any;
+        } = {
+          children: <div>
+            <StatisticWrapper value={calculateOtherList(other_list)}/>
+          </div>,
+          props: {},
+        };
+        if (row?.production > 0) {
+          obj.props.rowSpan = other_list?.length;
+        } else {
+          obj.props.rowSpan = 0;
+        }
+        return obj;
       },
     },
   ];
-
-  const remove = (record: ProductBaseListItem) => {
-    const nDataSource = [...dataSource];
-    _.remove(nDataSource, d => d?.uuid === record?.uuid);
-    setDataSource(nDataSource);
-  };
-
-  const expandedRowRender = (record: ProductBaseListItem) => {
-    return (
-      <Table
-        showHeader={false}
-        size="small" rowKey={record => record?.uuid as string}
-        columns={columns}
-        dataSource={record?.conf_par || []}
-        pagination={false}
-        scroll={{y: 78}}
-      />
-    );
-  };
 
   const renderContent = () => {
-
+    const total_price = parseFloat(sell_total_quota || '');
     if (currentStep === 1) {
       return (
         <>
-          {add ?
-            <>
-              <Alert message="产品选择" type="info" style={{marginBottom: '10px'}}/>
-              <Row gutter={[8, 8]}>
-                <Col span={11}>
-                  <Form.Item
-                    label="产品类别"
-                    name="genre"
-                    rules={[{required: true, message: '产品类型'}]}
-                  >
-                    <Select
-                      placeholder="产品类别"
-                      onChange={(val) => {
-                        fetchProduct(val);
-                      }}
-                      style={{width: '120px'}}
-                    >
-                      <Option value={1}>硬件</Option>
-                      <Option value={2}>软件</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-                <Col span={13} style={{marginLeft: '-45px'}}>
-                  <Form.Item
-                    name="production"
-                    label="产品选择"
-                    rules={[
-                      ({getFieldValue}) => ({
-                        validator(rule, value) {
-                          if (!getFieldValue('genre')) {
-                            return Promise.reject('请先选择产品类别!');
-                          } else if (!value) {
-                            return Promise.reject('请选择产品');
-                          }
-                          return Promise.resolve();
-                        },
-                      })
-                    ]}
-                  >
-                    <Select
-                      showSearch
-                      labelInValue
-                      placeholder="必选配置"
-                      notFoundContent="请先选择类别"
-                      filterOption={false}
-                      style={{width: '100%'}}
-                      onChange={handleChange}
-                      dropdownMatchSelectWidth={300}
-                    >
-                      {
-                        (productType(form.getFieldValue("genre") === 1 ? -3 : -4) as { label: string; key: number; }[])?.map(d => {
-
-                          return (
-                            <OptGroup label={<span style={{color: '#FF6A00'}}>{d?.label}</span>} key={d?.key}>
-                              {
-                                _.filter(data, o => o?.genre === d?.key)?.map(d2 => {
-                                  const priceText = actPrice(d2, identity);
-                                  const priceTextFinal = priceText === '0.00' ? '尚未定价' : '价格：¥' + priceText;
-                                  return (
-                                    <Option key={d2?.id} value={d2?.id}>
-                                      <>
-                                        <span>{d2?.pro_type}</span>
-                                        <Divider type="vertical"/>
-                                        <span style={{color: '#FF6A00'}}>{priceTextFinal}</span>
-                                      </>
-                                    </Option>
-                                  )
-                                })
-                              }
-                            </OptGroup>
-                          )
-                        })
-                      }
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-              {_.head(current?.conf_list) ?
-                <>
-                  <div className={styles.standardWrapper}>
-                    <div className={styles.standardInner}>
-                      <Form.List name="conf_par">
-                        {fields => {
-                          return (
-                            <div>
-                              {fields.map((field, index) => {
-                                const conf: ProductBaseListItem = current?.conf_list?.[index] as ProductBaseListItem;
-                                const priceText = actPrice(conf, identity);
-                                const priceTextFinal = priceText === '0.00' ? '尚未定价' : '价格：¥' + priceText;
-                                return (
-                                  <Row key={field.key} gutter={[8, 8]}>
-                                    <Col span={16} style={{marginLeft: '-20px'}}>
-                                      <Form.Item
-                                        name={[field.name, 'id']}
-                                        label={<Text strong>{productType(conf?.genre)}</Text>}
-                                        // @ts-ignore
-                                        fieldKey={[field.fieldKey, 'id']}
-                                      >
-                                        <Select disabled style={{width: 256}} showArrow={false}>
-                                          <Option key={conf?.id} value={conf?.id}>
-                                            <div>
-                                              <span>{conf?.pro_type}</span>
-                                              <Divider type="vertical"/>
-                                              <span style={{color: '#FF6A00'}}>{priceTextFinal}</span>
-                                            </div>
-                                          </Option>
-                                        </Select>
-                                      </Form.Item>
-                                    </Col>
-                                    <Col span={6}>
-                                      <Form.Item
-                                        name={[field.name, 'count']}
-                                        label={<Text type="secondary">数量：</Text>}
-                                        // @ts-ignore
-                                        fieldKey={[field.fieldKey, 'count']}
-                                        rules={[{required: true, message: '数量'}]}
-                                      >
-                                        <InputNumber
-                                          onChange={() => calculate()}
-                                          style={{marginLeft: '20px'}} placeholder="采购数量"
-                                          min={conf?.is_required ? 1 : 0}/>
-                                      </Form.Item>
-                                    </Col>
-                                  </Row>
-                                )
-                              })}
-                            </div>
-                          );
-                        }}
-                      </Form.List>
-                    </div>
-                  </div>
-                </> : null
-              }
-              <Row gutter={[8, 8]} style={{marginTop: '10px'}}>
-                <Col span={11}>
-                  <Form.Item
-                    name="count"
-                    label="产品数量"
-                    rules={[
-                      ({getFieldValue}) => ({
-                        validator(rule, value) {
-                          if (value && !getFieldValue('production')) {
-                            return Promise.reject('请先选择产品!');
-                          } else if (!value) {
-                            return Promise.reject('输入数量');
-                          }
-                          return Promise.resolve();
-                        },
-                      })
-                    ]}
-                  >
-                    <InputNumber onChange={() => calculate()} style={{width: 120}} placeholder="采购数量" min={1}/>
-                  </Form.Item>
-                </Col>
-                <Col span={7}>
-              <span style={{color: '#FF6A00', fontSize: '18px'}}>
-                <span style={{fontSize: '14px', color: 'grey'}}>总价：</span>
-                {totalPrice || '0.00'}</span>
-                </Col>
-                <Col span={6}>
-                  <Button type="primary" size="small" onClick={() => addProductToList()}>
-                    添加
-                  </Button>
-                </Col>
-              </Row>
-            </> : null}
-          <Alert
-            message="产品清单"
-            type="info"
-          />
-          {add ? null :
-            <Button type="primary" style={{margin: '10px 0'}} onClick={() => toggleAdd()}>添加产品</Button>}
-          <Table
-            rowKey={record => record?.uuid as string}
-            columns={columns.concat(operation)}
-            expandable={{expandedRowRender}}
-            dataSource={dataSource}
+          <div style={{margin: '10px 0'}}>
+            <Alert
+              message="产品清单"
+              type="info"
+            />
+          </div>
+          <div style={{margin: '5px 30px 0 30px', display: 'flex', justifyContent: 'flex-end'}}>
+            <Text strong style={{fontSize: '16px', color: 'grey'}}>总价：</Text>
+            <Text style={{color: '#FF6A00', fontSize: '20px', marginTop: '-5px'}}>
+              {!_.isNaN(total_price) ?
+                <StatisticWrapper value={total_price} style={{fontSize: '20px'}}/>
+                : '部分尚未定价'}
+            </Text>
+          </div>
+          <List
+            size="large"
+            rowKey={(record: { uuid: any; }) => record?.uuid}
             pagination={false}
-            scroll={{y: 195}}
-            summary={pageData => {
-              console.log(pageData);
-              const tPrice = _.reduce(pageData, (sum, n) => {
-                const price = n?.price - 0;
-                const priceItem = _.reduce(n?.conf_par, (sum2, n2) => {
-                  const price2 = n2?.price - 0;
-                  return sum2 + price2 * (n2?.count || 0);
-                }, 0);
-                return sum + (price + priceItem) * (n?.count || 0);
-              }, 0) || 0;
+            dataSource={dataSource || []}
+            renderItem={(item: { uuid: string; data: ProductBaseListItem[] }, index: number) => {
+              const account = _.head(_.filter(item?.data, d => d?.production > 0))?.sell_quota;
 
-              const fPrice: string = tPrice % 1 !== 0 ? tPrice.toString() : tPrice + '.00';
-              const mes = _.isNaN(fPrice) ? '部分未定价' : '¥ ' + fPrice;
+              const columns: ColumnsType<any> = [
+                {
+                  title: '产品名称',
+                  dataIndex: 'name',
+                  key: 'name',
+                  align: 'center',
+                  width: 160,
+                  render: (text: string) => {
+                    return (
+                      <div>
+                        <Ellipsis tooltip lines={1}>
+                          {text}
+                        </Ellipsis>
+                      </div>
+                    );
+                  },
+                },
+                {
+                  title: '型号',
+                  dataIndex: 'pro_type',
+                  key: 'pro_type',
+                  width: 120,
+                  align: 'center',
+                  render: (text: string) => {
+                    return (
+                      <div>
+                        <Ellipsis tooltip lines={1}>
+                          {text}
+                        </Ellipsis>
+                      </div>
+                    );
+                  },
+                },
+                {
+                  title: '产品描述',
+                  dataIndex: 'desc',
+                  width: 190,
+                  render: (text) => {
+                    return (
+                      <div style={{textAlign: 'left'}}>
+                        <Ellipsis tooltip lines={1}>
+                          <p style={{marginBottom: '0px'}}>
+                            {(text as string)?.split('\n')?.map((o, i) => {
+                              return (
+                                <span key={i}>{o}<br/></span>
+                              );
+                            })}
+                          </p>
+                        </Ellipsis>
+                      </div>
+                    );
+                  },
+                },
+                {
+                  title: '单价',
+                  dataIndex: 'price',
+                  width: 170,
+                  align: 'right',
+                  render: (text: any, record) => {
+                    const price = currentPriceNumber(record, identity);
+                    return (
+                      <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+                        <Text style={{color: '#FF6A00', textAlign: 'right'}}>
+                          {price ?
+                            <StatisticWrapper value={price}/>
+                            : '尚未定价'}
+                        </Text>
+                      </div>
+                    );
+                  },
+                },
+                {
+                  title: '数量',
+                  dataIndex: 'count',
+                  key: 'count',
+                  align: 'center',
+                  width: 100,
+                },
+                {
+                  title: '金额',
+                  dataIndex: 'total_price',
+                  key: 'total_price',
+                  width: 170,
+                  align: 'center',
+                  render: (value, row, index) => {
+                    const obj: {
+                      props: { rowSpan?: number; [propName: string]: any; };
+                      [propName: string]: any;
+                    } = {
+                      children: <div>
+                        <Text style={{color: '#FF6A00'}}>
+                          {account ?
+                            <StatisticWrapper value={account}/>
+                            : '部分尚未定价'}
+                        </Text>
+                      </div>,
+                      props: {},
+                    };
+                    if (row?.production > 0) {
+                      obj.props.rowSpan = item?.data?.length;
+                    } else {
+                      obj.props.rowSpan = 0;
+                    }
+                    return obj;
+                  },
+                },
+              ];
               return (
-                <>
-                  <tr>
-                    <th>
-                      <div style={{width: '40px'}}>总计</div>
-                    </th>
-                    <td colSpan={6}>
-                      <Text type="danger">{mes}</Text>
-                    </td>
-                  </tr>
-                </>
+                <List.Item
+                >
+                  <div>
+                    <Space style={{display: 'flex', justifyContent: 'space-between'}}>
+                      <Text strong>产品{index + 1}</Text>
+                    </Space>
+                    <Table
+                      bordered
+                      size="small"
+                      rowKey={record => record?.id}
+                      columns={columns}
+                      pagination={false}
+                      dataSource={item?.data || []}
+                    />
+                  </div>
+                </List.Item>
               );
             }}
-
-          />
-          <Alert
-            message="附加产品"
-            type="info"
-          />
-          <Form.List name="other_list">
-            {(fields, {add, remove}) => {
-              /**
-               * `fields` internal fill with `name`, `key`, `fieldKey` props.
-               * You can extends this into sub field to support multiple dynamic fields.
-               */
-              return (
-                <div>
-                  {fields.map((field, index) => (
-                    <Row key={field.key}>
-                      <Col span={9}>
-                        <Form.Item
-                          label="产品名"
-                          name={[field.name, "pro_type"]}
-                          // @ts-ignore
-                          fieldKey={[field.fieldKey, "pro_type"]}
-                          rules={[{required: true, message: '产品名'}]}
-                        >
-                          <Input placeholder="产品名" style={{width: 100}}/>
-                        </Form.Item>
-                      </Col>
-                      <Col span={7}>
-                        <Form.Item
-                          label="单价"
-                          name={[field.name, "price"]}
-                          // @ts-ignore
-                          fieldKey={[field.fieldKey, "price"]}
-                          rules={[{required: true, message: '单价'}]}
-                        >
-                          <InputNumber
-                            formatter={value => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            parser={value => (value as string).replace(/¥\s?|(,*)/g, '')}
-                            min={0}
-                            style={{width: 100}}
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col span={7}>
-                        <Form.Item
-                          label="数量"
-                          style={{marginRight: '10px'}}
-                          name={[field.name, "count"]}
-                          // @ts-ignore
-                          fieldKey={[field.fieldKey, "count"]}
-                          rules={[{required: true, message: '数量'}]}
-                        >
-                          <InputNumber placeholder="数量" style={{width: 100}}/>
-                        </Form.Item>
-                      </Col>
-                      <Col flex="none" span={1}>
-                        <MinusCircleOutlined
-                          className="dynamic-delete-button"
-                          onClick={() => {
-                            remove(field.name);
-                          }}
-                        />
-                      </Col>
-                    </Row>
-                  ))}
-                  <Form.Item>
-                    <Button
-                      type="dashed"
-                      onClick={() => {
-                        add();
-                      }}
-                      style={{width: "560px"}}
-                    >
-                      <PlusOutlined/> 添加其他产品
-                    </Button>
-                  </Form.Item>
-                </div>
-              );
-            }}
-          </Form.List>
+          >
+          </List>
+          {_.head(other_list) ?
+            <div style={{padding: '16px 24px'}}>
+              <Space style={{display: 'flex', justifyContent: 'space-between'}}>
+                <Text strong>附加产品</Text>
+              </Space>
+              <Table
+                bordered
+                size="small"
+                rowKey={record => record?.id}
+                columns={columnsOtherList}
+                pagination={false}
+                dataSource={other_list || []}
+              />
+            </div> : null
+          }
         </>
       );
     }
@@ -689,30 +452,45 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
               </Col>
             </Row>
             <Alert
+              style={{marginBottom: '10px'}}
               message="开票信息"
               type="info"
             />
-            <Row gutter={[8, 8]}>
-              <Col span={24} style={{marginLeft: '-80px'}}>
+            <Row gutter={[8, 8]} style={{marginLeft: '-128px'}}>
+              <Col span={24}>
                 <Form.Item
                   label="税号"
                   name="bill_id"
                   rules={[{required: false, message: '税号'}]}
                 >
-                  <Input placeholder="税号" style={{width: 481}} disabled={disabled}/>
+                  <Input placeholder="税号" style={{width: 500}} disabled={disabled}/>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Row gutter={[8, 8]} style={{marginLeft: '-128px'}}>
+              <Col span={24}>
+                <Form.Item
+                  label="开票地址"
+                  name="bill_addr"
+                  rules={[{required: false, message: '地址'}]}
+                >
+                  <Input placeholder="地址" style={{width: 500}} disabled={disabled}/>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={[8, 8]} style={{marginLeft: '-128px'}}>
+              <Col span={24}>
+                <Form.Item
+                  label="开户行"
+                  name="bill_bank"
+                  rules={[{required: false, message: '开户行'}]}
+                >
+                  <Input placeholder="开户行" style={{width: 500}} disabled={disabled}/>
                 </Form.Item>
               </Col>
             </Row>
             <Row gutter={[8, 8]}>
-              <Col span={12}>
-                <Form.Item
-                  label="地址"
-                  name="bill_addr"
-                  rules={[{required: false, message: '地址'}]}
-                >
-                  <Input placeholder="地址" style={{width: 200}} disabled={disabled}/>
-                </Form.Item>
-              </Col>
               <Col span={12}>
                 <Form.Item
                   label="电话"
@@ -720,17 +498,6 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
                   rules={[{required: false, message: '电话'}]}
                 >
                   <Input placeholder="电话" style={{width: 200}} disabled={disabled}/>
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={[8, 8]}>
-              <Col span={12}>
-                <Form.Item
-                  label="开户行"
-                  name="bill_bank"
-                  rules={[{required: false, message: '开户行'}]}
-                >
-                  <Input placeholder="开户行" style={{width: 200}} disabled={disabled}/>
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -789,7 +556,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
         <>
           <div>
             <Alert
-              message="项目基础信息(默认订单模式，修改公司名称将走合同形式)"
+              message="项目基础信息(默认订单形式，修改公司名称将走合同形式)"
               type="info"
             />
             <Row gutter={[8, 8]}>
@@ -912,7 +679,7 @@ const CreateOrder: React.FC<UpdateFormProps> = props => {
         {...formLayout}
         form={form}
         ref={(ref) => setFormRef(ref)}
-        initialValues={{...current2}}
+        initialValues={{...current}}
       >
         {renderContent()}
       </Form>
