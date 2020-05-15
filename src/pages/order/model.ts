@@ -12,7 +12,6 @@ export interface ProjectStateType {
   userlist?: NotRequired<UsersInfo>;
   projectList: NotRequired<ProjectListInfo>;
 }
-
 export type Effect = (
   action: AnyAction,
   effects: EffectsCommandMap & { select: <T>(func: (state: ProjectStateType) => T) => T },
